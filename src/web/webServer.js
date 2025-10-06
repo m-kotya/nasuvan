@@ -380,6 +380,8 @@ function initWebServer(app, io) {
       // Создаем розыгрыш в базе данных
       const giveawayData = await createGiveaway(channelName, keyword, prize || 'Участие в розыгрыше');
       
+      console.log('Giveaway data:', giveawayData);
+      
       if (giveawayData) {
         // Сохраняем информацию о розыгрыше
         const giveawayInfo = {
@@ -402,11 +404,12 @@ function initWebServer(app, io) {
         
         return res.json({ success: true, giveaway: giveawayInfo });
       } else {
+        console.error('Failed to create giveaway in database');
         return res.status(500).json({ error: 'Ошибка при создании розыгрыша' });
       }
     } catch (error) {
       console.error('Ошибка при создании розыгрыша:', error);
-      res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+      res.status(500).json({ error: 'Внутренняя ошибка сервера: ' + error.message });
     }
   });
 
@@ -503,7 +506,34 @@ function initWebServer(app, io) {
     }
   });
 
-  // API маршруты
+  // API маршрут для получения последних победителей
+  app.get('/api/winners', requireAuth, async (req, res) => {
+    try {
+      // Получаем имя канала авторизованного пользователя
+      const channelName = req.user.username;
+      
+      // Получаем последние 10 завершенных розыгрышей с победителями
+      const { data, error } = await supabase
+        .from('giveaways')
+        .select('*')
+        .eq('channel', channelName)
+        .not('winner', 'is', null)
+        .order('ended_at', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error('Ошибка при получении победителей:', error);
+        return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+      }
+
+      return res.json(data);
+    } catch (error) {
+      console.error('Ошибка при получении победителей:', error);
+      res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+    }
+  });
+
+  // Маршруты
   app.get('/api/giveaways/:channel', async (req, res) => {
     try {
       const { channel } = req.params;

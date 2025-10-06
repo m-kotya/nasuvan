@@ -35,6 +35,23 @@ winnerBtn.addEventListener('click', handleSelectWinner);
 rerollBtn.addEventListener('click', handleReroll);
 closeWinnerBtn.addEventListener('click', handleCloseWinner);
 
+// Функция загрузки последних победителей из базы данных
+async function loadWinnersFromDatabase() {
+    try {
+        const response = await fetch('/api/winners');
+        if (response.ok) {
+            const data = await response.json();
+            winners = data.map(winner => ({
+                name: winner.winner,
+                time: new Date(winner.ended_at)
+            }));
+            updateWinnersList();
+        }
+    } catch (error) {
+        console.error('Ошибка при загрузке победителей из базы данных:', error);
+    }
+}
+
 // Функция добавления победителя в список
 function addWinner(winnerName) {
     const now = new Date();
@@ -69,8 +86,16 @@ function updateWinnersList() {
     
     let html = '';
     winners.forEach(winner => {
-        const timeString = `${winner.time.getHours().toString().padStart(2, '0')}:${winner.time.getMinutes().toString().padStart(2, '0')}`;
-        const dateString = winner.time.toLocaleDateString('ru-RU');
+        // Форматируем дату как день/месяц/год
+        const day = winner.time.getDate().toString().padStart(2, '0');
+        const month = (winner.time.getMonth() + 1).toString().padStart(2, '0');
+        const year = winner.time.getFullYear();
+        const dateString = `${day}/${month}/${year}`;
+        
+        // Форматируем время как 24-часовой формат часы:минуты
+        const hours = winner.time.getHours().toString().padStart(2, '0');
+        const minutes = winner.time.getMinutes().toString().padStart(2, '0');
+        const timeString = `${hours}:${minutes}`;
         
         html += `
             <div class="winner-item">
@@ -78,7 +103,7 @@ function updateWinnersList() {
                     <span class="winner-name"><i class="fas fa-trophy winner-trophy"></i> ${winner.name}</span>
                 </div>
                 <div>
-                    <span class="winner-time" title="${dateString}">${timeString}</span>
+                    <span class="winner-time">${dateString} ${timeString}</span>
                 </div>
             </div>
         `;
@@ -713,7 +738,6 @@ function addChatMessage(type, user, text) {
     
     // Обрабатываем эмодзи в тексте сообщения
     const processedText = processEmojis(text);
-    
     messageDiv.innerHTML = `
         <span class="message-user">${user}:</span>
         <span class="message-text">${processedText}</span>
@@ -825,8 +849,17 @@ document.addEventListener('DOMContentLoaded', () => {
     resetBtn.disabled = true;
     winnerBtn.style.display = 'none';
     
-    // Инициализируем список победителей
-    updateWinnersList();
+    // Загружаем победителей из базы данных
+    if (isAuthenticated) {
+        loadWinnersFromDatabase();
+        
+        // Периодически обновляем список победителей каждые 30 секунд
+        setInterval(() => {
+            if (isAuthenticated) {
+                loadWinnersFromDatabase();
+            }
+        }, 30000);
+    }
     
     // Добавляем обработчик для закрытия модального окна при клике вне его области
     document.addEventListener('click', function(event) {
