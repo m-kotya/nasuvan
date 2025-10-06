@@ -1,4 +1,11 @@
 require('dotenv').config();
+
+// Для Node.js версии ниже 18, импортируем fetch
+if (!global.fetch) {
+  const fetch = require('node-fetch');
+  global.fetch = fetch;
+}
+
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -24,7 +31,12 @@ app.get('/health', (req, res) => {
 });
 
 // Инициализация компонентов
-initDatabase();
+const supabaseClient = initDatabase();
+if (!supabaseClient) {
+  console.error('Ошибка инициализации базы данных. Проверьте переменные окружения.');
+  process.exit(1);
+}
+
 initBot(io);
 initWebServer(app, io);
 

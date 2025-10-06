@@ -18,6 +18,12 @@ function initDatabase() {
 
 // Функции для работы с розыгрышами
 async function createGiveaway(channel, keyword, prize) {
+  // Проверяем, инициализирован ли клиент
+  if (!supabase) {
+    console.error('Supabase клиент не инициализирован');
+    return null;
+  }
+  
   const { data, error } = await supabase
     .from('giveaways')
     .insert([
@@ -40,6 +46,12 @@ async function createGiveaway(channel, keyword, prize) {
 }
 
 async function addParticipant(giveawayId, username) {
+  // Проверяем, инициализирован ли клиент
+  if (!supabase) {
+    console.error('Supabase клиент не инициализирован');
+    return null;
+  }
+  
   const { data, error } = await supabase
     .from('participants')
     .insert([
@@ -60,6 +72,12 @@ async function addParticipant(giveawayId, username) {
 }
 
 async function selectWinner(giveawayId) {
+  // Проверяем, инициализирован ли клиент
+  if (!supabase) {
+    console.error('Supabase клиент не инициализирован');
+    return null;
+  }
+  
   // Получаем всех участников розыгрыша
   const { data: participants, error } = await supabase
     .from('participants')
@@ -99,6 +117,12 @@ async function selectWinner(giveawayId) {
 }
 
 async function getGiveaways(channel) {
+  // Проверяем, инициализирован ли клиент
+  if (!supabase) {
+    console.error('Supabase клиент не инициализирован');
+    return [];
+  }
+  
   const { data, error } = await supabase
     .from('giveaways')
     .select('*')

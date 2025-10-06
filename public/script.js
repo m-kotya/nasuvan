@@ -19,8 +19,13 @@ endGiveawayBtn.addEventListener('click', handleEndGiveaway);
 
 // Функция обработки авторизации
 function handleAuth() {
-    // В реальной реализации здесь будет редирект на Twitch OAuth
-    alert('Авторизация через Twitch будет реализована здесь');
+    // Показываем индикатор загрузки
+    const originalText = authBtn.textContent;
+    authBtn.textContent = 'Перенаправление...';
+    authBtn.disabled = true;
+    
+    // Перенаправляем на маршрут авторизации Twitch
+    window.location.href = '/auth/twitch';
 }
 
 // Функция добавления бота в канал
@@ -157,4 +162,9 @@ function loadGiveawaysHistory(channelName) {
 // Инициализация
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Веб-интерфейс загружен');
+    
+    // Проверяем, успешно ли прошла авторизация
+    if (window.location.search.includes('auth=success')) {
+        alert('Авторизация через Twitch прошла успешно!');
+    }
 });
