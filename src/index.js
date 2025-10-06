@@ -10,6 +10,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 
 // Импортируем модули бота и веб-интерфейса
 const { initBot } = require('./bot/twitchBot');
@@ -23,6 +24,7 @@ const io = socketIo(server);
 
 // Middleware
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Health check endpoint для Railway

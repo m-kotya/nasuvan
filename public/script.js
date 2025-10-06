@@ -12,6 +12,7 @@ let participants = [];
 let giveawayActive = false;
 let currentKeyword = '';
 let socket = null;
+let isAuthenticated = false;
 
 // Обработчики событий
 authBtn.addEventListener('click', handleAuth);
@@ -27,6 +28,9 @@ function initWebSocket() {
     socket.on('connect', () => {
         console.log('WebSocket подключение установлено');
         addChatMessage('system', 'Система', 'Подключение к серверу установлено');
+        
+        // Проверяем статус авторизации
+        checkAuthStatus();
     });
     
     // Обработчик ошибок подключения
@@ -58,6 +62,10 @@ function initWebSocket() {
         giveawayActive = true;
         addChatMessage('system', 'Система', `Розыгрыш начат! Кодовое слово: "${data.keyword}"`);
         showNotification(`Розыгрыш начат с кодовым словом "${data.keyword}"`, 'success');
+        
+        // Активируем кнопки управления
+        startBtn.disabled = true;
+        resetBtn.disabled = false;
     });
     
     // Обработчик завершения розыгрыша
@@ -67,6 +75,31 @@ function initWebSocket() {
         } else {
             addChatMessage('system', 'Система', 'Розыгрыш завершен! Участников не было.');
         }
+        
+        // Деактивируем кнопки управления
+        startBtn.disabled = false;
+        resetBtn.disabled = true;
+    });
+}
+
+// Функция проверки статуса авторизации
+function checkAuthStatus() {
+    fetch('/api/giveaways/test', { method: 'GET' })
+    .then(response => {
+        if (response.status === 401) {
+            // Пользователь не авторизован
+            isAuthenticated = false;
+            authBtn.style.display = 'block';
+            addChatMessage('system', 'Система', 'Для начала работы необходимо авторизоваться через Twitch');
+        } else {
+            // Пользователь авторизован
+            isAuthenticated = true;
+            authBtn.style.display = 'none';
+            addChatMessage('system', 'Система', 'Вы успешно авторизованы через Twitch');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка проверки статуса авторизации:', error);
     });
 }
 
@@ -113,18 +146,22 @@ function handleStart() {
             giveawayActive = true;
             addChatMessage('system', 'Система', `Розыгрыш начат! Кодовое слово: "${keyword}"`);
             showNotification(`Розыгрыш начат с кодовым словом "${keyword}"`, 'success');
+            
+            // Активируем кнопку сброса
+            resetBtn.disabled = false;
         } else {
             showNotification(data.error || 'Ошибка при запуске розыгрыша', 'error');
+            startBtn.disabled = false;
         }
     })
     .catch(error => {
         console.error('Ошибка при запуске розыгрыша:', error);
         showNotification('Ошибка при запуске розыгрыша', 'error');
+        startBtn.disabled = false;
     })
     .finally(() => {
         // Восстанавливаем кнопку
         startBtn.innerHTML = originalText;
-        startBtn.disabled = false;
     });
 }
 
@@ -155,6 +192,9 @@ function handleReset() {
         
         addChatMessage('system', 'Система', 'Розыгрыш сброшен. Список участников очищен.');
         showNotification('Розыгрыш сброшен. Список участников очищен.', 'info');
+        
+        // Активируем кнопку запуска
+        startBtn.disabled = false;
     })
     .catch(error => {
         console.error('Ошибка при сбросе розыгрыша:', error);
@@ -166,11 +206,13 @@ function handleReset() {
         giveawayActive = false;
         currentKeyword = '';
         keywordInput.value = '';
+        
+        // Активируем кнопку запуска
+        startBtn.disabled = false;
     })
     .finally(() => {
         // Восстанавливаем кнопку
         resetBtn.innerHTML = originalText;
-        resetBtn.disabled = false;
     });
 }
 
@@ -275,8 +317,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.location.search.includes('auth=success')) {
         showNotification('Авторизация через Twitch прошла успешно!', 'success');
         addChatMessage('system', 'Система', 'Подключение к чату Twitch установлено');
+        window.history.replaceState({}, document.title, "/");
     }
     
     // Инициализируем WebSocket соединение
     initWebSocket();
+    
+    // Деактивируем кнопки управления по умолчанию
+    startBtn.disabled = false;
+    resetBtn.disabled = true;
 });

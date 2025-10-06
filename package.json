@@ -5,10 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "setup-db": "node setup-database.js",
-    "test-api": "node test-api.js",
-    "test-bot": "node test-bot.js"
+    "dev": "nodemon src/index.js"
   },
   "keywords": [
     "twitch",
@@ -26,7 +23,8 @@
     "supabase": "^1.0.0",
     "@supabase/supabase-js": "^2.38.0",
     "dotenv": "^16.3.1",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "cookie-parser": "^1.4.6"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

@@ -4,6 +4,8 @@ const { joinChannel, leaveChannel } = require('../bot/twitchBot');
 
 // Хранение активных розыгрышей в памяти (в реальном приложении лучше использовать БД)
 let activeGiveaways = new Map();
+// Хранение информации о сессиях пользователей
+let userSessions = new Map();
 
 function initWebServer(app, io) {
   // Маршрут для главной страницы
@@ -27,31 +29,95 @@ function initWebServer(app, io) {
   });
 
   // Маршрут для обработки callback от Twitch OAuth
-  app.get('/auth/twitch/callback', (req, res) => {
-    // В упрощенной версии просто показываем сообщение об успешной авторизации
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Авторизация успешна</title>
-        <meta charset="utf-8">
-        <style>
-          body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-          .success { color: green; }
-          a { display: inline-block; margin: 20px; padding: 10px 20px; background-color: #9146ff; color: white; text-decoration: none; border-radius: 5px; }
-        </style>
-      </head>
-      <body>
-        <h1 class="success">Авторизация через Twitch успешна!</h1>
-        <p>Теперь вы можете использовать бота для розыгрышей.</p>
-        <a href="/">Вернуться в приложение</a>
-      </body>
-      </html>
-    `);
+  app.get('/auth/twitch/callback', async (req, res) => {
+    const code = req.query.code;
+    if (!code) {
+      return res.status(400).send('Код авторизации не предоставлен');
+    }
+    
+    try {
+      // Обмениваем код на токен
+      const tokenResponse = await fetch('https://id.twitch.tv/oauth2/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          client_id: process.env.TWITCH_CLIENT_ID,
+          client_secret: process.env.TWITCH_CLIENT_SECRET,
+          code: code,
+          grant_type: 'authorization_code',
+          redirect_uri: `${process.env.APP_URL}/auth/twitch/callback`
+        })
+      });
+      
+      const tokenData = await tokenResponse.json();
+      
+      if (!tokenResponse.ok) {
+        console.error('Ошибка получения токена:', tokenData);
+        return res.status(500).send('Ошибка получения токена доступа');
+      }
+      
+      // Получаем информацию о пользователе
+      const userResponse = await fetch('https://api.twitch.tv/helix/users', {
+        headers: {
+          'Authorization': `Bearer ${tokenData.access_token}`,
+          'Client-ID': process.env.TWITCH_CLIENT_ID
+        }
+      });
+      
+      const userData = await userResponse.json();
+      
+      if (!userResponse.ok) {
+        console.error('Ошибка получения данных пользователя:', userData);
+        return res.status(500).send('Ошибка получения данных пользователя');
+      }
+      
+      const user = userData.data[0];
+      
+      // Сохраняем сессию пользователя
+      const sessionId = Math.random().toString(36).substring(2, 15);
+      userSessions.set(sessionId, {
+        userId: user.id,
+        username: user.login,
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token,
+        expiresAt: Date.now() + (tokenData.expires_in * 1000)
+      });
+      
+      // Устанавливаем cookie с sessionId
+      res.cookie('sessionId', sessionId, { maxAge: 900000, httpOnly: true });
+      
+      // Присоединяем бота к каналу пользователя
+      await joinChannel(user.login);
+      
+      // Перенаправляем на главную страницу с параметром успеха
+      res.redirect('/?auth=success');
+    } catch (error) {
+      console.error('Ошибка обработки callback:', error);
+      res.status(500).send('Ошибка обработки авторизации');
+    }
   });
 
+  // Middleware для проверки аутентификации
+  const requireAuth = (req, res, next) => {
+    const sessionId = req.cookies?.sessionId;
+    if (!sessionId || !userSessions.has(sessionId)) {
+      return res.status(401).json({ error: 'Требуется авторизация' });
+    }
+    
+    const session = userSessions.get(sessionId);
+    // Проверяем, не истек ли токен
+    if (Date.now() > session.expiresAt) {
+      return res.status(401).json({ error: 'Сессия истекла' });
+    }
+    
+    req.user = session;
+    next();
+  };
+
   // API маршрут для начала розыгрыша
-  app.post('/api/start-giveaway', async (req, res) => {
+  app.post('/api/start-giveaway', requireAuth, async (req, res) => {
     try {
       const { keyword, prize } = req.body;
       
@@ -59,9 +125,8 @@ function initWebServer(app, io) {
         return res.status(400).json({ error: 'Кодовое слово обязательно' });
       }
       
-      // Здесь обычно мы бы получали имя канала авторизованного пользователя
-      // Но для упрощения используем тестовый канал
-      const channelName = 'test_channel'; // В реальном приложении это будет имя канала пользователя
+      // Получаем имя канала авторизованного пользователя
+      const channelName = req.user.username;
       
       // Создаем розыгрыш в базе данных
       const giveawayData = await createGiveaway(channelName, keyword, prize || 'Участие в розыгрыше');
@@ -97,10 +162,10 @@ function initWebServer(app, io) {
   });
 
   // API маршрут для завершения розыгрыша
-  app.post('/api/end-giveaway', async (req, res) => {
+  app.post('/api/end-giveaway', requireAuth, async (req, res) => {
     try {
-      // В реальном приложении мы бы определяли канал по авторизованному пользователю
-      const channelName = 'test_channel'; // В реальном приложении это будет имя канала пользователя
+      // Получаем имя канала авторизованного пользователя
+      const channelName = req.user.username;
       
       // Завершаем все активные розыгрыши в канале
       let endedCount = 0;

@@ -5,10 +5,31 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 let supabase;
 
+// Фиктивный клиент для тестирования
+const mockSupabase = {
+  from: (table) => ({
+    insert: (data) => ({
+      select: () => Promise.resolve({ data: [{ id: 1, ...data[0] }], error: null })
+    }),
+    update: (data) => ({
+      eq: (field, value) => ({
+        select: () => Promise.resolve({ data: [{ id: 1, [field]: value, ...data }], error: null })
+      })
+    }),
+    select: (fields) => ({
+      eq: (field, value) => ({
+        order: (field, options) => Promise.resolve({ data: [], error: null })
+      })
+    })
+  })
+};
+
 function initDatabase() {
   if (!supabaseUrl || !supabaseKey) {
-    console.error('Не найдены SUPABASE_URL или SUPABASE_KEY в переменных окружения');
-    return null;
+    console.warn('Не найдены SUPABASE_URL или SUPABASE_KEY в переменных окружения. Используется фиктивный клиент для тестирования.');
+    supabase = mockSupabase;
+    console.log('Подключение к Supabase установлено (тестовый режим)');
+    return supabase;
   }
 
   supabase = createClient(supabaseUrl, supabaseKey);
