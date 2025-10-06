@@ -93,12 +93,12 @@ header h1 i {
 
 .left-column {
     flex: 1;
-    min-width: 350px;
+    min-width: 300px;
 }
 
 .right-column {
-    flex: 2;
-    min-width: 500px;
+    flex: 1;
+    min-width: 300px;
 }
 
 /* Кнопки */
@@ -266,8 +266,8 @@ header h1 i {
 /* Список участников */
 .participants-list {
     flex: 1;
-    min-height: 300px;
-    max-height: 400px;
+    min-height: 150px;
+    max-height: 250px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -303,8 +303,8 @@ header h1 i {
 /* Список победителей */
 .winners-list {
     flex: 1;
-    min-height: 250px;
-    max-height: 350px;
+    min-height: 150px;
+    max-height: 250px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -350,7 +350,7 @@ header h1 i {
 .chat-container {
     display: flex;
     flex-direction: column;
-    height: 700px;
+    height: 500px; /* Фиксированная высота */
 }
 
 .chat-messages {
@@ -456,7 +456,15 @@ footer {
     }
     
     .chat-container {
-        height: 600px;
+        height: 350px;
+    }
+    
+    .participants-list, .winners-list {
+        max-height: 200px;
+    }
+    
+    .card {
+        min-height: auto;
     }
 }
 
@@ -485,13 +493,21 @@ footer {
     }
     
     .chat-container {
-        height: 500px;
+        height: 300px;
+    }
+    
+    .participants-list, .winners-list {
+        max-height: 150px;
     }
     
     .user-status {
         flex-direction: column;
         gap: 10px;
         padding: 12px 20px;
+    }
+    
+    .card {
+        min-height: auto;
     }
 }
 

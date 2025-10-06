@@ -6,9 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "local": "node -r dotenv/config src/index.js",
-    "check-config": "node check-config.js",
-    "test": "node test-app.js"
+    "local": "node -r dotenv/config src/index.js"
   },
   "keywords": [
     "twitch",
