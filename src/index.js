@@ -37,6 +37,7 @@ if (!supabaseClient) {
   process.exit(1);
 }
 
+// Инициализируем бота с передачей ссылки на WebSocket сервер
 initBot(io);
 initWebServer(app, io);
 

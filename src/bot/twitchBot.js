@@ -3,6 +3,7 @@ const { createGiveaway, addParticipant, selectWinner, supabase } = require('../d
 
 // Хранение активных розыгрышей
 let activeGiveaways = new Map();
+let io = null; // Ссылка на WebSocket сервер
 
 // Конфигурация клиента Twitch
 const client = new tmi.Client({
@@ -18,7 +19,10 @@ const client = new tmi.Client({
   channels: []
 });
 
-function initBot(io) {
+function initBot(socketIo) {
+  // Сохраняем ссылку на WebSocket сервер
+  io = socketIo;
+  
   client.connect().catch(console.error);
 
   // Подписка на сообщения в чате
@@ -29,6 +33,16 @@ function initBot(io) {
     const channelName = channel.replace('#', '');
     const username = tags.username;
     const lowerMessage = message.toLowerCase();
+
+    // Отправляем сообщение через WebSocket всем подключенным клиентам
+    if (io) {
+      io.emit('twitchMessage', {
+        channel: channelName,
+        username: username,
+        message: message,
+        timestamp: new Date().toISOString()
+      });
+    }
 
     // Проверяем, есть ли активный розыгрыш с таким ключевым словом
     const giveaway = activeGiveaways.get(`${channelName}:${lowerMessage}`);
@@ -41,11 +55,13 @@ function initBot(io) {
         client.say(channel, `@${username} добавлен в розыгрыш!`);
         
         // Отправляем обновление через WebSocket
-        io.emit('participantAdded', {
-          giveawayId: giveaway.id,
-          username: username,
-          count: giveaway.participants.length + 1
-        });
+        if (io) {
+          io.emit('participantAdded', {
+            giveawayId: giveaway.id,
+            username: username,
+            count: giveaway.participants.length + 1
+          });
+        }
         
         // Добавляем участника в локальный список
         giveaway.participants.push(username);
@@ -78,12 +94,14 @@ function initBot(io) {
             client.say(channel, `Розыгрыш "${prize}" начался! Напишите "${keyword}" чтобы принять участие!`);
             
             // Отправляем обновление через WebSocket
-            io.emit('giveawayStarted', {
-              id: giveawayData.id,
-              keyword: keyword,
-              prize: prize,
-              channel: channelName
-            });
+            if (io) {
+              io.emit('giveawayStarted', {
+                id: giveawayData.id,
+                keyword: keyword,
+                prize: prize,
+                channel: channelName
+              });
+            }
           } else {
             client.say(channel, 'Ошибка при создании розыгрыша.');
           }
@@ -110,11 +128,13 @@ function initBot(io) {
             endedCount++;
             
             // Отправляем обновление через WebSocket
-            io.emit('giveawayEnded', {
-              id: giveaway.id,
-              winner: winner,
-              channel: channelName
-            });
+            if (io) {
+              io.emit('giveawayEnded', {
+                id: giveaway.id,
+                winner: winner,
+                channel: channelName
+              });
+            }
           }
         }
         
