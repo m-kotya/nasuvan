@@ -38,14 +38,37 @@ header {
     flex-wrap: wrap;
 }
 
+.header-left {
+    flex: 1;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
 header h1 {
     color: white;
     font-size: 1.8rem;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    margin: 0;
 }
 
 header h1 i {
     margin-right: 10px;
+}
+
+.winners-btn {
+    background: linear-gradient(45deg, #ff9800, #ff5722);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+.winners-btn:hover {
+    background: linear-gradient(45deg, #e68a00, #e64a19);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
 }
 
 .auth-section {
@@ -348,17 +371,6 @@ header h1 i {
     font-size: 1.2rem;
 }
 
-/* История розыгрышей */
-.history-content {
-    text-align: center;
-    padding: 20px 0;
-}
-
-.history-content p {
-    margin-bottom: 20px;
-    color: #666;
-}
-
 /* Чат */
 .chat-container {
     display: flex;
@@ -480,15 +492,25 @@ footer {
         min-height: 300px;
         max-height: 400px;
     }
-}
-
-@media (max-width: 768px) {
+    
     .header-content {
         flex-direction: column;
         gap: 15px;
-        text-align: center;
     }
     
+    .header-left, .header-right {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
+    
+    .header-right {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 768px) {
     .button-group {
         flex-direction: column;
     }
@@ -527,6 +549,10 @@ footer {
     
     .card {
         margin-bottom: 15px;
+    }
+    
+    .header-left h1 {
+        font-size: 1.5rem;
     }
 }
 
