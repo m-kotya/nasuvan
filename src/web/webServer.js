@@ -593,11 +593,20 @@ function initWebServer(app, io) {
       
       // Отправляем сообщение в чат всем подключенным клиентам
       io.emit('twitchMessage', {
-        channel: 'system',
+        channel: data.channel || 'system',
         username: 'Система',
         message: data.message,
         timestamp: new Date().toISOString()
       });
+      
+      // Отправляем сообщение в Twitch чат, если есть учетные данные бота
+      try {
+        const twitchBot = require('../bot/twitchBot');
+        // В реальной реализации здесь будет вызов функции для отправки сообщения в Twitch чат
+        console.log(`Сообщение для отправки в Twitch чат: ${data.message}`);
+      } catch (error) {
+        console.error('Ошибка при отправке сообщения в Twitch чат:', error);
+      }
     });
     
     socket.on('disconnect', () => {

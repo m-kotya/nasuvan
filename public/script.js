@@ -67,10 +67,18 @@ function initWebSocket() {
             addParticipant(data.username);
         }
         
-        // Если есть активный победитель и это его сообщение, останавливаем таймер
+        // Если есть активный победитель и это его сообщение, останавливаем таймер и отображаем сообщение в модальном окне
         if (currentWinner && data.username === currentWinner) {
             stopWinnerTimer();
             showNotification(`Победитель ${currentWinner} ответил в чат!`, 'success');
+            
+            // Добавляем сообщение в чат модального окна
+            const winnerChat = document.getElementById('winnerChat');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'winner-chat-message winner-response';
+            messageDiv.innerHTML = `<strong>${data.username}:</strong> ${data.message}`;
+            winnerChat.appendChild(messageDiv);
+            winnerChat.scrollTop = winnerChat.scrollHeight;
         }
     });
     
@@ -386,6 +394,7 @@ function handleSelectWinner() {
             if (socket && socket.connected) {
                 socket.emit('winnerSelectedChat', {
                     winner: data.winner,
+                    channel: 'default', // В реальной реализации нужно получить имя канала авторизованного пользователя
                     message: `Поздравляем @${data.winner}! Вы выиграли розыгрыш! Пожалуйста, напишите любое сообщение в чат для подтверждения.`
                 });
             }
@@ -449,6 +458,7 @@ function handleReroll() {
             if (socket && socket.connected) {
                 socket.emit('winnerSelectedChat', {
                     winner: data.winner,
+                    channel: 'default', // В реальной реализации нужно получить имя канала авторизованного пользователя
                     message: `Поздравляем @${data.winner}! Вы выиграли розыгрыш! Пожалуйста, напишите любое сообщение в чат для подтверждения.`
                 });
             }
@@ -485,6 +495,10 @@ function showWinner(winner) {
     currentWinner = winner;
     winnerName.textContent = winner;
     
+    // Очищаем чат в модальном окне
+    const winnerChat = document.getElementById('winnerChat');
+    winnerChat.innerHTML = '';
+    
     // Показываем модальное окно
     winnerSection.style.display = 'block';
     
@@ -504,6 +518,7 @@ function showWinner(winner) {
             display: flex;
             justify-content: center;
             align-items: center;
+            pointer-events: none; /* Предотвращаем взаимодействие с оверлеем */
         `;
         document.body.appendChild(overlay);
     }
@@ -519,6 +534,7 @@ function showWinner(winner) {
     winnerSection.style.left = '50%';
     winnerSection.style.transform = 'translate(-50%, -50%)';
     winnerSection.style.zIndex = '1000';
+    winnerSection.style.pointerEvents = 'auto'; /* Разрешаем взаимодействие с модальным окном */
 }
 
 // Функция запуска таймера победителя
@@ -738,8 +754,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (winnerSection.style.display === 'block' && 
             !winnerSection.contains(event.target) && 
             event.target !== winnerBtn &&
-            !event.target.closest('#winnerSection')) {
-            handleCloseWinner();
+            !event.target.closest('#winnerSection') &&
+            event.target.id !== 'modalOverlay') {
+            // Проверяем, что клик был вне модального окна и оверлея
+            if (event.target.id === 'modalOverlay') {
+                handleCloseWinner();
+            }
         }
     });
     

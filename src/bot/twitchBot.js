@@ -407,10 +407,18 @@ function setActiveGiveaways(giveaways) {
   activeGiveaways = giveaways;
 }
 
+// Функция для получения имени канала авторизованного пользователя
+function getUserChannel(username) {
+  // В реальной реализации здесь будет логика для получения имени канала пользователя
+  // Пока возвращаем имя пользователя как имя канала
+  return username;
+}
+
 module.exports = {
   initBot,
   joinChannel,
   leaveChannel,
   getActiveGiveaways,
-  setActiveGiveaways
+  setActiveGiveaways,
+  getUserChannel
 };

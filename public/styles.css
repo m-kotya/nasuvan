@@ -275,6 +275,7 @@ header h1 i {
     backdrop-filter: blur(10px);
     border: 2px solid rgba(255, 255, 255, 0.2);
     display: none;
+    pointer-events: auto; /* Предотвращаем исчезновение при наведении */
 }
 
 #winnerSection h2 {
@@ -298,6 +299,42 @@ header h1 i {
     margin: 15px 0;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     color: #FFD700;
+}
+
+.winner-message {
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    min-height: 100px;
+}
+
+.winner-message p {
+    margin-top: 0;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.winner-chat-container {
+    max-height: 150px;
+    overflow-y: auto;
+    margin-top: 10px;
+    text-align: left;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.winner-chat-message {
+    margin: 5px 0;
+    padding: 5px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.winner-chat-message.winner-response {
+    background: rgba(255, 215, 0, 0.2);
+    border-left: 3px solid #FFD700;
 }
 
 .winner-timer {
@@ -325,6 +362,7 @@ header h1 i {
     display: flex;
     justify-content: center;
     gap: 15px;
+    flex-wrap: wrap; /* Позволяем кнопкам переноситься при необходимости */
 }
 
 .winner-actions .btn {
