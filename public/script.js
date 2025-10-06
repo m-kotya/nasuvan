@@ -837,7 +837,7 @@ function addTestContent() {
 }
 
 // Добавляем тестовый контент после загрузки страницы
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
     console.log('Веб-интерфейс загружен');
     
     // Проверяем, успешно ли прошла авторизация
@@ -882,6 +882,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Добавляем тестовый контент для проверки выравнивания
-    setTimeout(addTestContent, 1000);
+    // Добавляем тестовый контент для проверки выравнивания (только для тестирования)
+    // setTimeout(addTestContent, 1000);
 });
