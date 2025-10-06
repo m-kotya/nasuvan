@@ -434,11 +434,17 @@ function initWebServer(app, io) {
       // Завершаем все активные розыгрыши в канале
       let endedCount = 0;
       const keysToDelete = [];
+      let winnerData = null;
       
       for (const [key, giveaway] of activeGiveaways.entries()) {
         if (giveaway.channel === channelName) {
           // Выбираем победителя
           const winner = await selectWinner(giveaway.id);
+          
+          // Сохраняем данные победителя для ответа
+          if (winner && !winnerData) {
+            winnerData = { id: giveaway.id, winner: winner };
+          }
           
           // Добавляем ключ для удаления
           keysToDelete.push(key);
@@ -459,7 +465,8 @@ function initWebServer(app, io) {
       return res.json({ 
         success: true, 
         message: `Завершено розыгрышей: ${endedCount}`,
-        endedCount: endedCount
+        endedCount: endedCount,
+        winner: winnerData
       });
     } catch (error) {
       console.error('Ошибка при завершении розыгрыша:', error);
@@ -497,6 +504,11 @@ function initWebServer(app, io) {
         activeGiveaway.participants = req.body.participants;
       }
       
+      // Проверяем, что есть участники
+      if (!activeGiveaway.participants || activeGiveaway.participants.length === 0) {
+        return res.status(400).json({ error: 'Нет участников для выбора победителя' });
+      }
+      
       // Выбираем случайного победителя из участников
       const winnerIndex = Math.floor(Math.random() * activeGiveaway.participants.length);
       const winner = activeGiveaway.participants[winnerIndex];
@@ -523,6 +535,7 @@ function initWebServer(app, io) {
     try {
       // Получаем имя канала авторизованного пользователя
       const channelName = req.user.username;
+      console.log('Запрос победителей для канала:', channelName);
       
       // Получаем последние 10 завершенных розыгрышей с победителями
       const { data, error } = await supabase
@@ -537,7 +550,8 @@ function initWebServer(app, io) {
         console.error('Ошибка при получении победителей:', error);
         return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
       }
-
+      
+      console.log('Получены победители:', data);
       return res.json(data);
     } catch (error) {
       console.error('Ошибка при получении победителей:', error);

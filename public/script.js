@@ -25,6 +25,7 @@ let currentWinner = null;
 let winnerTimerInterval = null;
 let winnerSeconds = 0;
 let winners = []; // Массив для хранения последних победителей
+let winnerResponded = false; // Флаг для отслеживания ответа победителя
 
 // Обработчики событий
 authBtn.addEventListener('click', handleAuth);
@@ -38,14 +39,39 @@ closeWinnerBtn.addEventListener('click', handleCloseWinner);
 // Функция загрузки последних победителей из базы данных
 async function loadWinnersFromDatabase() {
     try {
+        // Проверяем, авторизован ли пользователь
+        if (!isAuthenticated) {
+            console.log('Пользователь не авторизован, пропускаем загрузку победителей');
+            return;
+        }
+        
+        console.log('Загрузка победителей из базы данных...');
         const response = await fetch('/api/winners');
         if (response.ok) {
             const data = await response.json();
-            winners = data.map(winner => ({
-                name: winner.winner,
-                time: new Date(winner.ended_at)
-            }));
+            console.log('Получены данные победителей:', data);
+            
+            // Очищаем массив победителей
+            winners = [];
+            
+            // Заполняем массив победителей данными из базы
+            data.forEach(winnerData => {
+                if (winnerData.winner) { // Проверяем, что есть победитель
+                    winners.push({
+                        name: winnerData.winner,
+                        time: new Date(winnerData.ended_at)
+                    });
+                }
+            });
+            
+            // Ограничиваем список последними 10 победителями
+            if (winners.length > 10) {
+                winners = winners.slice(0, 10);
+            }
+            
             updateWinnersList();
+        } else {
+            console.error('Ошибка при загрузке победителей, статус:', response.status);
         }
     } catch (error) {
         console.error('Ошибка при загрузке победителей из базы данных:', error);
@@ -54,6 +80,13 @@ async function loadWinnersFromDatabase() {
 
 // Функция добавления победителя в список
 function addWinner(winnerName) {
+    // Проверяем, есть ли уже такой победитель в списке
+    const existingWinner = winners.find(w => w.name === winnerName);
+    if (existingWinner) {
+        console.log('Победитель уже есть в списке:', winnerName);
+        return;
+    }
+    
     const now = new Date();
     const winner = {
         name: winnerName,
@@ -117,10 +150,18 @@ function initWebSocket() {
     // Создаем WebSocket соединение с сервером
     socket = io();
     
+    // Флаг для отслеживания первого подключения
+    let isFirstConnection = true;
+    
     // Обработчик успешного подключения
     socket.on('connect', () => {
         console.log('WebSocket подключение установлено');
-        addChatMessage('system', 'Система', 'Подключение к серверу установлено');
+        
+        // Добавляем сообщение в чат только при первом подключении
+        if (isFirstConnection) {
+            addChatMessage('system', 'Система', 'Подключение к серверу установлено');
+            isFirstConnection = false;
+        }
         
         // Проверяем статус авторизации
         checkAuthStatus();
@@ -129,9 +170,12 @@ function initWebSocket() {
     // Обработчик ошибок подключения
     socket.on('connect_error', (error) => {
         console.error('Ошибка WebSocket подключения:', error);
-        addChatMessage('system', 'Система', 'Ошибка подключения к серверу: ' + error.message);
-        // Показываем кнопку авторизации при ошибке подключения
-        updateAuthButtons(false);
+        // Добавляем сообщение в чат только если это первая ошибка
+        if (isFirstConnection) {
+            addChatMessage('system', 'Система', 'Ошибка подключения к серверу: ' + error.message);
+            // Показываем кнопку авторизации при ошибке подключения
+            updateAuthButtons(false);
+        }
     });
     
     // Обработчик получения нового сообщения из Twitch чата
@@ -149,6 +193,7 @@ function initWebSocket() {
         // Если есть активный победитель и это его сообщение, останавливаем таймер и отображаем сообщение в модальном окне
         if (currentWinner && data.username === currentWinner) {
             stopWinnerTimer();
+            winnerResponded = true; // Устанавливаем флаг ответа
             showNotification(`Победитель ${currentWinner} ответил в чат!`, 'success');
             
             // Добавляем сообщение в чат модального окна
@@ -236,8 +281,8 @@ function initWebSocket() {
     // Обработчик выбора победителя
     socket.on('winnerSelected', (data) => {
         showWinner(data.winner);
-        // Добавляем победителя в список
-        addWinner(data.winner);
+        // Добавляем победителя в список только если он ответил
+        // Для этого мы будем добавлять победителя позже, когда он ответит
     });
     
     socket.on('disconnect', () => {
@@ -410,6 +455,11 @@ function handleReset() {
         addChatMessage('system', 'Система', 'Розыгрыш сброшен. Список участников очищен.');
         showNotification('Розыгрыш сброшен. Список участников очищен.', 'info');
         
+        // Если есть победитель, добавляем его в список
+        if (data.winner && data.winner.winner) {
+            addWinner(data.winner.winner);
+        }
+        
         // Активируем кнопку запуска
         startBtn.disabled = false;
         winnerBtn.style.display = 'none';
@@ -418,6 +468,7 @@ function handleReset() {
         winnerSection.style.display = 'none';
         currentWinner = null;
         stopWinnerTimer();
+        winnerResponded = false;
     })
     .catch(error => {
         console.error('Ошибка при сбросе розыгрыша:', error);
@@ -438,6 +489,7 @@ function handleReset() {
         winnerSection.style.display = 'none';
         currentWinner = null;
         stopWinnerTimer();
+        winnerResponded = false;
     })
     .finally(() => {
         // Восстанавливаем кнопку
@@ -486,8 +538,8 @@ function handleSelectWinner() {
             addChatMessage('winner', 'Система', `Победитель: @${data.winner}!`);
             showNotification(`Победитель: ${data.winner}`, 'success');
             
-            // Добавляем победителя в список
-            addWinner(data.winner);
+            // Не добавляем победителя сразу, ждем его ответа
+            // addWinner(data.winner);
             
             // Отправляем уведомление в чат через WebSocket
             if (socket && socket.connected) {
@@ -553,8 +605,8 @@ function handleReroll() {
             addChatMessage('winner', 'Система', `Новый победитель: @${data.winner}!`);
             showNotification(`Новый победитель: ${data.winner}`, 'success');
             
-            // Добавляем победителя в список
-            addWinner(data.winner);
+            // Не добавляем победителя сразу, ждем его ответа
+            // addWinner(data.winner);
             
             // Отправляем уведомление в чат через WebSocket
             if (socket && socket.connected) {
@@ -585,6 +637,14 @@ function handleCloseWinner() {
     currentWinner = null;
     stopWinnerTimer();
     
+    // Если победитель не ответил, не добавляем его в список
+    if (!winnerResponded && currentWinner) {
+        console.log('Победитель не ответил, не добавляем в список:', currentWinner);
+    } else if (currentWinner) {
+        // Добавляем победителя в список только если он ответил
+        addWinner(currentWinner);
+    }
+    
     // Удаляем оверлей
     const overlay = document.getElementById('modalOverlay');
     if (overlay) {
@@ -596,6 +656,7 @@ function handleCloseWinner() {
 function showWinner(winner) {
     currentWinner = winner;
     winnerName.textContent = winner;
+    winnerResponded = false; // Сброс флага ответа
     
     // Очищаем чат в модальном окне
     const winnerChat = document.getElementById('winnerChat');
@@ -830,6 +891,11 @@ document.addEventListener('DOMContentLoaded', () => {
         window.history.replaceState({}, document.title, "/");
         isAuthenticated = true;
         updateAuthButtons(true);
+        
+        // Загружаем победителей после авторизации
+        setTimeout(() => {
+            loadWinnersFromDatabase();
+        }, 1000);
     } else if (window.location.search.includes('logout=success')) {
         showNotification('Вы успешно вышли из системы', 'info');
         addChatMessage('system', 'Система', 'Вы вышли из системы');
@@ -849,7 +915,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resetBtn.disabled = true;
     winnerBtn.style.display = 'none';
     
-    // Загружаем победителей из базы данных
+    // Загружаем победителей из базы данных если пользователь авторизован
     if (isAuthenticated) {
         loadWinnersFromDatabase();
         
