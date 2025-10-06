@@ -13,7 +13,9 @@ const winnerName = document.getElementById('winnerName');
 const winnerTimer = document.getElementById('winnerTimer');
 const rerollBtn = document.getElementById('rerollBtn');
 const closeWinnerBtn = document.getElementById('closeWinnerBtn');
-const winnersList = document.getElementById('winnersList'); // Новый элемент
+const winnersList = document.getElementById('winnersList');
+const userStatus = document.getElementById('userStatus');
+const usernameDisplay = document.getElementById('usernameDisplay');
 
 // Глобальные переменные
 let participants = [];
@@ -24,8 +26,9 @@ let isAuthenticated = false;
 let currentWinner = null;
 let winnerTimerInterval = null;
 let winnerSeconds = 0;
-let winners = []; // Массив для хранения последних победителей
-let winnerResponded = false; // Флаг для отслеживания ответа победителя
+let winners = [];
+let winnerResponded = false;
+let currentUsername = '';
 
 // Обработчики событий
 authBtn.addEventListener('click', handleAuth);
@@ -35,115 +38,6 @@ resetBtn.addEventListener('click', handleReset);
 winnerBtn.addEventListener('click', handleSelectWinner);
 rerollBtn.addEventListener('click', handleReroll);
 closeWinnerBtn.addEventListener('click', handleCloseWinner);
-
-// Функция загрузки последних победителей из базы данных
-async function loadWinnersFromDatabase() {
-    try {
-        // Проверяем, авторизован ли пользователь
-        if (!isAuthenticated) {
-            console.log('Пользователь не авторизован, пропускаем загрузку победителей');
-            return;
-        }
-        
-        console.log('Загрузка победителей из базы данных...');
-        const response = await fetch('/api/winners');
-        if (response.ok) {
-            const data = await response.json();
-            console.log('Получены данные победителей:', data);
-            
-            // Очищаем массив победителей
-            winners = [];
-            
-            // Заполняем массив победителей данными из базы
-            data.forEach(winnerData => {
-                if (winnerData.winner) { // Проверяем, что есть победитель
-                    winners.push({
-                        name: winnerData.winner,
-                        time: new Date(winnerData.ended_at)
-                    });
-                }
-            });
-            
-            // Ограничиваем список последними 10 победителями
-            if (winners.length > 10) {
-                winners = winners.slice(0, 10);
-            }
-            
-            updateWinnersList();
-        } else {
-            console.error('Ошибка при загрузке победителей, статус:', response.status);
-        }
-    } catch (error) {
-        console.error('Ошибка при загрузке победителей из базы данных:', error);
-    }
-}
-
-// Функция добавления победителя в список
-function addWinner(winnerName) {
-    // Проверяем, есть ли уже такой победитель в списке
-    const existingWinner = winners.find(w => w.name === winnerName);
-    if (existingWinner) {
-        console.log('Победитель уже есть в списке:', winnerName);
-        return;
-    }
-    
-    const now = new Date();
-    const winner = {
-        name: winnerName,
-        time: now
-    };
-    
-    // Добавляем победителя в начало массива
-    winners.unshift(winner);
-    
-    // Ограничиваем список последними 10 победителями
-    if (winners.length > 10) {
-        winners = winners.slice(0, 10);
-    }
-    
-    // Обновляем отображение списка победителей
-    updateWinnersList();
-}
-
-// Функция обновления списка победителей
-function updateWinnersList() {
-    if (winners.length === 0) {
-        winnersList.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-trophy"></i>
-                <p>Победителей пока нет</p>
-            </div>
-        `;
-        return;
-    }
-    
-    let html = '';
-    winners.forEach(winner => {
-        // Форматируем дату как день/месяц/год
-        const day = winner.time.getDate().toString().padStart(2, '0');
-        const month = (winner.time.getMonth() + 1).toString().padStart(2, '0');
-        const year = winner.time.getFullYear();
-        const dateString = `${day}/${month}/${year}`;
-        
-        // Форматируем время как 24-часовой формат часы:минуты
-        const hours = winner.time.getHours().toString().padStart(2, '0');
-        const minutes = winner.time.getMinutes().toString().padStart(2, '0');
-        const timeString = `${hours}:${minutes}`;
-        
-        html += `
-            <div class="winner-item">
-                <div>
-                    <span class="winner-name"><i class="fas fa-trophy winner-trophy"></i> ${winner.name}</span>
-                </div>
-                <div>
-                    <span class="winner-time">${dateString} ${timeString}</span>
-                </div>
-            </div>
-        `;
-    });
-    
-    winnersList.innerHTML = html;
-}
 
 // Функция инициализации WebSocket соединения
 function initWebSocket() {
@@ -157,12 +51,6 @@ function initWebSocket() {
     socket.on('connect', () => {
         console.log('WebSocket подключение установлено');
         
-        // Добавляем сообщение в чат только при первом подключении
-        if (isFirstConnection) {
-            addChatMessage('system', 'Система', 'Подключение к серверу установлено');
-            isFirstConnection = false;
-        }
-        
         // Проверяем статус авторизации
         checkAuthStatus();
     });
@@ -170,19 +58,17 @@ function initWebSocket() {
     // Обработчик ошибок подключения
     socket.on('connect_error', (error) => {
         console.error('Ошибка WebSocket подключения:', error);
-        // Добавляем сообщение в чат только если это первая ошибка
-        if (isFirstConnection) {
-            addChatMessage('system', 'Система', 'Ошибка подключения к серверу: ' + error.message);
-            // Показываем кнопку авторизации при ошибке подключения
-            updateAuthButtons(false);
-        }
+        // Показываем кнопку авторизации при ошибке подключения
+        updateAuthButtons(false);
     });
     
     // Обработчик получения нового сообщения из Twitch чата
     socket.on('twitchMessage', (data) => {
         console.log('Получено сообщение из Twitch чата:', data);
-        // Добавляем сообщение в чат
-        addChatMessage('user', data.username, data.message);
+        // Добавляем сообщение в чат (кроме системных сообщений)
+        if (data.username !== 'Система') {
+            addChatMessage('user', data.username, data.message);
+        }
         
         // Если розыгрыш активен и сообщение содержит ключевое слово, добавляем участника
         if (giveawayActive && currentKeyword && 
@@ -193,7 +79,7 @@ function initWebSocket() {
         // Если есть активный победитель и это его сообщение, останавливаем таймер и отображаем сообщение в модальном окне
         if (currentWinner && data.username === currentWinner) {
             stopWinnerTimer();
-            winnerResponded = true; // Устанавливаем флаг ответа
+            winnerResponded = true;
             showNotification(`Победитель ${currentWinner} ответил в чат!`, 'success');
             
             // Добавляем сообщение в чат модального окна
@@ -218,25 +104,25 @@ function initWebSocket() {
     // Обработчик ошибок Twitch
     socket.on('twitchError', (data) => {
         console.log('Ошибка Twitch:', data);
-        addChatMessage('system', 'Система', 'Ошибка Twitch: ' + data.message);
+        // Не показываем системные сообщения
     });
     
     // Обработчик подключения к Twitch
     socket.on('twitchConnected', (data) => {
         console.log('Бот подключен к Twitch:', data);
-        addChatMessage('system', 'Система', data.message);
+        // Не показываем системные сообщения
     });
     
     // Обработчик присоединения к каналу
     socket.on('channelJoined', (data) => {
         console.log('Бот присоединился к каналу:', data);
-        addChatMessage('system', 'Система', data.message);
+        // Не показываем системные сообщения
     });
     
     // Обработчик выхода из канала
     socket.on('channelLeft', (data) => {
         console.log('Бот покинул канал:', data);
-        addChatMessage('system', 'Система', data.message);
+        // Не показываем системные сообщения
     });
     
     // Обработчик добавления участника
@@ -249,7 +135,7 @@ function initWebSocket() {
     socket.on('giveawayStarted', (data) => {
         currentKeyword = data.keyword;
         giveawayActive = true;
-        addChatMessage('system', 'Система', `Розыгрыш начат! Кодовое слово: "${data.keyword}"`);
+        // Не показываем системные сообщения
         showNotification(`Розыгрыш начат с кодовым словом "${data.keyword}"`, 'success');
         
         // Активируем кнопки управления
@@ -261,11 +147,11 @@ function initWebSocket() {
     // Обработчик завершения розыгрыша
     socket.on('giveawayEnded', (data) => {
         if (data.winner) {
-            addChatMessage('system', 'Система', `Розыгрыш завершен! Победитель: @${data.winner}`);
+            // Не показываем системные сообщения
             // Добавляем победителя в список
             addWinner(data.winner);
         } else {
-            addChatMessage('system', 'Система', 'Розыгрыш завершен! Участников не было.');
+            // Не показываем системные сообщения
         }
         
         // Деактивируем кнопки управления
@@ -281,8 +167,7 @@ function initWebSocket() {
     // Обработчик выбора победителя
     socket.on('winnerSelected', (data) => {
         showWinner(data.winner);
-        // Добавляем победителя в список только если он ответил
-        // Для этого мы будем добавлять победителя позже, когда он ответит
+        // Не добавляем победителя сразу, ждем его ответа
     });
     
     socket.on('disconnect', () => {
@@ -298,22 +183,29 @@ function checkAuthStatus() {
             // Пользователь не авторизован
             isAuthenticated = false;
             updateAuthButtons(false);
-            addChatMessage('system', 'Система', 'Для начала работы необходимо авторизоваться через Twitch');
         } else if (response.ok) {
             // Пользователь авторизован
-            isAuthenticated = true;
-            updateAuthButtons(true);
-            addChatMessage('system', 'Система', 'Вы успешно авторизованы через Twitch');
+            return response.json();
         } else {
             // Другая ошибка
             throw new Error('Ошибка проверки авторизации: ' + response.status);
+        }
+    })
+    .then(data => {
+        if (data) {
+            isAuthenticated = true;
+            currentUsername = data.user;
+            updateAuthButtons(true);
+            // Загружаем победителей после авторизации
+            setTimeout(() => {
+                loadWinnersFromDatabase();
+            }, 500);
         }
     })
     .catch(error => {
         console.error('Ошибка проверки статуса авторизации:', error);
         // В случае ошибки показываем кнопку авторизации
         updateAuthButtons(false);
-        addChatMessage('system', 'Система', 'Ошибка проверки авторизации. Пожалуйста, авторизуйтесь через Twitch');
     });
 }
 
@@ -321,10 +213,12 @@ function checkAuthStatus() {
 function updateAuthButtons(isLoggedIn) {
     if (isLoggedIn) {
         authBtn.style.display = 'none';
-        logoutBtn.style.display = 'block';
+        userStatus.style.display = 'flex';
+        usernameDisplay.textContent = currentUsername;
     } else {
         authBtn.style.display = 'block';
-        logoutBtn.style.display = 'none';
+        userStatus.style.display = 'none';
+        currentUsername = '';
     }
 }
 
@@ -393,7 +287,7 @@ function handleStart() {
         if (data.success) {
             currentKeyword = keyword;
             giveawayActive = true;
-            addChatMessage('system', 'Система', `Розыгрыш начат! Кодовое слово: "${keyword}"`);
+            // addChatMessage('system', 'Система', `Розыгрыш начат! Кодовое слово: "${keyword}"`);
             showNotification(`Розыгрыш начат с кодовым словом "${keyword}"`, 'success');
             
             // Активируем кнопку сброса и кнопку выбора победителя
@@ -452,7 +346,7 @@ function handleReset() {
         currentKeyword = '';
         keywordInput.value = '';
         
-        addChatMessage('system', 'Система', 'Розыгрыш сброшен. Список участников очищен.');
+        // addChatMessage('system', 'Система', 'Розыгрыш сброшен. Список участников очищен.');
         showNotification('Розыгрыш сброшен. Список участников очищен.', 'info');
         
         // Если есть победитель, добавляем его в список
@@ -535,7 +429,7 @@ function handleSelectWinner() {
     .then(data => {
         if (data.winner) {
             showWinner(data.winner);
-            addChatMessage('winner', 'Система', `Победитель: @${data.winner}!`);
+            // addChatMessage('winner', 'Система', `Победитель: @${data.winner}!`);
             showNotification(`Победитель: ${data.winner}`, 'success');
             
             // Не добавляем победителя сразу, ждем его ответа
@@ -602,7 +496,7 @@ function handleReroll() {
     .then(data => {
         if (data.winner) {
             showWinner(data.winner);
-            addChatMessage('winner', 'Система', `Новый победитель: @${data.winner}!`);
+            // addChatMessage('winner', 'Система', `Новый победитель: @${data.winner}!`);
             showNotification(`Новый победитель: ${data.winner}`, 'success');
             
             // Не добавляем победителя сразу, ждем его ответа
@@ -634,16 +528,20 @@ function handleReroll() {
 // Функция закрытия секции победителя
 function handleCloseWinner() {
     winnerSection.style.display = 'none';
-    currentWinner = null;
     stopWinnerTimer();
     
     // Если победитель не ответил, не добавляем его в список
     if (!winnerResponded && currentWinner) {
         console.log('Победитель не ответил, не добавляем в список:', currentWinner);
+        showNotification(`Победитель ${currentWinner} не ответил в чат`, 'info');
     } else if (currentWinner) {
         // Добавляем победителя в список только если он ответил
         addWinner(currentWinner);
+        showNotification(`Победитель ${currentWinner} добавлен в список`, 'success');
     }
+    
+    // Очищаем текущего победителя
+    currentWinner = null;
     
     // Удаляем оверлей
     const overlay = document.getElementById('modalOverlay');
@@ -728,6 +626,8 @@ function updateWinnerTimer() {
 function addParticipant(username) {
     // Проверяем, есть ли уже такой участник
     if (participants.includes(username)) {
+        // Добавляем сообщение в чат о том, что участник уже в списке
+        addChatMessage('already-participant', username, `Написал кодовое слово: "${currentKeyword}" (уже в списке)`);
         return;
     }
     
@@ -786,6 +686,11 @@ function updateParticipantsList() {
 
 // Функция добавления сообщения в чат с поддержкой эмодзи
 function addChatMessage(type, user, text) {
+    // Не показываем системные сообщения
+    if (type === 'system') {
+        return;
+    }
+    
     const messageDiv = document.createElement('div');
     messageDiv.className = `chat-message ${type}`;
     
@@ -880,6 +785,119 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
+// Функция загрузки последних победителей из базы данных
+async function loadWinnersFromDatabase() {
+    try {
+        // Проверяем, авторизован ли пользователь
+        if (!isAuthenticated) {
+            console.log('Пользователь не авторизован, пропускаем загрузку победителей');
+            return;
+        }
+        
+        console.log('Загрузка победителей из базы данных...');
+        const response = await fetch('/api/winners');
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Получены данные победителей:', data);
+            
+            // Очищаем массив победителей
+            winners = [];
+            
+            // Заполняем массив победителей данными из базы
+            if (Array.isArray(data)) {
+                data.forEach(winnerData => {
+                    if (winnerData.winner) { // Проверяем, что есть победитель
+                        winners.push({
+                            name: winnerData.winner,
+                            time: new Date(winnerData.ended_at)
+                        });
+                    }
+                });
+                
+                // Ограничиваем список последними 10 победителями
+                if (winners.length > 10) {
+                    winners = winners.slice(0, 10);
+                }
+                
+                updateWinnersList();
+            }
+        } else {
+            console.error('Ошибка при загрузке победителей, статус:', response.status);
+            const errorText = await response.text();
+            console.error('Текст ошибки:', errorText);
+        }
+    } catch (error) {
+        console.error('Ошибка при загрузке победителей из базы данных:', error);
+    }
+}
+
+// Функция добавления победителя в список
+function addWinner(winnerName) {
+    // Проверяем, есть ли уже такой победитель в списке
+    const existingWinner = winners.find(w => w.name === winnerName);
+    if (existingWinner) {
+        console.log('Победитель уже есть в списке:', winnerName);
+        return;
+    }
+    
+    const now = new Date();
+    const winner = {
+        name: winnerName,
+        time: now
+    };
+    
+    // Добавляем победителя в начало массива
+    winners.unshift(winner);
+    
+    // Ограничиваем список последними 10 победителями
+    if (winners.length > 10) {
+        winners = winners.slice(0, 10);
+    }
+    
+    // Обновляем отображение списка победителей
+    updateWinnersList();
+}
+
+// Функция обновления списка победителей
+function updateWinnersList() {
+    if (winners.length === 0) {
+        winnersList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-trophy"></i>
+                <p>Победителей пока нет</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    winners.forEach(winner => {
+        // Форматируем дату как день/месяц/год
+        const day = winner.time.getDate().toString().padStart(2, '0');
+        const month = (winner.time.getMonth() + 1).toString().padStart(2, '0');
+        const year = winner.time.getFullYear();
+        const dateString = `${day}/${month}/${year}`;
+        
+        // Форматируем время как 24-часовой формат часы:минуты
+        const hours = winner.time.getHours().toString().padStart(2, '0');
+        const minutes = winner.time.getMinutes().toString().padStart(2, '0');
+        const timeString = `${hours}:${minutes}`;
+        
+        html += `
+            <div class="winner-item">
+                <div>
+                    <span class="winner-name"><i class="fas fa-trophy winner-trophy"></i> ${winner.name}</span>
+                </div>
+                <div>
+                    <span class="winner-time">${dateString} ${timeString}</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    winnersList.innerHTML = html;
+}
+
 // Инициализация
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Веб-интерфейс загружен');
@@ -887,7 +905,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Проверяем, успешно ли прошла авторизация
     if (window.location.search.includes('auth=success')) {
         showNotification('Авторизация через Twitch прошла успешно!', 'success');
-        addChatMessage('system', 'Система', 'Подключение к чату Twitch установлено');
+        // addChatMessage('system', 'Система', 'Подключение к чату Twitch установлено');
         window.history.replaceState({}, document.title, "/");
         isAuthenticated = true;
         updateAuthButtons(true);
@@ -898,13 +916,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     } else if (window.location.search.includes('logout=success')) {
         showNotification('Вы успешно вышли из системы', 'info');
-        addChatMessage('system', 'Система', 'Вы вышли из системы');
+        // addChatMessage('system', 'Система', 'Вы вышли из системы');
         window.history.replaceState({}, document.title, "/");
         isAuthenticated = false;
         updateAuthButtons(false);
     } else {
-        // Показываем кнопку авторизации по умолчанию
-        updateAuthButtons(false);
+        // Проверяем статус авторизации
+        checkAuthStatus();
     }
     
     // Инициализируем WebSocket соединение
@@ -917,7 +935,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Загружаем победителей из базы данных если пользователь авторизован
     if (isAuthenticated) {
-        loadWinnersFromDatabase();
+        setTimeout(() => {
+            loadWinnersFromDatabase();
+        }, 1000);
         
         // Периодически обновляем список победителей каждые 30 секунд
         setInterval(() => {
@@ -946,5 +966,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Добавляем приветственное сообщение в чат
-    addChatMessage('system', 'Система', 'Добро пожаловать в Twitch Giveaway Bot!');
+    // addChatMessage('system', 'Система', 'Добро пожаловать в Twitch Giveaway Bot!');
 });

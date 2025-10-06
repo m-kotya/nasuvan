@@ -9,6 +9,16 @@ console.log('Supabase environment variables check:');
 console.log('SUPABASE_URL:', supabaseUrl ? 'SET' : 'NOT SET');
 console.log('SUPABASE_KEY:', supabaseKey ? 'SET' : 'NOT SET');
 
+// Проверка Railway переменных
+const isRailway = process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_ENVIRONMENT_NAME;
+console.log('Running on Railway:', isRailway ? 'YES' : 'NO');
+
+if (isRailway) {
+  console.log('Railway Environment:');
+  console.log('  RAILWAY_PROJECT_ID:', process.env.RAILWAY_PROJECT_ID);
+  console.log('  RAILWAY_ENVIRONMENT_NAME:', process.env.RAILWAY_ENVIRONMENT_NAME);
+}
+
 // Фиктивный клиент для тестирования
 const mockSupabase = {
   from: (table) => ({
@@ -33,12 +43,6 @@ const mockSupabase = {
 
 function initDatabase() {
   console.log('Инициализация базы данных...');
-  console.log('SUPABASE_URL from env:', supabaseUrl);
-  console.log('SUPABASE_KEY from env:', supabaseKey ? 'SET' : 'NOT SET');
-  
-  // Проверяем, работаем ли мы на Railway
-  const isRailway = process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_ENVIRONMENT_NAME;
-  console.log('Running on Railway:', isRailway ? 'YES' : 'NO');
   
   // Если мы на Railway, то переменные должны быть установлены
   if (isRailway) {
@@ -53,6 +57,7 @@ function initDatabase() {
     
     try {
       console.log('Попытка подключения к Supabase с реальными данными...');
+      console.log('SUPABASE_URL:', supabaseUrl);
       supabase = createClient(supabaseUrl, supabaseKey);
       console.log('Подключение к Supabase установлено');
       return supabase;

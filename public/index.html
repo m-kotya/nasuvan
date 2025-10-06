@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nasuvan Giveaway Bot</title>
+    <title>Twitch Giveaway Bot</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -11,13 +11,19 @@
     <div class="container">
         <header>
             <div class="header-content">
-                <h1><i class="fab fa-twitch"></i> Nasuvan Giveaway Bot</h1>
+                <h1><i class="fab fa-twitch"></i> Twitch Giveaway Bot</h1>
                 <div class="auth-section">
-                    <button id="authBtn" class="btn btn-primary">
+                    <div id="userStatus" class="user-status" style="display: none;">
+                        <div class="user-info">
+                            <div class="online-indicator"></div>
+                            <span id="usernameDisplay" class="username"></span>
+                        </div>
+                        <button id="logoutBtn" class="btn btn-secondary">
+                            <i class="fas fa-sign-out-alt"></i> Выйти
+                        </button>
+                    </div>
+                    <button id="authBtn" class="btn btn-primary" style="display: block;">
                         <i class="fas fa-sign-in-alt"></i> Авторизация через Twitch
-                    </button>
-                    <button id="logoutBtn" class="btn btn-secondary" style="display: none;">
-                        <i class="fas fa-sign-out-alt"></i> Выйти
                     </button>
                 </div>
             </div>
@@ -90,6 +96,7 @@
                                 <div id="chatContainer" class="chat-container">
                                     <div id="chatMessages" class="chat-messages">
                                         <div class="chat-message system">
+                                            <span class="message-user">Система:</span>
                                             <span class="message-text">Подключитесь к чату Twitch для начала розыгрыша</span>
                                             <span class="message-time">--:--</span>
                                         </div>
@@ -103,7 +110,7 @@
         </main>
 
         <footer>
-            <p>&copy; 2025 Nasuvan Giveaway Bot. Все права защищены.</p>
+            <p>&copy; 2025 Twitch Giveaway Bot. Все права защищены.</p>
         </footer>
     </div>
 

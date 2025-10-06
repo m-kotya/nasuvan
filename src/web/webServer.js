@@ -1,6 +1,6 @@
 const path = require('path');
 const crypto = require('crypto');
-const { getGiveaways, createGiveaway, selectWinner } = require('../database/supabaseClient');
+const { getGiveaways, createGiveaway, selectWinner, supabase } = require('../database/supabaseClient');
 const { joinChannel, leaveChannel } = require('../bot/twitchBot');
 
 // Хранение активных розыгрышей в памяти (в реальном приложении лучше использовать БД)
@@ -47,6 +47,19 @@ async function refreshAccessToken(refreshToken) {
 }
 
 function initWebServer(app, io) {
+  // Проверка Railway переменных
+  const isRailway = process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_ENVIRONMENT_NAME;
+  console.log('Running on Railway:', isRailway ? 'YES' : 'NO');
+  
+  if (isRailway) {
+    console.log('Railway Environment Variables:');
+    console.log('  RAILWAY_PROJECT_ID:', process.env.RAILWAY_PROJECT_ID ? 'SET' : 'NOT SET');
+    console.log('  SUPABASE_URL:', process.env.SUPABASE_URL ? 'SET' : 'NOT SET');
+    console.log('  SUPABASE_KEY:', process.env.SUPABASE_KEY ? 'SET' : 'NOT SET');
+    console.log('  TWITCH_CLIENT_ID:', process.env.TWITCH_CLIENT_ID ? 'SET' : 'NOT SET');
+    console.log('  TWITCH_CLIENT_SECRET:', process.env.TWITCH_CLIENT_SECRET ? 'SET' : 'NOT SET');
+  }
+
   // Маршрут для главной страницы
   app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../../public/index.html'));
@@ -536,6 +549,12 @@ function initWebServer(app, io) {
       // Получаем имя канала авторизованного пользователя
       const channelName = req.user.username;
       console.log('Запрос победителей для канала:', channelName);
+      
+      // Проверяем, инициализирован ли клиент Supabase
+      if (!supabase) {
+        console.error('Supabase client not initialized');
+        return res.status(500).json({ error: 'Database not available' });
+      }
       
       // Получаем последние 10 завершенных розыгрышей с победителями
       const { data, error } = await supabase
