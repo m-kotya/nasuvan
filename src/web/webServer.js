@@ -96,9 +96,25 @@ function initWebServer(app, io) {
       `);
     }
     
-    const scope = 'user:read:email';
+    // Необходимые scope для полноценной работы бота:
+    // - channel:read:redemptions - для чтения сообщений в чате
+    // - channel:manage:redemptions - для управления розыгрышами
+    // - chat:read - для чтения сообщений в чате
+    // - chat:edit - для отправки сообщений в чат
+    // - whispers:read - для чтения личных сообщений
+    // - whispers:edit - для отправки личных сообщений
+    const scopes = [
+      'channel:read:redemptions',
+      'channel:manage:redemptions',
+      'chat:read',
+      'chat:edit',
+      'whispers:read',
+      'whispers:edit'
+    ];
+    
+    const scope = scopes.join(' ');
     const state = crypto.randomBytes(32).toString('hex'); // Защита от CSRF
-    const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&state=${state}`;
+    const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${state}`;
     
     console.log('Redirecting user to Twitch Auth URL:', authUrl);
     res.redirect(authUrl);
