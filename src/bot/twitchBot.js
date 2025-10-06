@@ -116,9 +116,9 @@ function initBot(socketIo) {
     // Отправляем сообщение через WebSocket о тестовом режиме
     if (io) {
       io.emit('twitchConnected', {
-        message: 'Бот работает в тестовом режиме (учетные данные не настроены)',
-        timestamp: new Date().toISOString()
-      });
+          message: 'Бот работает в тестовом режиме (учетные данные не настроены)',
+          timestamp: new Date().toISOString()
+        });
     }
   }
 
@@ -163,7 +163,8 @@ function initBot(socketIo) {
             io.emit('participantAdded', {
               giveawayId: giveaway.id,
               username: username,
-              count: giveaway.participants ? giveaway.participants.length + 1 : 1
+              count: giveaway.participants ? giveaway.participants.length + 1 : 1,
+              channel: channelName // Добавляем имя канала
             });
           }
           
@@ -171,7 +172,10 @@ function initBot(socketIo) {
           if (!giveaway.participants) {
             giveaway.participants = [];
           }
-          giveaway.participants.push(username);
+          // Проверяем, чтобы не добавлять дубликаты
+          if (!giveaway.participants.includes(username)) {
+            giveaway.participants.push(username);
+          }
         }
         return;
       }

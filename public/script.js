@@ -358,12 +358,15 @@ function handleSelectWinner() {
     winnerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Выбор...';
     winnerBtn.disabled = true;
     
-    // Отправляем запрос на сервер для выбора победителя
+    // Отправляем запрос на сервер для выбора победителя, включая список участников
     fetch('/api/select-winner', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+            participants: participants
+        })
     })
     .then(response => {
         if (!response.ok) {
@@ -410,12 +413,15 @@ function handleReroll() {
     rerollBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Реролл...';
     rerollBtn.disabled = true;
     
-    // Отправляем запрос на сервер для повторного выбора победителя
+    // Отправляем запрос на сервер для повторного выбора победителя, включая список участников
     fetch('/api/select-winner', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+            participants: participants
+        })
     })
     .then(response => {
         if (!response.ok) {
@@ -502,6 +508,15 @@ function addParticipant(username) {
     
     // Добавляем сообщение в чат
     addChatMessage('participant', username, `Написал кодовое слово: "${currentKeyword}"`);
+    
+    // Отправляем уведомление на сервер о новом участнике
+    if (socket && socket.connected) {
+        socket.emit('addParticipant', {
+            username: username,
+            channel: 'default', // В реальной реализации нужно получить имя канала авторизованного пользователя
+            timestamp: new Date().toISOString()
+        });
+    }
     
     // Показываем уведомление
     showNotification(`Участник ${username} добавлен`, 'success');

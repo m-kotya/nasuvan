@@ -471,9 +471,15 @@ function initWebServer(app, io) {
         return res.status(400).json({ error: 'Нет активного розыгрыша' });
       }
       
-      // Проверяем, есть ли участники
-      if (!activeGiveaway.participants || activeGiveaway.participants.length === 0) {
+      // Проверяем, есть ли участники (проверяем как в локальном массиве, так и в базе данных)
+      if ((!activeGiveaway.participants || activeGiveaway.participants.length === 0) && 
+          (!req.body.participants || req.body.participants.length === 0)) {
         return res.status(400).json({ error: 'Нет участников для выбора победителя' });
+      }
+      
+      // Если участники переданы в запросе, обновляем локальный список
+      if (req.body.participants && Array.isArray(req.body.participants)) {
+        activeGiveaway.participants = req.body.participants;
       }
       
       // Выбираем случайного победителя из участников
@@ -553,6 +559,32 @@ function initWebServer(app, io) {
       username: 'Система',
       message: 'WebSocket соединение установлено',
       timestamp: new Date().toISOString()
+    });
+    
+    // Обработчик добавления участника от фронтенда
+    socket.on('addParticipant', (data) => {
+      console.log('Получен запрос на добавление участника:', data);
+      
+      // Находим активный розыгрыш для канала
+      let activeGiveaway = null;
+      for (const [key, giveaway] of activeGiveaways.entries()) {
+        if (giveaway.channel === data.channel) {
+          activeGiveaway = giveaway;
+          break;
+        }
+      }
+      
+      if (activeGiveaway) {
+        // Добавляем участника в локальный список, если его там еще нет
+        if (!activeGiveaway.participants) {
+          activeGiveaway.participants = [];
+        }
+        
+        if (!activeGiveaway.participants.includes(data.username)) {
+          activeGiveaway.participants.push(data.username);
+          console.log(`Участник ${data.username} добавлен в розыгрыш ${activeGiveaway.id}`);
+        }
+      }
     });
     
     socket.on('disconnect', () => {
