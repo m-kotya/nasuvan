@@ -100,6 +100,9 @@ function checkAuthStatus() {
     })
     .catch(error => {
         console.error('Ошибка проверки статуса авторизации:', error);
+        // В случае ошибки показываем кнопку авторизации
+        authBtn.style.display = 'block';
+        addChatMessage('system', 'Система', 'Ошибка проверки авторизации. Пожалуйста, авторизуйтесь через Twitch');
     });
 }
 
@@ -326,4 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Деактивируем кнопки управления по умолчанию
     startBtn.disabled = false;
     resetBtn.disabled = true;
+    
+    // Показываем кнопку авторизации по умолчанию
+    authBtn.style.display = 'block';
 });
