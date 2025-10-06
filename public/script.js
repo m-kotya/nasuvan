@@ -196,10 +196,6 @@ function checkAuthStatus() {
             isAuthenticated = true;
             currentUsername = data.user;
             updateAuthButtons(true);
-            // Загружаем победителей после авторизации
-            setTimeout(() => {
-                loadWinnersFromDatabase();
-            }, 500);
         }
     })
     .catch(error => {
@@ -287,7 +283,6 @@ function handleStart() {
         if (data.success) {
             currentKeyword = keyword;
             giveawayActive = true;
-            // addChatMessage('system', 'Система', `Розыгрыш начат! Кодовое слово: "${keyword}"`);
             showNotification(`Розыгрыш начат с кодовым словом "${keyword}"`, 'success');
             
             // Активируем кнопку сброса и кнопку выбора победителя
@@ -346,7 +341,6 @@ function handleReset() {
         currentKeyword = '';
         keywordInput.value = '';
         
-        // addChatMessage('system', 'Система', 'Розыгрыш сброшен. Список участников очищен.');
         showNotification('Розыгрыш сброшен. Список участников очищен.', 'info');
         
         // Если есть победитель, добавляем его в список
@@ -429,7 +423,6 @@ function handleSelectWinner() {
     .then(data => {
         if (data.winner) {
             showWinner(data.winner);
-            // addChatMessage('winner', 'Система', `Победитель: @${data.winner}!`);
             showNotification(`Победитель: ${data.winner}`, 'success');
             
             // Не добавляем победителя сразу, ждем его ответа
@@ -496,7 +489,6 @@ function handleReroll() {
     .then(data => {
         if (data.winner) {
             showWinner(data.winner);
-            // addChatMessage('winner', 'Система', `Новый победитель: @${data.winner}!`);
             showNotification(`Новый победитель: ${data.winner}`, 'success');
             
             // Не добавляем победителя сразу, ждем его ответа
@@ -528,6 +520,7 @@ function handleReroll() {
 // Функция закрытия секции победителя
 function handleCloseWinner() {
     winnerSection.style.display = 'none';
+    currentWinner = null;
     stopWinnerTimer();
     
     // Если победитель не ответил, не добавляем его в список
@@ -539,9 +532,6 @@ function handleCloseWinner() {
         addWinner(currentWinner);
         showNotification(`Победитель ${currentWinner} добавлен в список`, 'success');
     }
-    
-    // Очищаем текущего победителя
-    currentWinner = null;
     
     // Удаляем оверлей
     const overlay = document.getElementById('modalOverlay');
@@ -785,52 +775,6 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Функция загрузки последних победителей из базы данных
-async function loadWinnersFromDatabase() {
-    try {
-        // Проверяем, авторизован ли пользователь
-        if (!isAuthenticated) {
-            console.log('Пользователь не авторизован, пропускаем загрузку победителей');
-            return;
-        }
-        
-        console.log('Загрузка победителей из базы данных...');
-        const response = await fetch('/api/winners');
-        if (response.ok) {
-            const data = await response.json();
-            console.log('Получены данные победителей:', data);
-            
-            // Очищаем массив победителей
-            winners = [];
-            
-            // Заполняем массив победителей данными из базы
-            if (Array.isArray(data)) {
-                data.forEach(winnerData => {
-                    if (winnerData.winner) { // Проверяем, что есть победитель
-                        winners.push({
-                            name: winnerData.winner,
-                            time: new Date(winnerData.ended_at)
-                        });
-                    }
-                });
-                
-                // Ограничиваем список последними 10 победителями
-                if (winners.length > 10) {
-                    winners = winners.slice(0, 10);
-                }
-                
-                updateWinnersList();
-            }
-        } else {
-            console.error('Ошибка при загрузке победителей, статус:', response.status);
-            const errorText = await response.text();
-            console.error('Текст ошибки:', errorText);
-        }
-    } catch (error) {
-        console.error('Ошибка при загрузке победителей из базы данных:', error);
-    }
-}
-
 // Функция добавления победителя в список
 function addWinner(winnerName) {
     // Проверяем, есть ли уже такой победитель в списке
@@ -853,49 +797,6 @@ function addWinner(winnerName) {
     if (winners.length > 10) {
         winners = winners.slice(0, 10);
     }
-    
-    // Обновляем отображение списка победителей
-    updateWinnersList();
-}
-
-// Функция обновления списка победителей
-function updateWinnersList() {
-    if (winners.length === 0) {
-        winnersList.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-trophy"></i>
-                <p>Победителей пока нет</p>
-            </div>
-        `;
-        return;
-    }
-    
-    let html = '';
-    winners.forEach(winner => {
-        // Форматируем дату как день/месяц/год
-        const day = winner.time.getDate().toString().padStart(2, '0');
-        const month = (winner.time.getMonth() + 1).toString().padStart(2, '0');
-        const year = winner.time.getFullYear();
-        const dateString = `${day}/${month}/${year}`;
-        
-        // Форматируем время как 24-часовой формат часы:минуты
-        const hours = winner.time.getHours().toString().padStart(2, '0');
-        const minutes = winner.time.getMinutes().toString().padStart(2, '0');
-        const timeString = `${hours}:${minutes}`;
-        
-        html += `
-            <div class="winner-item">
-                <div>
-                    <span class="winner-name"><i class="fas fa-trophy winner-trophy"></i> ${winner.name}</span>
-                </div>
-                <div>
-                    <span class="winner-time">${dateString} ${timeString}</span>
-                </div>
-            </div>
-        `;
-    });
-    
-    winnersList.innerHTML = html;
 }
 
 // Инициализация
@@ -905,18 +806,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Проверяем, успешно ли прошла авторизация
     if (window.location.search.includes('auth=success')) {
         showNotification('Авторизация через Twitch прошла успешно!', 'success');
-        // addChatMessage('system', 'Система', 'Подключение к чату Twitch установлено');
         window.history.replaceState({}, document.title, "/");
         isAuthenticated = true;
         updateAuthButtons(true);
-        
-        // Загружаем победителей после авторизации
-        setTimeout(() => {
-            loadWinnersFromDatabase();
-        }, 1000);
     } else if (window.location.search.includes('logout=success')) {
         showNotification('Вы успешно вышли из системы', 'info');
-        // addChatMessage('system', 'Система', 'Вы вышли из системы');
         window.history.replaceState({}, document.title, "/");
         isAuthenticated = false;
         updateAuthButtons(false);
@@ -932,20 +826,6 @@ document.addEventListener('DOMContentLoaded', () => {
     startBtn.disabled = false;
     resetBtn.disabled = true;
     winnerBtn.style.display = 'none';
-    
-    // Загружаем победителей из базы данных если пользователь авторизован
-    if (isAuthenticated) {
-        setTimeout(() => {
-            loadWinnersFromDatabase();
-        }, 1000);
-        
-        // Периодически обновляем список победителей каждые 30 секунд
-        setInterval(() => {
-            if (isAuthenticated) {
-                loadWinnersFromDatabase();
-            }
-        }, 30000);
-    }
     
     // Добавляем обработчик для закрытия модального окна при клике вне его области
     document.addEventListener('click', function(event) {
@@ -964,7 +844,4 @@ document.addEventListener('DOMContentLoaded', () => {
             winnerSection.style.transform = 'translate(-50%, -50%)';
         }
     });
-    
-    // Добавляем приветственное сообщение в чат
-    // addChatMessage('system', 'Система', 'Добро пожаловать в Twitch Giveaway Bot!');
 });

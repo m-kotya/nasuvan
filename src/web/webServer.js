@@ -65,6 +65,11 @@ function initWebServer(app, io) {
     res.sendFile(path.join(__dirname, '../../public/index.html'));
   });
 
+  // Маршрут для страницы победителей
+  app.get('/winners', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/winners.html'));
+  });
+
   // Маршрут для начала авторизации через Twitch
   app.get('/auth/twitch', (req, res) => {
     const clientId = process.env.TWITCH_CLIENT_ID;

@@ -32,7 +32,7 @@
         <main>
             <div class="dashboard">
                 <div class="main-layout">
-                    <!-- Левая колонка - участники и управление -->
+                    <!-- Левая колонка - управление и участники -->
                     <div class="left-column">
                         <div class="card">
                             <div class="card-header">
@@ -70,17 +70,16 @@
                             </div>
                         </div>
                         
-                        <!-- Последние победители -->
                         <div class="card">
                             <div class="card-header">
-                                <h2><i class="fas fa-trophy"></i> Последние победители</h2>
+                                <h2><i class="fas fa-history"></i> История розыгрышей</h2>
                             </div>
                             <div class="card-body">
-                                <div id="winnersList" class="winners-list">
-                                    <div class="empty-state">
-                                        <i class="fas fa-trophy"></i>
-                                        <p>Победителей пока нет</p>
-                                    </div>
+                                <div class="history-content">
+                                    <p>Просмотреть историю победителей можно на отдельной странице:</p>
+                                    <a href="/winners" class="btn btn-primary" target="_blank">
+                                        <i class="fas fa-trophy"></i> Посмотреть победителей
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -95,11 +94,7 @@
                             <div class="card-body">
                                 <div id="chatContainer" class="chat-container">
                                     <div id="chatMessages" class="chat-messages">
-                                        <div class="chat-message system">
-                                            <span class="message-user">Система:</span>
-                                            <span class="message-text">Подключитесь к чату Twitch для начала розыгрыша</span>
-                                            <span class="message-time">--:--</span>
-                                        </div>
+                                        <!-- Сообщения будут добавляться здесь -->
                                     </div>
                                 </div>
                             </div>
