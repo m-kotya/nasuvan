@@ -392,47 +392,6 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Функция для тестирования отправки сообщений (только в тестовом режиме)
-function sendTestMessage() {
-    if (!isAuthenticated) {
-        showNotification('Пожалуйста, сначала авторизуйтесь через Twitch', 'error');
-        return;
-    }
-    
-    const testUsername = 'test_user';
-    const testMessage = keywordInput.value.trim() || 'тестовое сообщение';
-    
-    fetch('/api/test/chat-message', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            username: testUsername,
-            message: testMessage
-        })
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.error || 'Ошибка при отправке тестового сообщения');
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            showNotification('Тестовое сообщение отправлено', 'success');
-        } else {
-            throw new Error(data.error || 'Ошибка при отправке тестового сообщения');
-        }
-    })
-    .catch(error => {
-        console.error('Ошибка при отправке тестового сообщения:', error);
-        showNotification('Ошибка при отправке тестового сообщения: ' + error.message, 'error');
-    });
-}
-
 // Инициализация
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Веб-интерфейс загружен');
@@ -464,12 +423,4 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Добавляем приветственное сообщение в чат
     addChatMessage('system', 'Система', 'Добро пожаловать в Twitch Giveaway Bot!');
-    
-    // Для тестирования в браузере можно добавить кнопку отправки тестовых сообщений
-    // Это будет работать только в тестовом режиме
-    if (!process.env.TWITCH_BOT_USERNAME || !process.env.TWITCH_OAUTH_TOKEN || 
-        process.env.TWITCH_BOT_USERNAME === 'your_bot_username' || 
-        process.env.TWITCH_OAUTH_TOKEN === 'oauth:your_token_here') {
-        console.log('Тестовый режим активирован. Можно использовать sendTestMessage() в консоли браузера');
-    }
 });

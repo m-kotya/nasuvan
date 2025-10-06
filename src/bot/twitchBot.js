@@ -86,26 +86,37 @@ function initBot(socketIo) {
   });
 
   // Подключение к Twitch (только если есть учетные данные)
-  if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
-      process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
-      process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
-    client.connect().catch(error => {
-      console.error('Ошибка подключения к Twitch:', error.message);
-      // Отправляем сообщение через WebSocket об ошибке подключения
+  if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN) {
+    // Проверяем, что учетные данные не являются плейсхолдерами
+    if (process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
+        process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
+      client.connect().catch(error => {
+        console.error('Ошибка подключения к Twitch:', error.message);
+        // Отправляем сообщение через WebSocket об ошибке подключения
+        if (io) {
+          io.emit('twitchError', {
+            message: 'Ошибка подключения к Twitch: ' + error.message,
+            timestamp: new Date().toISOString()
+          });
+        }
+        // Не прерываем работу приложения при ошибке подключения
+      });
+    } else {
+      console.log('Учетные данные бота содержат плейсхолдеры. Бот будет работать в ограниченном режиме.');
+      // Отправляем сообщение через WebSocket о тестовом режиме
       if (io) {
-        io.emit('twitchError', {
-          message: 'Ошибка подключения к Twitch: ' + error.message,
+        io.emit('twitchConnected', {
+          message: 'Бот работает в тестовом режиме (учетные данные содержат плейсхолдеры)',
           timestamp: new Date().toISOString()
         });
       }
-      // Не прерываем работу приложения при ошибке подключения
-    });
+    }
   } else {
     console.log('Учетные данные бота не настроены. Бот будет работать в ограниченном режиме.');
     // Отправляем сообщение через WebSocket о тестовом режиме
     if (io) {
       io.emit('twitchConnected', {
-        message: 'Бот работает в тестовом режиме (без реального подключения к Twitch)',
+        message: 'Бот работает в тестовом режиме (учетные данные не настроены)',
         timestamp: new Date().toISOString()
       });
     }
@@ -136,7 +147,7 @@ function initBot(socketIo) {
         // Добавляем участника в розыгрыш
         const participant = await addParticipant(giveaway.id, username);
         if (participant) {
-          // Отправляем уведомление в чат (только если есть учетные данные бота)
+          // Отправляем уведомление в чат (только если есть учетные данные бота и они не плейсхолдеры)
           try {
             if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
                 process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
@@ -187,7 +198,7 @@ function initBot(socketIo) {
               channel: channelName
             });
             
-            // Отправляем уведомление в чат (только если есть учетные данные бота)
+            // Отправляем уведомление в чат (только если есть учетные данные бота и они не плейсхолдеры)
             try {
               if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
                   process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
@@ -295,11 +306,11 @@ function initBot(socketIo) {
 
 // Функция для добавления бота в канал
 async function joinChannel(channelName) {
-  // Проверяем, есть ли учетные данные бота
+  // Проверяем, есть ли учетные данные бота и что они не являются плейсхолдерами
   if (!process.env.TWITCH_BOT_USERNAME || !process.env.TWITCH_OAUTH_TOKEN || 
       process.env.TWITCH_BOT_USERNAME === 'your_bot_username' || 
       process.env.TWITCH_OAUTH_TOKEN === 'oauth:your_token_here') {
-    console.log('Учетные данные бота не настроены. Добавление в канал невозможно.');
+    console.log('Учетные данные бота не настроены или содержат плейсхолдеры. Добавление в канал невозможно.');
     // Все равно отправляем сообщение через WebSocket для тестирования
     if (io) {
       io.emit('channelJoined', {
@@ -336,11 +347,11 @@ async function joinChannel(channelName) {
 
 // Функция для удаления бота из канала
 async function leaveChannel(channelName) {
-  // Проверяем, есть ли учетные данные бота
+  // Проверяем, есть ли учетные данные бота и что они не являются плейсхолдерами
   if (!process.env.TWITCH_BOT_USERNAME || !process.env.TWITCH_OAUTH_TOKEN || 
       process.env.TWITCH_BOT_USERNAME === 'your_bot_username' || 
       process.env.TWITCH_OAUTH_TOKEN === 'oauth:your_token_here') {
-    console.log('Учетные данные бота не настроены. Удаление из канала невозможно.');
+    console.log('Учетные данные бота не настроены или содержат плейсхолдеры. Удаление из канала невозможно.');
     connectedChannels.delete(channelName);
     
     // Отправляем сообщение через WebSocket
@@ -382,43 +393,8 @@ async function leaveChannel(channelName) {
   }
 }
 
-// Функция для симуляции получения сообщений из чата (для тестирования)
-function simulateChatMessage(channel, username, message) {
-  // Отправляем сообщение через WebSocket всем подключенным клиентам
-  if (io) {
-    io.emit('twitchMessage', {
-      channel: channel,
-      username: username,
-      message: message,
-      timestamp: new Date().toISOString()
-    });
-  }
-  
-  // Проверяем, есть ли активный розыгрыш с таким ключевым словом
-  for (const [key, giveaway] of activeGiveaways.entries()) {
-    if (giveaway.channel === channel && giveaway.keyword === message.toLowerCase()) {
-      // Отправляем обновление через WebSocket
-      if (io) {
-        io.emit('participantAdded', {
-          giveawayId: giveaway.id,
-          username: username,
-          count: giveaway.participants ? giveaway.participants.length + 1 : 1
-        });
-      }
-      
-      // Добавляем участника в локальный список
-      if (!giveaway.participants) {
-        giveaway.participants = [];
-      }
-      giveaway.participants.push(username);
-      break;
-    }
-  }
-}
-
 module.exports = {
   initBot,
   joinChannel,
-  leaveChannel,
-  simulateChatMessage
+  leaveChannel
 };

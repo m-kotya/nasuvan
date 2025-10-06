@@ -59,7 +59,7 @@ try {
 // Обработка ошибок сервера
 server.on('error', (error) => {
   if (error.code === 'EADDRINUSE') {
-    console.error(`Порт ${error.port} уже используется. Пожалуйста, освободите порт или измените PORT в .env файле.`);
+    console.error(`Порт ${error.port} уже используется. Пожалуйста, освободите порт или измените PORT в переменных окружения.`);
     process.exit(1);
   } else {
     console.error('Ошибка сервера:', error);
@@ -87,4 +87,10 @@ process.on('SIGINT', () => {
 const PORT = process.env.PORT || process.env.RAILWAY_PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Сервер запущен на порту ${PORT}`);
+  console.log('Переменные окружения:');
+  console.log('  TWITCH_BOT_USERNAME:', process.env.TWITCH_BOT_USERNAME ? 'Установлен' : 'Не установлен');
+  console.log('  TWITCH_OAUTH_TOKEN:', process.env.TWITCH_OAUTH_TOKEN ? 'Установлен' : 'Не установлен');
+  console.log('  TWITCH_CLIENT_ID:', process.env.TWITCH_CLIENT_ID ? 'Установлен' : 'Не установлен');
+  console.log('  TWITCH_CLIENT_SECRET:', process.env.TWITCH_CLIENT_SECRET ? 'Установлен' : 'Не установлен');
+  console.log('  APP_URL:', process.env.APP_URL || 'Не установлен');
 });

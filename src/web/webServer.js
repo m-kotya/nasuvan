@@ -1,7 +1,7 @@
 const path = require('path');
 const crypto = require('crypto');
 const { getGiveaways, createGiveaway, selectWinner } = require('../database/supabaseClient');
-const { joinChannel, leaveChannel, simulateChatMessage } = require('../bot/twitchBot');
+const { joinChannel, leaveChannel } = require('../bot/twitchBot');
 
 // Хранение активных розыгрышей в памяти (в реальном приложении лучше использовать БД)
 let activeGiveaways = new Map();
@@ -65,22 +65,22 @@ function initWebServer(app, io) {
     console.log('  Calculated redirectUri:', redirectUri);
     
     // Проверяем обязательные переменные окружения
-    if (!clientId || clientId === 'your_real_client_id_here') {
-      console.error('TWITCH_CLIENT_ID is not properly configured');
+    if (!clientId) {
+      console.error('TWITCH_CLIENT_ID is not set');
       return res.status(500).send(`
         <h2>Ошибка конфигурации</h2>
-        <p>TWITCH_CLIENT_ID не установлен или содержит плейсхолдер.</p>
-        <p>Пожалуйста, установите правильное значение в файле .env</p>
+        <p>TWITCH_CLIENT_ID не установлен.</p>
+        <p>Пожалуйста, установите правильное значение в переменных окружения Railway.</p>
         <a href="/">Вернуться на главную</a>
       `);
     }
     
-    if (!appUrl || appUrl === 'https://nasuvan-production.up.railway.app') {
-      console.error('APP_URL is not properly configured');
+    if (!appUrl) {
+      console.error('APP_URL is not set');
       return res.status(500).send(`
         <h2>Ошибка конфигурации</h2>
-        <p>APP_URL не установлен или содержит плейсхолдер.</p>
-        <p>Пожалуйста, установите правильное значение в файле .env</p>
+        <p>APP_URL не установлен.</p>
+        <p>Пожалуйста, установите правильное значение в переменных окружения Railway.</p>
         <a href="/">Вернуться на главную</a>
       `);
     }
@@ -167,12 +167,12 @@ function initWebServer(app, io) {
     ];
     
     for (const varName of requiredEnvVars) {
-      if (!process.env[varName] || process.env[varName].includes('your_') || process.env[varName].includes('placeholder')) {
-        console.error(`Required environment variable ${varName} is not properly set`);
+      if (!process.env[varName]) {
+        console.error(`Required environment variable ${varName} is not set`);
         return res.status(500).send(`
           <h2>Ошибка конфигурации</h2>
-          <p>Переменная окружения ${varName} не установлена или содержит плейсхолдер.</p>
-          <p>Пожалуйста, установите правильное значение в файле .env</p>
+          <p>Переменная окружения ${varName} не установлена.</p>
+          <p>Пожалуйста, установите правильное значение в переменных окружения Railway.</p>
           <a href="/">Вернуться на главную</a>
         `);
       }
@@ -494,28 +494,6 @@ function initWebServer(app, io) {
       }
     } catch (error) {
       console.error('Ошибка при удалении бота из канала:', error);
-      res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-    }
-  });
-
-  // Тестовый маршрут для симуляции сообщений из чата (только в тестовом режиме)
-  app.post('/api/test/chat-message', requireAuth, (req, res) => {
-    try {
-      const { username, message } = req.body;
-      
-      if (!username || !message) {
-        return res.status(400).json({ error: 'Требуются поля username и message' });
-      }
-      
-      // Получаем имя канала авторизованного пользователя
-      const channelName = req.user.username;
-      
-      // Симулируем получение сообщения из чата
-      simulateChatMessage(channelName, username, message);
-      
-      res.json({ success: true, message: 'Сообщение отправлено' });
-    } catch (error) {
-      console.error('Ошибка при симуляции сообщения:', error);
       res.status(500).json({ error: 'Внутренняя ошибка сервера' });
     }
   });
