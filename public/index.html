@@ -5,64 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Twitch Giveaway Bot</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <header>
-        <h1>Twitch Giveaway Bot</h1>
-        <nav>
-            <button id="authBtn">Авторизация через Twitch</button>
-        </nav>
-    </header>
-
-    <main>
-        <section id="authNotification" style="display: none; background-color: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin: 20px;">
-            <p>✅ Авторизация через Twitch пройдена успешно! Теперь вы можете использовать все функции бота.</p>
-        </section>
-        
-        <section id="channelSection">
-            <h2>Управление каналом</h2>
-            <div class="form-group">
-                <label for="channelName">Имя канала Twitch:</label>
-                <input type="text" id="channelName" placeholder="Введите имя канала">
-                <button id="joinChannelBtn">Добавить бота</button>
-                <button id="leaveChannelBtn">Удалить бота</button>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1><i class="fab fa-twitch"></i> Twitch Giveaway Bot</h1>
+                <div class="auth-section">
+                    <button id="authBtn" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Авторизация через Twitch
+                    </button>
+                </div>
             </div>
-        </section>
+        </header>
 
-        <section id="giveawaySection">
-            <h2>Управление розыгрышами</h2>
-            <div class="form-group">
-                <label for="giveawayKeyword">Ключевое слово:</label>
-                <input type="text" id="giveawayKeyword" placeholder="Введите ключевое слово">
-                
-                <label for="giveawayPrize">Приз:</label>
-                <input type="text" id="giveawayPrize" placeholder="Введите описание приза">
-                
-                <button id="startGiveawayBtn">Начать розыгрыш</button>
-                <button id="endGiveawayBtn">Завершить розыгрыш</button>
+        <main>
+            <div class="dashboard">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-gamepad"></i> Управление каналом</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="channelName"><i class="fas fa-hashtag"></i> Имя канала Twitch:</label>
+                            <input type="text" id="channelName" placeholder="Введите имя канала" class="form-control">
+                        </div>
+                        <div class="button-group">
+                            <button id="joinChannelBtn" class="btn btn-success">
+                                <i class="fas fa-plus-circle"></i> Добавить бота
+                            </button>
+                            <button id="leaveChannelBtn" class="btn btn-danger">
+                                <i class="fas fa-minus-circle"></i> Удалить бота
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-gift"></i> Управление розыгрышами</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="giveawayKeyword"><i class="fas fa-key"></i> Ключевое слово:</label>
+                                <input type="text" id="giveawayKeyword" placeholder="Введите ключевое слово" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="giveawayPrize"><i class="fas fa-trophy"></i> Приз:</label>
+                                <input type="text" id="giveawayPrize" placeholder="Введите описание приза" class="form-control">
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button id="startGiveawayBtn" class="btn btn-success">
+                                <i class="fas fa-play"></i> Начать розыгрыш
+                            </button>
+                            <button id="endGiveawayBtn" class="btn btn-warning">
+                                <i class="fas fa-stop"></i> Завершить розыгрыш
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-history"></i> Активные розыгрыши</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="activeGiveawaysList" class="giveaways-list">
+                            <div class="empty-state">
+                                <i class="fas fa-gifts"></i>
+                                <p>Нет активных розыгрышей</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-archive"></i> История розыгрышей</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="giveawaysHistory" class="giveaways-list">
+                            <div class="empty-state">
+                                <i class="fas fa-history"></i>
+                                <p>История розыгрышей пуста</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </section>
+        </main>
 
-        <section id="activeGiveawaysSection">
-            <h2>Активные розыгрыши</h2>
-            <div id="activeGiveawaysList">
-                <!-- Активные розыгрыши будут отображаться здесь -->
-                <p>Нет активных розыгрышей</p>
-            </div>
-        </section>
-
-        <section id="historySection">
-            <h2>История розыгрышей</h2>
-            <div id="giveawaysHistory">
-                <!-- История розыгрышей будет отображаться здесь -->
-                <p>История розыгрышей пуста</p>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <p>&copy; 2025 Twitch Giveaway Bot</p>
-    </footer>
+        <footer>
+            <p>&copy; 2025 Twitch Giveaway Bot. Все права защищены.</p>
+        </footer>
+    </div>
 
     <script src="script.js"></script>
 </body>

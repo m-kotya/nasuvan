@@ -9,7 +9,8 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: #333;
-    background-color: #f4f4f4;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
 }
 
 .container {
@@ -21,156 +22,328 @@ body {
 
 /* Заголовок */
 header {
-    background-color: #9146ff;
-    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
     padding: 1rem;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 header h1 {
+    color: white;
     font-size: 1.8rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-#authBtn {
-    background-color: #fff;
-    color: #9146ff;
+header h1 i {
+    margin-right: 10px;
+}
+
+.auth-section {
+    display: flex;
+    align-items: center;
+}
+
+/* Кнопки */
+.btn {
+    padding: 12px 20px;
     border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
-    font-weight: bold;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 0.95rem;
 }
 
-#authBtn:hover {
-    background-color: #f0f0f0;
+.btn i {
+    margin-right: 8px;
 }
 
-#authBtn:disabled {
+.btn-primary {
+    background: linear-gradient(45deg, #6441a5, #9146ff);
+    color: white;
+    box-shadow: 0 4px 15px rgba(145, 70, 255, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(45deg, #5a379a, #823de0);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(145, 70, 255, 0.4);
+}
+
+.btn-primary:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+    transform: none;
 }
 
-/* Уведомления */
-#authNotification {
-    background-color: #d4edda;
-    color: #155724;
-    padding: 15px;
-    border-radius: 5px;
-    margin: 20px;
-    border: 1px solid #c3e6cb;
+.btn-success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
 }
 
-/* Основное содержимое */
-main {
-    padding: 20px 0;
+.btn-success:hover {
+    background: linear-gradient(45deg, #218838, #1ba87e);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
 }
 
-section {
-    background-color: white;
+.btn-danger {
+    background: linear-gradient(45deg, #dc3545, #e74c3c);
+    color: white;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(45deg, #c82333, #d62c1a);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+}
+
+.btn-warning {
+    background: linear-gradient(45deg, #ffc107, #fd7e14);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+.btn-warning:hover {
+    background: linear-gradient(45deg, #e0a800, #e07a00);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+}
+
+/* Карточки */
+.card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
     margin-bottom: 20px;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+    transition: transform 0.3s ease;
 }
 
-section h2 {
-    margin-bottom: 15px;
-    color: #9146ff;
-    border-bottom: 2px solid #9146ff;
-    padding-bottom: 5px;
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-header {
+    background: linear-gradient(45deg, #6441a5, #9146ff);
+    color: white;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.card-header h2 {
+    font-size: 1.4rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.card-header h2 i {
+    margin-right: 10px;
+}
+
+.card-body {
+    padding: 20px;
 }
 
 /* Формы */
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #555;
 }
 
-.form-group input {
+.form-group label i {
+    margin-right: 8px;
+    color: #9146ff;
+}
+
+.form-control {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    margin-bottom: 10px;
+    padding: 12px 15px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.form-group button {
-    background-color: #9146ff;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-right: 10px;
-    margin-top: 10px;
+.form-control:focus {
+    outline: none;
+    border-color: #9146ff;
+    box-shadow: 0 0 0 3px rgba(145, 70, 255, 0.1);
 }
 
-.form-group button:hover {
-    background-color: #7d3dc8;
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
 }
 
-.form-group button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
+.button-group {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
 }
 
-/* Списки */
-#giveawaysHistory, #activeGiveawaysList {
-    min-height: 100px;
+.button-group .btn {
+    flex: 1;
+    min-width: 150px;
+}
+
+/* Списки розыгрышей */
+.giveaways-list {
+    min-height: 150px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    color: #ccc;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    margin: 0;
 }
 
 .giveaway-item {
-    padding: 15px;
+    padding: 20px;
     border: 1px solid #eee;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    background-color: #fafafa;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    background: #fafafa;
+    transition: all 0.3s ease;
+}
+
+.giveaway-item:hover {
+    background: #f5f5f5;
+    border-color: #ddd;
+    transform: translateX(5px);
 }
 
 .giveaway-item h3 {
     color: #9146ff;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
 }
 
 .giveaway-item p {
-    margin: 5px 0;
+    margin: 8px 0;
+    color: #666;
+}
+
+.giveaway-item strong {
+    color: #333;
 }
 
 .winner {
     font-weight: bold;
-    color: #ff6b6b;
+    color: #28a745;
+    background: rgba(40, 167, 69, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
 }
 
 /* Подвал */
 footer {
     text-align: center;
     padding: 20px;
-    background-color: #333;
-    color: white;
+    color: rgba(255, 255, 255, 0.8);
     margin-top: 20px;
+    font-size: 0.9rem;
 }
 
 /* Адаптивность */
 @media (max-width: 768px) {
-    header {
+    .header-content {
         flex-direction: column;
+        gap: 15px;
         text-align: center;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .button-group {
+        flex-direction: column;
+    }
+    
+    .button-group .btn {
+        width: 100%;
     }
     
     .container {
         width: 95%;
+        padding: 10px;
     }
     
-    .form-group button {
-        display: block;
-        width: 100%;
-        margin-bottom: 10px;
+    .card-header h2 {
+        font-size: 1.2rem;
     }
+}
+
+/* Уведомления */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.notification.success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+.notification.error {
+    background: linear-gradient(45deg, #dc3545, #e74c3c);
+}
+
+.notification.info {
+    background: linear-gradient(45deg, #17a2b8, #3498db);
 }
