@@ -271,7 +271,8 @@ header h1 i {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     z-index: 10000;
     text-align: center;
-    min-width: 300px;
+    min-width: 500px;
+    max-width: 90vw;
     backdrop-filter: blur(10px);
     border: 2px solid rgba(255, 255, 255, 0.2);
     display: none;
@@ -285,7 +286,6 @@ header h1 i {
     margin: 0;
     width: auto;
     height: auto;
-    max-width: 90vw;
     max-height: 90vh;
     overflow: auto;
 }
@@ -318,7 +318,7 @@ header h1 i {
     padding: 15px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
-    min-height: 150px;
+    min-height: 200px;
 }
 
 .winner-message p {
@@ -328,14 +328,14 @@ header h1 i {
 }
 
 .winner-chat-container {
-    max-height: 150px;
+    max-height: 200px;
     overflow-y: auto;
     margin-top: 10px;
     text-align: left;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
     padding: 10px;
-    min-height: 80px;
+    min-height: 120px;
 }
 
 .winner-chat-message {
