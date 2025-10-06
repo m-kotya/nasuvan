@@ -18,27 +18,40 @@ function initWebServer(app, io) {
     const clientId = process.env.TWITCH_CLIENT_ID;
     const redirectUri = `${process.env.APP_URL}/auth/twitch/callback`;
     
+    console.log('Twitch Auth Request:');
+    console.log('  Client ID:', clientId);
+    console.log('  Redirect URI:', redirectUri);
+    console.log('  APP_URL:', process.env.APP_URL);
+    
     if (!clientId) {
       return res.status(500).send('TWITCH_CLIENT_ID не установлен в переменных окружения');
+    }
+    
+    if (!process.env.APP_URL) {
+      return res.status(500).send('APP_URL не установлен в переменных окружения');
     }
     
     const scope = 'user:read:email';
     const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
     
+    console.log('Redirecting to Twitch Auth URL:', authUrl);
     res.redirect(authUrl);
   });
 
   // Маршрут для обработки callback от Twitch OAuth
   app.get('/auth/twitch/callback', async (req, res) => {
     console.log('Получен callback запрос:', req.query);
+    console.log('Headers:', req.headers);
     
     const code = req.query.code;
     const error = req.query.error;
+    const errorDescription = req.query.error_description;
     
     // Обрабатываем ошибки авторизации
     if (error) {
       console.error('Ошибка авторизации Twitch:', error);
-      return res.status(400).send(`Ошибка авторизации: ${error}`);
+      console.error('Описание ошибки:', errorDescription);
+      return res.status(400).send(`Ошибка авторизации: ${error}. Описание: ${errorDescription}`);
     }
     
     if (!code) {
@@ -63,7 +76,7 @@ function initWebServer(app, io) {
       });
       
       const tokenData = await tokenResponse.json();
-      console.log('Получен токен:', tokenData);
+      console.log('Получен токен ответ:', tokenData);
       
       if (!tokenResponse.ok) {
         console.error('Ошибка получения токена:', tokenData);
