@@ -32,6 +32,16 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Проверка переменных окружения
+console.log('=== Environment Variables Check ===');
+console.log('RAILWAY_PROJECT_ID:', process.env.RAILWAY_PROJECT_ID ? 'SET' : 'NOT SET');
+console.log('RAILWAY_ENVIRONMENT_NAME:', process.env.RAILWAY_ENVIRONMENT_NAME ? 'SET' : 'NOT SET');
+console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? 'SET' : 'NOT SET');
+console.log('SUPABASE_KEY:', process.env.SUPABASE_KEY ? 'SET' : 'NOT SET');
+console.log('TWITCH_CLIENT_ID:', process.env.TWITCH_CLIENT_ID ? 'SET' : 'NOT SET');
+console.log('TWITCH_CLIENT_SECRET:', process.env.TWITCH_CLIENT_SECRET ? 'SET' : 'NOT SET');
+console.log('==================================');
+
 // Инициализация компонентов
 try {
   const supabaseClient = initDatabase();
@@ -93,4 +103,6 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('  TWITCH_CLIENT_ID:', process.env.TWITCH_CLIENT_ID ? 'Установлен' : 'Не установлен');
   console.log('  TWITCH_CLIENT_SECRET:', process.env.TWITCH_CLIENT_SECRET ? 'Установлен' : 'Не установлен');
   console.log('  APP_URL:', process.env.APP_URL || 'Не установлен');
+  console.log('  SUPABASE_URL:', process.env.SUPABASE_URL ? 'Установлен' : 'Не установлен');
+  console.log('  SUPABASE_KEY:', process.env.SUPABASE_KEY ? 'Установлен' : 'Не установлен');
 });

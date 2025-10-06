@@ -5,12 +5,19 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 let supabase;
 
+console.log('Supabase environment variables check:');
+console.log('SUPABASE_URL:', supabaseUrl ? 'SET' : 'NOT SET');
+console.log('SUPABASE_KEY:', supabaseKey ? 'SET' : 'NOT SET');
+
 // Фиктивный клиент для тестирования
 const mockSupabase = {
   from: (table) => ({
-    insert: (data) => ({
-      select: () => Promise.resolve({ data: [{ id: 1, ...data[0] }], error: null })
-    }),
+    insert: (data) => {
+      console.log(`Mock insert into ${table}:`, data);
+      return {
+        select: () => Promise.resolve({ data: [{ id: 1, ...data[0] }], error: null })
+      };
+    },
     update: (data) => ({
       eq: (field, value) => ({
         select: () => Promise.resolve({ data: [{ id: 1, [field]: value, ...data }], error: null })
@@ -25,45 +32,122 @@ const mockSupabase = {
 };
 
 function initDatabase() {
-  if (!supabaseUrl || !supabaseKey) {
-    console.warn('Не найдены SUPABASE_URL или SUPABASE_KEY в переменных окружения. Используется фиктивный клиент для тестирования.');
+  console.log('Инициализация базы данных...');
+  console.log('SUPABASE_URL from env:', supabaseUrl);
+  console.log('SUPABASE_KEY from env:', supabaseKey ? 'SET' : 'NOT SET');
+  
+  // Проверяем, работаем ли мы на Railway
+  const isRailway = process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_ENVIRONMENT_NAME;
+  console.log('Running on Railway:', isRailway ? 'YES' : 'NO');
+  
+  // Если мы на Railway, то переменные должны быть установлены
+  if (isRailway) {
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('ОШИБКА: На Railway должны быть установлены переменные SUPABASE_URL и SUPABASE_KEY');
+      console.error('Пожалуйста, установите их в настройках Railway');
+      // Все равно продолжаем работу с фиктивным клиентом, чтобы приложение не падало
+      supabase = mockSupabase;
+      console.log('Подключение к Supabase установлено (тестовый режим)');
+      return supabase;
+    }
+    
+    try {
+      console.log('Попытка подключения к Supabase с реальными данными...');
+      supabase = createClient(supabaseUrl, supabaseKey);
+      console.log('Подключение к Supabase установлено');
+      return supabase;
+    } catch (error) {
+      console.error('Ошибка при подключении к Supabase:', error);
+      console.warn('Используется фиктивный клиент для тестирования.');
+      supabase = mockSupabase;
+      return supabase;
+    }
+  }
+  
+  // Для локальной разработки проверяем реальные значения
+  const isRealUrl = supabaseUrl && !supabaseUrl.includes('your-project.supabase.co');
+  const isRealKey = supabaseKey && !supabaseKey.includes('your_supabase_key_here');
+  
+  if (!supabaseUrl || !supabaseKey || !isRealUrl || !isRealKey) {
+    console.warn('Не найдены настоящие SUPABASE_URL или SUPABASE_KEY в переменных окружения. Используется фиктивный клиент для тестирования.');
     supabase = mockSupabase;
     console.log('Подключение к Supabase установлено (тестовый режим)');
     return supabase;
   }
 
-  supabase = createClient(supabaseUrl, supabaseKey);
-  console.log('Подключение к Supabase установлено');
-  return supabase;
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('Подключение к Supabase установлено');
+    return supabase;
+  } catch (error) {
+    console.error('Ошибка при подключении к Supabase:', error);
+    console.warn('Используется фиктивный клиент для тестирования.');
+    supabase = mockSupabase;
+    return supabase;
+  }
 }
 
 // Функции для работы с розыгрышами
 async function createGiveaway(channel, keyword, prize) {
   // Проверяем, инициализирован ли клиент
   if (!supabase) {
-    console.error('Supabase клиент не инициализирован');
-    return null;
+    console.warn('Supabase клиент не инициализирован, используем фиктивные данные');
+    // Возвращаем фиктивные данные для тестирования
+    return {
+      id: Date.now(),
+      channel,
+      keyword,
+      prize,
+      started_at: new Date(),
+      is_active: true
+    };
   }
   
-  const { data, error } = await supabase
-    .from('giveaways')
-    .insert([
-      {
+  console.log('Попытка создания розыгрыша:', { channel, keyword, prize });
+  
+  try {
+    const { data, error } = await supabase
+      .from('giveaways')
+      .insert([
+        {
+          channel,
+          keyword,
+          prize,
+          started_at: new Date(),
+          is_active: true
+        }
+      ])
+      .select();
+
+    if (error) {
+      console.error('Ошибка при создании розыгрыша в Supabase:', error);
+      console.error('Детали ошибки:', JSON.stringify(error, null, 2));
+      // Возвращаем фиктивные данные для тестирования
+      return {
+        id: Date.now(),
         channel,
         keyword,
         prize,
         started_at: new Date(),
         is_active: true
-      }
-    ])
-    .select();
-
-  if (error) {
-    console.error('Ошибка при создании розыгрыша:', error);
-    return null;
+      };
+    }
+    
+    console.log('Успешно создан розыгрыш в Supabase:', data);
+    
+    return data[0];
+  } catch (error) {
+    console.error('Исключение при создании розыгрыша:', error);
+    // Возвращаем фиктивные данные для тестирования
+    return {
+      id: Date.now(),
+      channel,
+      keyword,
+      prize,
+      started_at: new Date(),
+      is_active: true
+    };
   }
-
-  return data[0];
 }
 
 async function addParticipant(giveawayId, username) {

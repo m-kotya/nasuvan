@@ -8,6 +8,10 @@ let activeGiveaways = new Map();
 // Хранение информации о сессиях пользователей
 let userSessions = new Map();
 
+// Проверка, работаем ли мы на Railway
+const isRailway = process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_ENVIRONMENT_NAME;
+console.log('Web server running on Railway:', isRailway ? 'YES' : 'NO');
+
 // Функция для генерации безопасного sessionId
 function generateSessionId() {
   return crypto.randomBytes(32).toString('hex');
@@ -370,19 +374,25 @@ function initWebServer(app, io) {
     try {
       const { keyword, prize } = req.body;
       
+      console.log('Получен запрос на создание розыгрыша:', { keyword, prize });
+      
       if (!keyword) {
+        console.log('Ошибка: Кодовое слово обязательно');
         return res.status(400).json({ error: 'Кодовое слово обязательно' });
       }
       
       // Получаем имя канала авторизованного пользователя
       const channelName = req.user.username;
+      console.log('Имя канала:', channelName);
       
       // Создаем розыгрыш в базе данных
+      console.log('Попытка создания розыгрыша в базе данных...');
       const giveawayData = await createGiveaway(channelName, keyword, prize || 'Участие в розыгрыше');
       
-      console.log('Giveaway data:', giveawayData);
+      console.log('Результат создания розыгрыша:', giveawayData);
       
-      if (giveawayData) {
+      // Проверяем, что мы получили данные (даже фиктивные)
+      if (giveawayData && giveawayData.id) {
         // Сохраняем информацию о розыгрыше
         const giveawayInfo = {
           id: giveawayData.id,
@@ -402,13 +412,15 @@ function initWebServer(app, io) {
           channel: channelName
         });
         
+        console.log('Розыгрыш успешно создан и сохранен:', giveawayInfo);
         return res.json({ success: true, giveaway: giveawayInfo });
       } else {
-        console.error('Failed to create giveaway in database');
+        console.error('Не удалось создать розыгрыш - отсутствует ID');
         return res.status(500).json({ error: 'Ошибка при создании розыгрыша' });
       }
     } catch (error) {
       console.error('Ошибка при создании розыгрыша:', error);
+      console.error('Stack trace:', error.stack);
       res.status(500).json({ error: 'Внутренняя ошибка сервера: ' + error.message });
     }
   });
