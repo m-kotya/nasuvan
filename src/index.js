@@ -94,7 +94,7 @@ process.on('SIGINT', () => {
 });
 
 // Запуск сервера с учетом переменных окружения Railway
-const PORT = process.env.PORT || process.env.RAILWAY_PORT || 3000;
+const PORT = process.env.PORT || process.env.RAILWAY_PORT || 3006;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Сервер запущен на порту ${PORT}`);
   console.log('Переменные окружения:');

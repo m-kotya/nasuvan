@@ -242,68 +242,68 @@ function initBot(socketIo) {
             }
           } catch (error) {
             console.error('Ошибка отправки сообщения в чат:', error.message);
-          }
-        }
-      } else if (message.startsWith('!endgiveaway')) {
-        // Завершаем все активные розыгрыши в канале
-        let endedCount = 0;
-        
-        for (const [key, giveaway] of activeGiveaways.entries()) {
-          if (giveaway.channel === channelName) {
-            // Выбираем победителя
-            const winner = await selectWinner(giveaway.id);
-            
-            if (winner) {
-              try {
-                if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
-                    process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
-                    process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
-                  await client.say(channel, `Розыгрыш "${giveaway.prize}" завершен! Победитель: @${winner}`);
-                }
-              } catch (error) {
-                console.error('Ошибка отправки сообщения в чат:', error.message);
-              }
-            } else {
-              try {
-                if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
-                    process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
-                    process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
-                  await client.say(channel, `Розыгрыш "${giveaway.prize}" завершен! Участников не было.`);
-                }
-              } catch (error) {
-                console.error('Ошибка отправки сообщения в чат:', error.message);
-              }
-            }
-            
-            // Удаляем розыгрыш из активных
-            activeGiveaways.delete(key);
-            endedCount++;
-            
-            // Отправляем обновление через WebSocket
-            if (io) {
-              io.emit('giveawayEnded', {
-                id: giveaway.id,
-                winner: winner,
-                channel: channelName
-              });
             }
           }
-        }
-        
-        if (endedCount === 0) {
-          try {
-            if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
-                process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
-                process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
-              await client.say(channel, 'Нет активных розыгрышей в этом канале.');
+        } else if (message.startsWith('!endgiveaway')) {
+          // Завершаем все активные розыгрыши в канале
+          let endedCount = 0;
+          
+          for (const [key, giveaway] of activeGiveaways.entries()) {
+            if (giveaway.channel === channelName) {
+              // Выбираем победителя
+              const winnerResult = await selectWinner(giveaway.id);
+              
+              if (winnerResult && winnerResult.winner) {
+                try {
+                  if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
+                      process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
+                      process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
+                    await client.say(channel, `Розыгрыш "${giveaway.prize}" завершен! Победитель: @${winnerResult.winner}`);
+                  }
+                } catch (error) {
+                  console.error('Ошибка отправки сообщения в чат:', error.message);
+                }
+              } else {
+                try {
+                  if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
+                      process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
+                      process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
+                    await client.say(channel, `Розыгрыш "${giveaway.prize}" завершен! Участников не было.`);
+                  }
+                } catch (error) {
+                  console.error('Ошибка отправки сообщения в чат:', error.message);
+                }
+              }
+              
+              // Удаляем розыгрыш из активных
+              activeGiveaways.delete(key);
+              endedCount++;
+              
+              // Отправляем обновление через WebSocket
+              if (io) {
+                io.emit('giveawayEnded', {
+                  id: giveaway.id,
+                  winner: winnerResult ? winnerResult.winner : null,
+                  channel: channelName
+                });
+              }
             }
-          } catch (error) {
-            console.error('Ошибка отправки сообщения в чат:', error.message);
+          }
+          
+          if (endedCount === 0) {
+            try {
+              if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
+                  process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
+                  process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
+                await client.say(channel, 'Нет активных розыгрышей в этом канале.');
+              }
+            } catch (error) {
+              console.error('Ошибка отправки сообщения в чат:', error.message);
+            }
           }
         }
       }
-    }
-  });
+    });
 
   console.log('Twitch бот инициализирован');
 }
@@ -397,6 +397,25 @@ async function leaveChannel(channelName) {
   }
 }
 
+// Функция для отправки сообщения о победителе в чат Twitch
+async function announceWinner(channelName, winner, hasTelegram) {
+  try {
+    // Проверяем, есть ли учетные данные бота и что они не являются плейсхолдерами
+    if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
+        process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
+        process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
+      
+      // Форматируем имя канала (убираем # если есть)
+      const formattedChannel = channelName.startsWith('#') ? channelName : `#${channelName}`;
+      
+      // Отправляем сообщение о победителе
+      await client.say(formattedChannel, `Поздравляем @${winner}! Вы выиграли розыгрыш! У вас есть 15 секунд, чтобы ответить в чат для подтверждения.`);
+    }
+  } catch (error) {
+    console.error('Ошибка отправки сообщения о победителе в чат:', error.message);
+  }
+}
+
 // Функция для получения активных розыгрышей
 function getActiveGiveaways() {
   return activeGiveaways;
@@ -420,5 +439,6 @@ module.exports = {
   leaveChannel,
   getActiveGiveaways,
   setActiveGiveaways,
-  getUserChannel
+  getUserChannel,
+  announceWinner
 };

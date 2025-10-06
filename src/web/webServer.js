@@ -457,11 +457,21 @@ function initWebServer(app, io) {
       for (const [key, giveaway] of activeGiveaways.entries()) {
         if (giveaway.channel === channelName) {
           // Выбираем победителя
-          const winner = await selectWinner(giveaway.id);
+          const winnerResult = await selectWinner(giveaway.id);
           
-          // Сохраняем данные победителя для ответа
-          if (winner && !winnerData) {
-            winnerData = { id: giveaway.id, winner: winner };
+          // Объявляем победителя в чате Twitch, если есть победитель
+          if (winnerResult && winnerResult.winner) {
+            try {
+              const { announceWinner } = require('../bot/twitchBot');
+              await announceWinner(channelName, winnerResult.winner, false); // false - так как у нас нет Telegram интеграции
+            } catch (error) {
+              console.error('Ошибка при объявлении победителя в чате Twitch:', error);
+            }
+            
+            // Сохраняем данные победителя для ответа
+            if (!winnerData) {
+              winnerData = { id: giveaway.id, winner: winnerResult.winner };
+            }
           }
           
           // Добавляем ключ для удаления
@@ -471,7 +481,7 @@ function initWebServer(app, io) {
           // Отправляем уведомление через WebSocket
           io.emit('giveawayEnded', {
             id: giveaway.id,
-            winner: winner,
+            winner: winnerResult ? winnerResult.winner : null,
             channel: channelName
           });
         }
@@ -514,7 +524,7 @@ function initWebServer(app, io) {
       // Проверяем, есть ли участники (проверяем как в локальном массиве, так и в базе данных)
       if ((!activeGiveaway.participants || activeGiveaway.participants.length === 0) && 
           (!req.body.participants || req.body.participants.length === 0)) {
-        return res.status(400).json({ error: 'Нет участников для выбора победителя' });
+      return res.status(400).json({ error: 'Нет участников для выбора победителя' });
       }
       
       // Если участники переданы в запросе, обновляем локальный список
@@ -537,6 +547,14 @@ function initWebServer(app, io) {
         channel: channelName,
         giveawayId: activeGiveaway.id
       });
+      
+      // Объявляем победителя в чате Twitch
+      try {
+        const { announceWinner } = require('../bot/twitchBot');
+        await announceWinner(channelName, winner, false); // false - так как у нас нет Telegram интеграции
+      } catch (error) {
+        console.error('Ошибка при объявлении победителя в чате Twitch:', error);
+      }
       
       return res.json({ 
         success: true, 

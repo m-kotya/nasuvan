@@ -188,6 +188,18 @@ async function selectWinner(giveawayId) {
     return null;
   }
   
+  // Получаем все данные о розыгрыше
+  const { data: giveawayData, error: giveawayError } = await supabase
+    .from('giveaways')
+    .select('*')
+    .eq('id', giveawayId)
+    .single();
+
+  if (giveawayError) {
+    console.error('Ошибка при получении данных розыгрыша:', giveawayError);
+    return null;
+  }
+  
   // Получаем всех участников розыгрыша
   const { data: participants, error } = await supabase
     .from('participants')
@@ -200,6 +212,21 @@ async function selectWinner(giveawayId) {
   }
 
   if (participants.length === 0) {
+    // Обновляем запись о розыгрыше, даже если нет участников
+    const { data: updatedGiveaway, error: updateError } = await supabase
+      .from('giveaways')
+      .update({ 
+        is_active: false, 
+        ended_at: new Date()
+      })
+      .eq('id', giveawayId)
+      .select();
+
+    if (updateError) {
+      console.error('Ошибка при обновлении розыгрыша:', updateError);
+      return null;
+    }
+    
     return null;
   }
 
@@ -223,7 +250,12 @@ async function selectWinner(giveawayId) {
     return null;
   }
 
-  return winner.username;
+  // Возвращаем объект с информацией о победителе и канале
+  return {
+    winner: winner.username,
+    channel: giveawayData.channel,
+    prize: giveawayData.prize
+  };
 }
 
 async function getGiveaways(channel) {

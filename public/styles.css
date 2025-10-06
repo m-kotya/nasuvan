@@ -291,7 +291,7 @@ header h1 i {
 /* Список участников */
 .participants-list {
     flex: 1;
-    min-height: 200px;
+    min-height: 450px;
     max-height: 650px; /* Увеличенная высота для выравнивания с чатом */
     overflow-y: auto;
     display: flex;
