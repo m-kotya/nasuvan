@@ -76,7 +76,8 @@ function initWebSocket() {
             const winnerChat = document.getElementById('winnerChat');
             const messageDiv = document.createElement('div');
             messageDiv.className = 'winner-chat-message winner-response';
-            messageDiv.innerHTML = `<strong>${data.username}:</strong> ${data.message}`;
+            const timeString = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            messageDiv.innerHTML = `[${timeString}] <strong>${data.username}:</strong> ${processEmojis(data.message)}`;
             winnerChat.appendChild(messageDiv);
             winnerChat.scrollTop = winnerChat.scrollHeight;
         }
@@ -514,11 +515,8 @@ function showWinner(winner) {
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.7);
-            z-index: 999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            pointer-events: none; /* Предотвращаем взаимодействие с оверлеем */
+            z-index: 9999;
+            pointer-events: none;
         `;
         document.body.appendChild(overlay);
     }
@@ -527,14 +525,6 @@ function showWinner(winner) {
     winnerSeconds = 0;
     updateWinnerTimer();
     startWinnerTimer();
-    
-    // Центрируем модальное окно
-    winnerSection.style.position = 'fixed';
-    winnerSection.style.top = '50%';
-    winnerSection.style.left = '50%';
-    winnerSection.style.transform = 'translate(-50%, -50%)';
-    winnerSection.style.zIndex = '1000';
-    winnerSection.style.pointerEvents = 'auto'; /* Разрешаем взаимодействие с модальным окном */
 }
 
 // Функция запуска таймера победителя
@@ -753,13 +743,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', function(event) {
         if (winnerSection.style.display === 'block' && 
             !winnerSection.contains(event.target) && 
-            event.target !== winnerBtn &&
-            !event.target.closest('#winnerSection') &&
-            event.target.id !== 'modalOverlay') {
-            // Проверяем, что клик был вне модального окна и оверлея
-            if (event.target.id === 'modalOverlay') {
-                handleCloseWinner();
-            }
+            event.target.id === 'modalOverlay') {
+            handleCloseWinner();
         }
     });
     

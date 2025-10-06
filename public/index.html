@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Twitch Giveaway Bot</title>
+    <title>Nasuvan Giveaway Bot</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -11,7 +11,7 @@
     <div class="container">
         <header>
             <div class="header-content">
-                <h1><i class="fab fa-twitch"></i> Twitch Giveaway Bot</h1>
+                <h1><i class="fab fa-twitch"></i> Nasuvan Giveaway Bot</h1>
                 <div class="auth-section">
                     <button id="authBtn" class="btn btn-primary">
                         <i class="fas fa-sign-in-alt"></i> Авторизация через Twitch
@@ -61,18 +61,18 @@
                                         <p>Участников пока нет</p>
                                     </div>
                                 </div>
-                                <div id="winnerSection" class="winner-section" style="display: none;">
+                                <div id="winnerDisplay" class="winner-section" style="display: none;">
                                     <div class="winner-display">
                                         <h3><i class="fas fa-trophy"></i> Победитель</h3>
                                         <div class="winner-info">
-                                            <span id="winnerName" class="winner-name"></span>
-                                            <div id="winnerTimer" class="winner-timer">00:00</div>
+                                            <span id="winnerNameDisplay" class="winner-name"></span>
+                                            <div id="winnerTimerDisplay" class="winner-timer">00:00</div>
                                         </div>
                                         <div class="winner-actions">
-                                            <button id="rerollBtn" class="btn btn-warning">
+                                            <button id="rerollDisplayBtn" class="btn btn-warning">
                                                 <i class="fas fa-redo"></i> Реролл
                                             </button>
-                                            <button id="closeWinnerBtn" class="btn btn-secondary">
+                                            <button id="closeWinnerDisplayBtn" class="btn btn-secondary">
                                                 <i class="fas fa-times"></i> Закрыть
                                             </button>
                                         </div>

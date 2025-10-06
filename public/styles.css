@@ -269,13 +269,17 @@ header h1 i {
     padding: 30px;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
+    z-index: 10000;
     text-align: center;
     min-width: 300px;
     backdrop-filter: blur(10px);
     border: 2px solid rgba(255, 255, 255, 0.2);
     display: none;
-    pointer-events: auto; /* Предотвращаем исчезновение при наведении */
+    pointer-events: auto;
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    -moz-transform: translateZ(0);
 }
 
 #winnerSection h2 {
@@ -306,7 +310,7 @@ header h1 i {
     padding: 15px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
-    min-height: 100px;
+    min-height: 150px;
 }
 
 .winner-message p {
@@ -323,6 +327,7 @@ header h1 i {
     background: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
     padding: 10px;
+    min-height: 80px;
 }
 
 .winner-chat-message {
@@ -330,6 +335,7 @@ header h1 i {
     padding: 5px;
     border-radius: 4px;
     font-size: 13px;
+    word-wrap: break-word;
 }
 
 .winner-chat-message.winner-response {
