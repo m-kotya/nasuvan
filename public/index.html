@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitch Giveaway Bot</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Twitch Giveaway Bot</h1>
+        <nav>
+            <button id="authBtn">Авторизация через Twitch</button>
+        </nav>
+    </header>
+
+    <main>
+        <section id="channelSection">
+            <h2>Управление каналом</h2>
+            <div class="form-group">
+                <label for="channelName">Имя канала Twitch:</label>
+                <input type="text" id="channelName" placeholder="Введите имя канала">
+                <button id="joinChannelBtn">Добавить бота</button>
+                <button id="leaveChannelBtn">Удалить бота</button>
+            </div>
+        </section>
+
+        <section id="giveawaySection">
+            <h2>Управление розыгрышами</h2>
+            <div class="form-group">
+                <label for="giveawayKeyword">Ключевое слово:</label>
+                <input type="text" id="giveawayKeyword" placeholder="Введите ключевое слово">
+                
+                <label for="giveawayPrize">Приз:</label>
+                <input type="text" id="giveawayPrize" placeholder="Введите описание приза">
+                
+                <button id="startGiveawayBtn">Начать розыгрыш</button>
+                <button id="endGiveawayBtn">Завершить розыгрыш</button>
+            </div>
+        </section>
+
+        <section id="activeGiveawaysSection">
+            <h2>Активные розыгрыши</h2>
+            <div id="activeGiveawaysList">
+                <!-- Активные розыгрыши будут отображаться здесь -->
+                <p>Нет активных розыгрышей</p>
+            </div>
+        </section>
+
+        <section id="historySection">
+            <h2>История розыгрышей</h2>
+            <div id="giveawaysHistory">
+                <!-- История розыгрышей будет отображаться здесь -->
+                <p>История розыгрышей пуста</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Twitch Giveaway Bot</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
