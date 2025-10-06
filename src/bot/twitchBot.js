@@ -393,8 +393,20 @@ async function leaveChannel(channelName) {
   }
 }
 
+// Функция для получения активных розыгрышей
+function getActiveGiveaways() {
+  return activeGiveaways;
+}
+
+// Функция для установки активных розыгрышей (используется для синхронизации)
+function setActiveGiveaways(giveaways) {
+  activeGiveaways = giveaways;
+}
+
 module.exports = {
   initBot,
   joinChannel,
-  leaveChannel
+  leaveChannel,
+  getActiveGiveaways,
+  setActiveGiveaways
 };

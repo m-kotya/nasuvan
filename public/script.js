@@ -4,9 +4,15 @@ const logoutBtn = document.getElementById('logoutBtn');
 const keywordInput = document.getElementById('keywordInput');
 const startBtn = document.getElementById('startBtn');
 const resetBtn = document.getElementById('resetBtn');
+const winnerBtn = document.getElementById('winnerBtn');
 const participantsList = document.getElementById('participantsList');
 const participantsCount = document.getElementById('participantsCount');
 const chatMessages = document.getElementById('chatMessages');
+const winnerSection = document.getElementById('winnerSection');
+const winnerName = document.getElementById('winnerName');
+const winnerTimer = document.getElementById('winnerTimer');
+const rerollBtn = document.getElementById('rerollBtn');
+const closeWinnerBtn = document.getElementById('closeWinnerBtn');
 
 // Глобальные переменные
 let participants = [];
@@ -14,12 +20,18 @@ let giveawayActive = false;
 let currentKeyword = '';
 let socket = null;
 let isAuthenticated = false;
+let currentWinner = null;
+let winnerTimerInterval = null;
+let winnerSeconds = 0;
 
 // Обработчики событий
 authBtn.addEventListener('click', handleAuth);
 logoutBtn.addEventListener('click', handleLogout);
 startBtn.addEventListener('click', handleStart);
 resetBtn.addEventListener('click', handleReset);
+winnerBtn.addEventListener('click', handleSelectWinner);
+rerollBtn.addEventListener('click', handleReroll);
+closeWinnerBtn.addEventListener('click', handleCloseWinner);
 
 // Функция инициализации WebSocket соединения
 function initWebSocket() {
@@ -53,6 +65,12 @@ function initWebSocket() {
         if (giveawayActive && currentKeyword && 
             data.message.toLowerCase() === currentKeyword.toLowerCase()) {
             addParticipant(data.username);
+        }
+        
+        // Если есть активный победитель и это его сообщение, останавливаем таймер
+        if (currentWinner && data.username === currentWinner) {
+            stopWinnerTimer();
+            showNotification(`Победитель ${currentWinner} ответил в чат!`, 'success');
         }
     });
     
@@ -96,6 +114,7 @@ function initWebSocket() {
         // Активируем кнопки управления
         startBtn.disabled = true;
         resetBtn.disabled = false;
+        winnerBtn.style.display = 'block';
     });
     
     // Обработчик завершения розыгрыша
@@ -109,6 +128,16 @@ function initWebSocket() {
         // Деактивируем кнопки управления
         startBtn.disabled = false;
         resetBtn.disabled = true;
+        winnerBtn.style.display = 'none';
+        
+        // Скрываем секцию победителя
+        winnerSection.style.display = 'none';
+        currentWinner = null;
+    });
+    
+    // Обработчик выбора победителя
+    socket.on('winnerSelected', (data) => {
+        showWinner(data.winner);
     });
 }
 
@@ -218,8 +247,9 @@ function handleStart() {
             addChatMessage('system', 'Система', `Розыгрыш начат! Кодовое слово: "${keyword}"`);
             showNotification(`Розыгрыш начат с кодовым словом "${keyword}"`, 'success');
             
-            // Активируем кнопку сброса
+            // Активируем кнопку сброса и кнопку выбора победителя
             resetBtn.disabled = false;
+            winnerBtn.style.display = 'block';
         } else {
             throw new Error(data.error || 'Ошибка при запуске розыгрыша');
         }
@@ -278,6 +308,12 @@ function handleReset() {
         
         // Активируем кнопку запуска
         startBtn.disabled = false;
+        winnerBtn.style.display = 'none';
+        
+        // Скрываем секцию победителя
+        winnerSection.style.display = 'none';
+        currentWinner = null;
+        stopWinnerTimer();
     })
     .catch(error => {
         console.error('Ошибка при сбросе розыгрыша:', error);
@@ -292,11 +328,165 @@ function handleReset() {
         
         // Активируем кнопку запуска
         startBtn.disabled = false;
+        winnerBtn.style.display = 'none';
+        
+        // Скрываем секцию победителя
+        winnerSection.style.display = 'none';
+        currentWinner = null;
+        stopWinnerTimer();
     })
     .finally(() => {
         // Восстанавливаем кнопку
         resetBtn.innerHTML = originalText;
     });
+}
+
+// Функция выбора победителя
+function handleSelectWinner() {
+    if (!isAuthenticated) {
+        showNotification('Пожалуйста, сначала авторизуйтесь через Twitch', 'error');
+        return;
+    }
+    
+    if (participants.length === 0) {
+        showNotification('Нет участников для выбора победителя', 'error');
+        return;
+    }
+    
+    // Показываем индикатор загрузки
+    const originalText = winnerBtn.innerHTML;
+    winnerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Выбор...';
+    winnerBtn.disabled = true;
+    
+    // Отправляем запрос на сервер для выбора победителя
+    fetch('/api/select-winner', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Ошибка при выборе победителя');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.winner) {
+            showWinner(data.winner);
+            addChatMessage('winner', 'Система', `Победитель: @${data.winner}!`);
+            showNotification(`Победитель: ${data.winner}`, 'success');
+        } else {
+            showNotification('Не удалось выбрать победителя', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка при выборе победителя:', error);
+        showNotification('Ошибка при выборе победителя: ' + error.message, 'error');
+    })
+    .finally(() => {
+        // Восстанавливаем кнопку
+        winnerBtn.innerHTML = originalText;
+        winnerBtn.disabled = false;
+    });
+}
+
+// Функция реролла (повторного выбора победителя)
+function handleReroll() {
+    if (!isAuthenticated) {
+        showNotification('Пожалуйста, сначала авторизуйтесь через Twitch', 'error');
+        return;
+    }
+    
+    if (participants.length === 0) {
+        showNotification('Нет участников для выбора победителя', 'error');
+        return;
+    }
+    
+    // Показываем индикатор загрузки
+    const originalText = rerollBtn.innerHTML;
+    rerollBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Реролл...';
+    rerollBtn.disabled = true;
+    
+    // Отправляем запрос на сервер для повторного выбора победителя
+    fetch('/api/select-winner', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Ошибка при реролле');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.winner) {
+            showWinner(data.winner);
+            addChatMessage('winner', 'Система', `Новый победитель: @${data.winner}!`);
+            showNotification(`Новый победитель: ${data.winner}`, 'success');
+        } else {
+            showNotification('Не удалось выбрать нового победителя', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка при реролле:', error);
+        showNotification('Ошибка при реролле: ' + error.message, 'error');
+    })
+    .finally(() => {
+        // Восстанавливаем кнопку
+        rerollBtn.innerHTML = originalText;
+        rerollBtn.disabled = false;
+    });
+}
+
+// Функция закрытия секции победителя
+function handleCloseWinner() {
+    winnerSection.style.display = 'none';
+    currentWinner = null;
+    stopWinnerTimer();
+}
+
+// Функция отображения победителя
+function showWinner(winner) {
+    currentWinner = winner;
+    winnerName.textContent = winner;
+    winnerSection.style.display = 'block';
+    
+    // Сброс таймера и запуск
+    winnerSeconds = 0;
+    updateWinnerTimer();
+    startWinnerTimer();
+}
+
+// Функция запуска таймера победителя
+function startWinnerTimer() {
+    stopWinnerTimer(); // Останавливаем предыдущий таймер, если есть
+    
+    winnerTimerInterval = setInterval(() => {
+        winnerSeconds++;
+        updateWinnerTimer();
+    }, 1000);
+}
+
+// Функция остановки таймера победителя
+function stopWinnerTimer() {
+    if (winnerTimerInterval) {
+        clearInterval(winnerTimerInterval);
+        winnerTimerInterval = null;
+    }
+}
+
+// Функция обновления отображения таймера
+function updateWinnerTimer() {
+    const minutes = Math.floor(winnerSeconds / 60);
+    const seconds = winnerSeconds % 60;
+    winnerTimer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
 // Функция добавления участника
@@ -340,7 +530,7 @@ function updateParticipantsList() {
         const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
         
         html += `
-            <div class="participant-item">
+            <div class="participant-item" data-username="${participant}">
                 <span class="participant-name">${participant}</span>
                 <span class="participant-time">${timeString}</span>
             </div>
@@ -350,22 +540,67 @@ function updateParticipantsList() {
     participantsList.innerHTML = html;
 }
 
-// Функция добавления сообщения в чат
+// Функция добавления сообщения в чат с поддержкой эмодзи
 function addChatMessage(type, user, text) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `chat-message ${type}`;
     
+    // Проверяем, есть ли пользователь уже в списке участников
+    if (participants.includes(user) && type === 'user') {
+        messageDiv.classList.add('already-participant');
+    }
+    
     const now = new Date();
     const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     
+    // Обрабатываем эмодзи в тексте сообщения
+    const processedText = processEmojis(text);
+    
     messageDiv.innerHTML = `
         <span class="message-user">${user}:</span>
-        <span class="message-text">${text}</span>
+        <span class="message-text">${processedText}</span>
         <span class="message-time">${timeString}</span>
     `;
     
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Функция обработки эмодзи в тексте
+function processEmojis(text) {
+    // Заменяем некоторые популярные Twitch эмодзи на изображения
+    // В реальной реализации здесь будет логика получения эмодзи с Twitch API
+    const emojiMap = {
+        ':)': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/1/default/light/1.0" alt=":)" class="twitch-emoji">',
+        ':(': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/2/default/light/1.0" alt=":(" class="twitch-emoji">',
+        ':D': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/3/default/light/1.0" alt=":D" class="twitch-emoji">',
+        ';)': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/4/default/light/1.0" alt=";)" class="twitch-emoji">',
+        ':P': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/5/default/light/1.0" alt=":P" class="twitch-emoji">',
+        ':o': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/6/default/light/1.0" alt=":o" class="twitch-emoji">',
+        ':O': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/6/default/light/1.0" alt=":O" class="twitch-emoji">',
+        'Kappa': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/25/default/light/1.0" alt="Kappa" class="twitch-emoji">',
+        'PogChamp': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/88/default/light/1.0" alt="PogChamp" class="twitch-emoji">',
+        'DansGame': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/33/default/light/1.0" alt="DansGame" class="twitch-emoji">',
+        'BibleThump': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/86/default/light/1.0" alt="BibleThump" class="twitch-emoji">',
+        '4Head': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/354/default/light/1.0" alt="4Head" class="twitch-emoji">',
+        'Pog': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/305954156/default/light/1.0" alt="Pog" class="twitch-emoji">',
+        'LUL': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/305954160/default/light/1.0" alt="LUL" class="twitch-emoji">',
+        'OMEGALUL': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/305954159/default/light/1.0" alt="OMEGALUL" class="twitch-emoji">',
+        'Pepega': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/305954157/default/light/1.0" alt="Pepega" class="twitch-emoji">',
+        'monkaS': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/305954158/default/light/1.0" alt="monkaS" class="twitch-emoji">'
+    };
+    
+    let processedText = text;
+    for (const [emojiCode, emojiHtml] of Object.entries(emojiMap)) {
+        processedText = processedText.replace(new RegExp(escapeRegExp(emojiCode), 'g'), emojiHtml);
+    }
+    
+    return processedText;
+}
+
+// Вспомогательная функция для экранирования специальных символов в регулярных выражениях
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // Функция показа уведомлений
@@ -420,6 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Деактивируем кнопки управления по умолчанию
     startBtn.disabled = false;
     resetBtn.disabled = true;
+    winnerBtn.style.display = 'none';
     
     // Добавляем приветственное сообщение в чат
     addChatMessage('system', 'Система', 'Добро пожаловать в Twitch Giveaway Bot!');

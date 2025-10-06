@@ -452,6 +452,51 @@ function initWebServer(app, io) {
     }
   });
 
+  // API маршрут для выбора победителя
+  app.post('/api/select-winner', requireAuth, async (req, res) => {
+    try {
+      // Получаем имя канала авторизованного пользователя
+      const channelName = req.user.username;
+      
+      // Находим активный розыгрыш для этого канала
+      let activeGiveaway = null;
+      for (const [key, giveaway] of activeGiveaways.entries()) {
+        if (giveaway.channel === channelName) {
+          activeGiveaway = giveaway;
+          break;
+        }
+      }
+      
+      if (!activeGiveaway) {
+        return res.status(400).json({ error: 'Нет активного розыгрыша' });
+      }
+      
+      // Проверяем, есть ли участники
+      if (!activeGiveaway.participants || activeGiveaway.participants.length === 0) {
+        return res.status(400).json({ error: 'Нет участников для выбора победителя' });
+      }
+      
+      // Выбираем случайного победителя из участников
+      const winnerIndex = Math.floor(Math.random() * activeGiveaway.participants.length);
+      const winner = activeGiveaway.participants[winnerIndex];
+      
+      // Отправляем уведомление через WebSocket
+      io.emit('winnerSelected', {
+        winner: winner,
+        channel: channelName,
+        giveawayId: activeGiveaway.id
+      });
+      
+      return res.json({ 
+        success: true, 
+        winner: winner
+      });
+    } catch (error) {
+      console.error('Ошибка при выборе победителя:', error);
+      res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+    }
+  });
+
   // API маршруты
   app.get('/api/giveaways/:channel', async (req, res) => {
     try {
