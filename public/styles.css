@@ -8,9 +8,11 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
-    color: #333;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #e0e0e0;
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%);
     min-height: 100vh;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230a0a1a"/><path d="M20,20 L80,80 M80,20 L20,80" stroke="%231a1a2e" stroke-width="1"/></svg>');
+    background-size: 200px 200px;
 }
 
 .container {
@@ -22,13 +24,25 @@ body {
 
 /* Заголовок */
 header {
-    background: rgba(255, 255, 255, 0.1);
+    background: linear-gradient(90deg, #1a1a2e 0%, #16213e 100%);
     backdrop-filter: blur(10px);
     border-radius: 15px;
     padding: 1rem;
     margin-bottom: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 2px solid #c1272d;
+    position: relative;
+    overflow: hidden;
+}
+
+header::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #c1272d, #f0d43a, #c1272d);
 }
 
 .header-content {
@@ -36,16 +50,22 @@ header {
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
+    position: relative;
+    z-index: 2;
 }
 
 header h1 {
-    color: white;
-    font-size: 1.8rem;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    color: #f0d43a;
+    font-size: 2rem;
+    text-shadow: 0 0 10px rgba(240, 212, 58, 0.5);
+    font-family: 'Arial Black', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
 }
 
 header h1 i {
     margin-right: 10px;
+    color: #c1272d;
 }
 
 .auth-section {
@@ -83,6 +103,25 @@ header h1 i {
     justify-content: center;
     text-decoration: none;
     font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+}
+
+.btn:hover::before {
+    left: 100%;
 }
 
 .btn i {
@@ -90,91 +129,105 @@ header h1 i {
 }
 
 .btn-primary {
-    background: linear-gradient(45deg, #6441a5, #9146ff);
-    color: white;
-    box-shadow: 0 4px 15px rgba(145, 70, 255, 0.3);
+    background: linear-gradient(45deg, #c1272d, #f0d43a);
+    color: #1a1a2e;
+    box-shadow: 0 4px 15px rgba(193, 39, 45, 0.4);
+    border: 1px solid #f0d43a;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(45deg, #5a379a, #823de0);
+    background: linear-gradient(45deg, #d1373d, #f8e44a);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(145, 70, 255, 0.4);
-}
-
-.btn-primary:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
+    box-shadow: 0 6px 20px rgba(193, 39, 45, 0.6);
 }
 
 .btn-success {
     background: linear-gradient(45deg, #28a745, #20c997);
     color: white;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    border: 1px solid #20c997;
 }
 
 .btn-success:hover {
     background: linear-gradient(45deg, #218838, #1ba87e);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
 }
 
 .btn-warning {
     background: linear-gradient(45deg, #ffc107, #fd7e14);
-    color: white;
-    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+    color: #1a1a2e;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+    border: 1px solid #ffc107;
 }
 
 .btn-warning:hover {
     background: linear-gradient(45deg, #e0a800, #e07a00);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+    box-shadow: 0 6px 20px rgba(255, 193, 7, 0.6);
 }
 
 .btn-info {
     background: linear-gradient(45deg, #17a2b8, #3498db);
     color: white;
-    box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+    box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);
+    border: 1px solid #3498db;
 }
 
 .btn-info:hover {
     background: linear-gradient(45deg, #138496, #2980b9);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(23, 162, 184, 0.4);
+    box-shadow: 0 6px 20px rgba(23, 162, 184, 0.6);
 }
 
 .btn-secondary {
-    background: linear-gradient(45deg, #6c757d, #495057);
+    background: linear-gradient(45deg, #6a0dad, #8a2be2);
     color: white;
-    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+    box-shadow: 0 4px 15px rgba(106, 13, 173, 0.4);
+    border: 1px solid #8a2be2;
 }
 
 .btn-secondary:hover {
-    background: linear-gradient(45deg, #5a6268, #343a40);
+    background: linear-gradient(45deg, #7a1deb, #9a3bf2);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+    box-shadow: 0 6px 20px rgba(106, 13, 173, 0.6);
 }
 
 /* Карточки */
 .card {
-    background: rgba(255, 255, 255, 0.95);
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     border-radius: 15px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 2px solid #c1272d;
     overflow: hidden;
     transition: transform 0.3s ease;
+    position: relative;
+}
+
+.card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #c1272d, #f0d43a, #c1272d);
 }
 
 .card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
 .card-header {
-    background: linear-gradient(45deg, #6441a5, #9146ff);
-    color: white;
+    background: linear-gradient(45deg, #1a1a2e, #0f3460);
+    color: #f0d43a;
     padding: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    font-family: 'Arial Black', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .card-header h2 {
@@ -187,6 +240,7 @@ header h1 i {
 
 .card-header h2 i {
     margin-right: 10px;
+    color: #c1272d;
 }
 
 .card-body {
@@ -264,16 +318,16 @@ header h1 i {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #ffffff;
     padding: 30px;
     border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     z-index: 10000;
     text-align: center;
-    min-width: 300px;
+    min-width: 350px;
     backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: 3px solid #c1272d;
     display: none;
     pointer-events: auto;
     -webkit-backface-visibility: hidden;
@@ -284,8 +338,12 @@ header h1 i {
 
 #winnerSection h2 {
     margin-top: 0;
-    font-size: 24px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    font-size: 28px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    color: #f0d43a;
+    font-family: 'Arial Black', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .winner-content {
@@ -295,28 +353,35 @@ header h1 i {
 .winner-content p {
     margin: 10px 0;
     font-size: 16px;
+    color: #e0e0e0;
 }
 
 #winnerName {
-    font-size: 28px;
+    font-size: 32px;
     font-weight: bold;
     margin: 15px 0;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    color: #FFD700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    color: #f0d43a;
+    background: linear-gradient(to right, #f0d43a, #c1272d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-family: 'Arial Black', sans-serif;
 }
 
 .winner-message {
     margin: 20px 0;
     padding: 15px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 10px;
     min-height: 150px;
+    border: 1px solid #c1272d;
 }
 
 .winner-message p {
     margin-top: 0;
     font-size: 14px;
     opacity: 0.9;
+    color: #e0e0e0;
 }
 
 .winner-chat-container {
@@ -324,10 +389,11 @@ header h1 i {
     overflow-y: auto;
     margin-top: 10px;
     text-align: left;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.4);
     border-radius: 8px;
     padding: 10px;
     min-height: 80px;
+    border: 1px solid #6a0dad;
 }
 
 .winner-chat-message {
@@ -336,11 +402,12 @@ header h1 i {
     border-radius: 4px;
     font-size: 13px;
     word-wrap: break-word;
+    color: #e0e0e0;
 }
 
 .winner-chat-message.winner-response {
-    background: rgba(255, 215, 0, 0.2);
-    border-left: 3px solid #FFD700;
+    background: rgba(193, 39, 45, 0.3);
+    border-left: 3px solid #f0d43a;
 }
 
 .winner-timer {
@@ -351,16 +418,19 @@ header h1 i {
     margin-bottom: 5px;
     font-size: 14px;
     opacity: 0.9;
+    color: #e0e0e0;
 }
 
 #winnerTimer {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: bold;
     font-family: 'Courier New', monospace;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.4);
     padding: 10px 15px;
     border-radius: 8px;
     display: inline-block;
+    color: #f0d43a;
+    border: 1px solid #c1272d;
 }
 
 .winner-actions {
@@ -368,11 +438,11 @@ header h1 i {
     display: flex;
     justify-content: center;
     gap: 15px;
-    flex-wrap: wrap; /* Позволяем кнопкам переноситься при необходимости */
+    flex-wrap: wrap;
 }
 
 .winner-actions .btn {
-    padding: 10px 20px;
+    padding: 12px 20px;
     font-size: 14px;
     border: none;
     border-radius: 6px;
@@ -381,11 +451,14 @@ header h1 i {
     display: flex;
     align-items: center;
     gap: 8px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .winner-actions .btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .winner-actions .btn:active {
@@ -393,21 +466,25 @@ header h1 i {
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.2);
+    background: linear-gradient(45deg, #6a0dad, #8a2be2);
     color: white;
+    box-shadow: 0 4px 15px rgba(106, 13, 173, 0.4);
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: linear-gradient(45deg, #7a1deb, #9a3bf2);
+    box-shadow: 0 6px 20px rgba(106, 13, 173, 0.6);
 }
 
 .btn-primary {
-    background: rgba(255, 255, 255, 0.9);
-    color: #764ba2;
+    background: linear-gradient(45deg, #c1272d, #f0d43a);
+    color: #1a1a2e;
+    box-shadow: 0 4px 15px rgba(193, 39, 45, 0.4);
 }
 
 .btn-primary:hover {
-    background: white;
+    background: linear-gradient(45deg, #d1373d, #f8e44a);
+    box-shadow: 0 6px 20px rgba(193, 39, 45, 0.6);
 }
 
 /* Стили для смайликов Twitch */
@@ -515,6 +592,9 @@ footer {
     color: rgba(255, 255, 255, 0.8);
     margin-top: 20px;
     font-size: 0.9rem;
+    background: linear-gradient(90deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 10px;
+    border: 1px solid #c1272d;
 }
 
 /* Адаптивность */
