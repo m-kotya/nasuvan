@@ -57,6 +57,15 @@ function initBot(socketIo) {
     if (self) {
       console.log(`Бот присоединился к каналу ${channel}`);
       connectedChannels.add(channel);
+      
+      // Отправляем сообщение через WebSocket
+      if (io) {
+        io.emit('channelJoined', {
+          channel: channel,
+          message: `Бот присоединился к каналу ${channel}`,
+          timestamp: new Date().toISOString()
+        });
+      }
     }
   });
   
@@ -64,6 +73,15 @@ function initBot(socketIo) {
     if (self) {
       console.log(`Бот покинул канал ${channel}`);
       connectedChannels.delete(channel);
+      
+      // Отправляем сообщение через WebSocket
+      if (io) {
+        io.emit('channelLeft', {
+          channel: channel,
+          message: `Бот покинул канал ${channel}`,
+          timestamp: new Date().toISOString()
+        });
+      }
     }
   });
 
@@ -73,10 +91,24 @@ function initBot(socketIo) {
       process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
     client.connect().catch(error => {
       console.error('Ошибка подключения к Twitch:', error.message);
+      // Отправляем сообщение через WebSocket об ошибке подключения
+      if (io) {
+        io.emit('twitchError', {
+          message: 'Ошибка подключения к Twitch: ' + error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
       // Не прерываем работу приложения при ошибке подключения
     });
   } else {
     console.log('Учетные данные бота не настроены. Бот будет работать в ограниченном режиме.');
+    // Отправляем сообщение через WebSocket о тестовом режиме
+    if (io) {
+      io.emit('twitchConnected', {
+        message: 'Бот работает в тестовом режиме (без реального подключения к Twitch)',
+        timestamp: new Date().toISOString()
+      });
+    }
   }
 
   // Подписка на сообщения в чате
@@ -104,9 +136,11 @@ function initBot(socketIo) {
         // Добавляем участника в розыгрыш
         const participant = await addParticipant(giveaway.id, username);
         if (participant) {
-          // Отправляем уведомление в чат
+          // Отправляем уведомление в чат (только если есть учетные данные бота)
           try {
-            if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN) {
+            if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
+                process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
+                process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
               await client.say(channel, `@${username} добавлен в розыгрыш!`);
             }
           } catch (error) {
@@ -153,9 +187,11 @@ function initBot(socketIo) {
               channel: channelName
             });
             
-            // Отправляем уведомление в чат
+            // Отправляем уведомление в чат (только если есть учетные данные бота)
             try {
-              if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN) {
+              if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
+                  process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
+                  process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
                 await client.say(channel, `Розыгрыш "${prize}" начался! Напишите "${keyword}" чтобы принять участие!`);
               }
             } catch (error) {
@@ -173,7 +209,9 @@ function initBot(socketIo) {
             }
           } else {
             try {
-              if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN) {
+              if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
+                  process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
+                  process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
                 await client.say(channel, 'Ошибка при создании розыгрыша.');
               }
             } catch (error) {
@@ -182,7 +220,9 @@ function initBot(socketIo) {
           }
         } else {
           try {
-            if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN) {
+            if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
+                process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
+                process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
               await client.say(channel, 'Использование: !startgiveaway <ключевое слово> <приз>');
             }
           } catch (error) {
@@ -200,7 +240,9 @@ function initBot(socketIo) {
             
             if (winner) {
               try {
-                if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN) {
+                if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
+                    process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
+                    process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
                   await client.say(channel, `Розыгрыш "${giveaway.prize}" завершен! Победитель: @${winner}`);
                 }
               } catch (error) {
@@ -208,7 +250,9 @@ function initBot(socketIo) {
               }
             } else {
               try {
-                if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN) {
+                if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
+                    process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
+                    process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
                   await client.say(channel, `Розыгрыш "${giveaway.prize}" завершен! Участников не было.`);
                 }
               } catch (error) {
@@ -233,7 +277,9 @@ function initBot(socketIo) {
         
         if (endedCount === 0) {
           try {
-            if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN) {
+            if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN && 
+                process.env.TWITCH_BOT_USERNAME !== 'your_bot_username' && 
+                process.env.TWITCH_OAUTH_TOKEN !== 'oauth:your_token_here') {
               await client.say(channel, 'Нет активных розыгрышей в этом канале.');
             }
           } catch (error) {
@@ -258,10 +304,12 @@ async function joinChannel(channelName) {
     if (io) {
       io.emit('channelJoined', {
         channel: channelName,
-        message: 'Канал добавлен (тестовый режим)',
+        message: `Канал ${channelName} добавлен (тестовый режим)`,
         timestamp: new Date().toISOString()
       });
     }
+    // Добавляем канал в список подключенных для тестирования
+    connectedChannels.add(channelName);
     return true;
   }
   
@@ -274,7 +322,7 @@ async function joinChannel(channelName) {
     if (io) {
       io.emit('channelJoined', {
         channel: channelName,
-        message: 'Бот присоединился к каналу',
+        message: `Бот присоединился к каналу ${channelName}`,
         timestamp: new Date().toISOString()
       });
     }
@@ -294,6 +342,15 @@ async function leaveChannel(channelName) {
       process.env.TWITCH_OAUTH_TOKEN === 'oauth:your_token_here') {
     console.log('Учетные данные бота не настроены. Удаление из канала невозможно.');
     connectedChannels.delete(channelName);
+    
+    // Отправляем сообщение через WebSocket
+    if (io) {
+      io.emit('channelLeft', {
+        channel: channelName,
+        message: `Канал ${channelName} удален (тестовый режим)`,
+        timestamp: new Date().toISOString()
+      });
+    }
     return true;
   }
   
@@ -306,7 +363,7 @@ async function leaveChannel(channelName) {
     if (io) {
       io.emit('channelLeft', {
         channel: channelName,
-        message: 'Бот покинул канал',
+        message: `Бот покинул канал ${channelName}`,
         timestamp: new Date().toISOString()
       });
     }
@@ -325,8 +382,43 @@ async function leaveChannel(channelName) {
   }
 }
 
+// Функция для симуляции получения сообщений из чата (для тестирования)
+function simulateChatMessage(channel, username, message) {
+  // Отправляем сообщение через WebSocket всем подключенным клиентам
+  if (io) {
+    io.emit('twitchMessage', {
+      channel: channel,
+      username: username,
+      message: message,
+      timestamp: new Date().toISOString()
+    });
+  }
+  
+  // Проверяем, есть ли активный розыгрыш с таким ключевым словом
+  for (const [key, giveaway] of activeGiveaways.entries()) {
+    if (giveaway.channel === channel && giveaway.keyword === message.toLowerCase()) {
+      // Отправляем обновление через WebSocket
+      if (io) {
+        io.emit('participantAdded', {
+          giveawayId: giveaway.id,
+          username: username,
+          count: giveaway.participants ? giveaway.participants.length + 1 : 1
+        });
+      }
+      
+      // Добавляем участника в локальный список
+      if (!giveaway.participants) {
+        giveaway.participants = [];
+      }
+      giveaway.participants.push(username);
+      break;
+    }
+  }
+}
+
 module.exports = {
   initBot,
   joinChannel,
-  leaveChannel
+  leaveChannel,
+  simulateChatMessage
 };

@@ -1,7 +1,7 @@
 const path = require('path');
 const crypto = require('crypto');
 const { getGiveaways, createGiveaway, selectWinner } = require('../database/supabaseClient');
-const { joinChannel, leaveChannel } = require('../bot/twitchBot');
+const { joinChannel, leaveChannel, simulateChatMessage } = require('../bot/twitchBot');
 
 // Хранение активных розыгрышей в памяти (в реальном приложении лучше использовать БД)
 let activeGiveaways = new Map();
@@ -494,6 +494,28 @@ function initWebServer(app, io) {
       }
     } catch (error) {
       console.error('Ошибка при удалении бота из канала:', error);
+      res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+    }
+  });
+
+  // Тестовый маршрут для симуляции сообщений из чата (только в тестовом режиме)
+  app.post('/api/test/chat-message', requireAuth, (req, res) => {
+    try {
+      const { username, message } = req.body;
+      
+      if (!username || !message) {
+        return res.status(400).json({ error: 'Требуются поля username и message' });
+      }
+      
+      // Получаем имя канала авторизованного пользователя
+      const channelName = req.user.username;
+      
+      // Симулируем получение сообщения из чата
+      simulateChatMessage(channelName, username, message);
+      
+      res.json({ success: true, message: 'Сообщение отправлено' });
+    } catch (error) {
+      console.error('Ошибка при симуляции сообщения:', error);
       res.status(500).json({ error: 'Внутренняя ошибка сервера' });
     }
   });
