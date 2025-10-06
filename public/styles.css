@@ -258,6 +258,49 @@ header h1 i {
     border-left: 4px solid #28a745;
 }
 
+/* Список победителей */
+.winners-list {
+    min-height: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    
+    /* Скрыли скроллбары для разных браузеров */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE и Edge */
+}
+
+.winners-list::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.winner-item {
+    padding: 12px 15px;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #fff9c4, #ffecb3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.winner-item .winner-name {
+    font-weight: bold;
+    color: #ff9800;
+    font-size: 1.1rem;
+}
+
+.winner-item .winner-time {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.winner-item .winner-trophy {
+    color: #ff9800;
+    font-size: 1.2rem;
+}
+
 /* Стили для секции победителя */
 #winnerSection {
     position: fixed;

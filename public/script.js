@@ -13,6 +13,7 @@ const winnerName = document.getElementById('winnerName');
 const winnerTimer = document.getElementById('winnerTimer');
 const rerollBtn = document.getElementById('rerollBtn');
 const closeWinnerBtn = document.getElementById('closeWinnerBtn');
+const winnersList = document.getElementById('winnersList'); // Новый элемент
 
 // Глобальные переменные
 let participants = [];
@@ -23,6 +24,7 @@ let isAuthenticated = false;
 let currentWinner = null;
 let winnerTimerInterval = null;
 let winnerSeconds = 0;
+let winners = []; // Массив для хранения последних победителей
 
 // Обработчики событий
 authBtn.addEventListener('click', handleAuth);
@@ -32,6 +34,58 @@ resetBtn.addEventListener('click', handleReset);
 winnerBtn.addEventListener('click', handleSelectWinner);
 rerollBtn.addEventListener('click', handleReroll);
 closeWinnerBtn.addEventListener('click', handleCloseWinner);
+
+// Функция добавления победителя в список
+function addWinner(winnerName) {
+    const now = new Date();
+    const winner = {
+        name: winnerName,
+        time: now
+    };
+    
+    // Добавляем победителя в начало массива
+    winners.unshift(winner);
+    
+    // Ограничиваем список последними 10 победителями
+    if (winners.length > 10) {
+        winners = winners.slice(0, 10);
+    }
+    
+    // Обновляем отображение списка победителей
+    updateWinnersList();
+}
+
+// Функция обновления списка победителей
+function updateWinnersList() {
+    if (winners.length === 0) {
+        winnersList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-trophy"></i>
+                <p>Победителей пока нет</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    winners.forEach(winner => {
+        const timeString = `${winner.time.getHours().toString().padStart(2, '0')}:${winner.time.getMinutes().toString().padStart(2, '0')}`;
+        const dateString = winner.time.toLocaleDateString('ru-RU');
+        
+        html += `
+            <div class="winner-item">
+                <div>
+                    <span class="winner-name"><i class="fas fa-trophy winner-trophy"></i> ${winner.name}</span>
+                </div>
+                <div>
+                    <span class="winner-time" title="${dateString}">${timeString}</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    winnersList.innerHTML = html;
+}
 
 // Функция инициализации WebSocket соединения
 function initWebSocket() {
@@ -103,7 +157,6 @@ function initWebSocket() {
         addChatMessage('system', 'Система', data.message);
     });
     
-    
     // Обработчик присоединения к каналу
     socket.on('channelJoined', (data) => {
         console.log('Бот присоединился к каналу:', data);
@@ -139,6 +192,8 @@ function initWebSocket() {
     socket.on('giveawayEnded', (data) => {
         if (data.winner) {
             addChatMessage('system', 'Система', `Розыгрыш завершен! Победитель: @${data.winner}`);
+            // Добавляем победителя в список
+            addWinner(data.winner);
         } else {
             addChatMessage('system', 'Система', 'Розыгрыш завершен! Участников не было.');
         }
@@ -156,6 +211,12 @@ function initWebSocket() {
     // Обработчик выбора победителя
     socket.on('winnerSelected', (data) => {
         showWinner(data.winner);
+        // Добавляем победителя в список
+        addWinner(data.winner);
+    });
+    
+    socket.on('disconnect', () => {
+        console.log('WebSocket соединение закрыто');
     });
 }
 
@@ -400,11 +461,14 @@ function handleSelectWinner() {
             addChatMessage('winner', 'Система', `Победитель: @${data.winner}!`);
             showNotification(`Победитель: ${data.winner}`, 'success');
             
+            // Добавляем победителя в список
+            addWinner(data.winner);
+            
             // Отправляем уведомление в чат через WebSocket
             if (socket && socket.connected) {
                 socket.emit('winnerSelectedChat', {
                     winner: data.winner,
-                    channel: 'default', // В реальной реализации нужно получить имя канала авторизованного пользователя
+                    channel: 'default',
                     message: `Поздравляем @${data.winner}! Вы выиграли розыгрыш! Пожалуйста, напишите любое сообщение в чат для подтверждения.`
                 });
             }
@@ -464,11 +528,14 @@ function handleReroll() {
             addChatMessage('winner', 'Система', `Новый победитель: @${data.winner}!`);
             showNotification(`Новый победитель: ${data.winner}`, 'success');
             
+            // Добавляем победителя в список
+            addWinner(data.winner);
+            
             // Отправляем уведомление в чат через WebSocket
             if (socket && socket.connected) {
                 socket.emit('winnerSelectedChat', {
                     winner: data.winner,
-                    channel: 'default', // В реальной реализации нужно получить имя канала авторизованного пользователя
+                    channel: 'default',
                     message: `Поздравляем @${data.winner}! Вы выиграли розыгрыш! Пожалуйста, напишите любое сообщение в чат для подтверждения.`
                 });
             }
@@ -589,7 +656,7 @@ function addParticipant(username) {
     if (socket && socket.connected) {
         socket.emit('addParticipant', {
             username: username,
-            channel: 'default', // В реальной реализации нужно получить имя канала авторизованного пользователя
+            channel: 'default',
             timestamp: new Date().toISOString()
         });
     }
@@ -757,6 +824,9 @@ document.addEventListener('DOMContentLoaded', () => {
     startBtn.disabled = false;
     resetBtn.disabled = true;
     winnerBtn.style.display = 'none';
+    
+    // Инициализируем список победителей
+    updateWinnersList();
     
     // Добавляем обработчик для закрытия модального окна при клике вне его области
     document.addEventListener('click', function(event) {
