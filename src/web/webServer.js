@@ -52,12 +52,16 @@ function initWebServer(app, io) {
   app.get('/auth/twitch', (req, res) => {
     const clientId = process.env.TWITCH_CLIENT_ID;
     const appUrl = process.env.APP_URL;
-    const redirectUri = `${appUrl}/auth/twitch/callback`;
+    
+    // Нормализуем APP_URL - убираем слеш в конце если есть
+    const normalizedAppUrl = appUrl.endsWith('/') ? appUrl.slice(0, -1) : appUrl;
+    const redirectUri = `${normalizedAppUrl}/auth/twitch/callback`;
     
     console.log('=== Twitch OAuth Authorization Request ===');
     console.log('Environment variables:');
     console.log('  TWITCH_CLIENT_ID:', clientId ? 'SET' : 'NOT SET');
     console.log('  APP_URL:', appUrl || 'NOT SET');
+    console.log('  Normalized APP_URL:', normalizedAppUrl);
     console.log('  Calculated redirectUri:', redirectUri);
     
     // Проверяем обязательные переменные окружения
@@ -96,10 +100,6 @@ function initWebServer(app, io) {
     const state = crypto.randomBytes(32).toString('hex'); // Защита от CSRF
     const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&state=${state}`;
     
-    // Сохраняем state для проверки в callback
-    req.session = req.session || {};
-    req.session.oauthState = state;
-    
     console.log('Redirecting user to Twitch Auth URL:', authUrl);
     res.redirect(authUrl);
   });
@@ -132,16 +132,6 @@ function initWebServer(app, io) {
       `);
     }
     
-    // Проверяем state для защиты от CSRF
-    // if (!req.session.oauthState || req.session.oauthState !== state) {
-    //   console.error('Invalid state parameter');
-    //   return res.status(400).send(`
-    //     <h2>Ошибка авторизации</h2>
-    //     <p>Неверный параметр state. Возможна попытка CSRF-атаки.</p>
-    //     <a href="/">Вернуться на главную</a>
-    //   `);
-    // }
-    
     if (!code) {
       console.error('Authorization code not provided in request:', req.query);
       return res.status(400).send(`
@@ -170,7 +160,9 @@ function initWebServer(app, io) {
       }
     }
     
-    const redirectUri = `${process.env.APP_URL}/auth/twitch/callback`;
+    // Нормализуем APP_URL для redirect_uri
+    const normalizedAppUrl = process.env.APP_URL.endsWith('/') ? process.env.APP_URL.slice(0, -1) : process.env.APP_URL;
+    const redirectUri = `${normalizedAppUrl}/auth/twitch/callback`;
     console.log('Using redirect URI for token exchange:', redirectUri);
     
     try {
