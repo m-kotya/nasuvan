@@ -258,52 +258,121 @@ header h1 i {
     border-left: 4px solid #28a745;
 }
 
-/* Секция победителя */
-.winner-section {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #e1e5e9;
-}
-
-.winner-display {
-    text-align: center;
-}
-
-.winner-display h3 {
-    color: #ffc107;
-    margin-bottom: 15px;
-}
-
-.winner-info {
-    background: linear-gradient(45deg, #6441a5, #9146ff);
+/* Стили для секции победителя */
+#winnerSection {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    text-align: center;
+    min-width: 300px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    display: none;
 }
 
-.winner-name {
-    font-size: 1.5rem;
+#winnerSection h2 {
+    margin-top: 0;
+    font-size: 24px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.winner-content {
+    margin: 20px 0;
+}
+
+.winner-content p {
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+#winnerName {
+    font-size: 28px;
     font-weight: bold;
-    display: block;
-    margin-bottom: 10px;
+    margin: 15px 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    color: #FFD700;
 }
 
 .winner-timer {
-    font-size: 2rem;
+    margin: 20px 0;
+}
+
+.winner-timer p {
+    margin-bottom: 5px;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+#winnerTimer {
+    font-size: 24px;
     font-weight: bold;
     font-family: 'Courier New', monospace;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px 15px;
+    border-radius: 8px;
+    display: inline-block;
 }
 
 .winner-actions {
+    margin-top: 25px;
     display: flex;
-    gap: 15px;
     justify-content: center;
-    flex-wrap: wrap;
+    gap: 15px;
 }
 
 .winner-actions .btn {
-    min-width: 120px;
+    padding: 10px 20px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.winner-actions .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.winner-actions .btn:active {
+    transform: translateY(0);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.btn-primary {
+    background: rgba(255, 255, 255, 0.9);
+    color: #764ba2;
+}
+
+.btn-primary:hover {
+    background: white;
+}
+
+/* Стили для смайликов Twitch */
+.twitch-emoji {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin: 0 2px;
+  display: inline-block;
 }
 
 /* Чат */
@@ -375,14 +444,6 @@ header h1 i {
 .message-time {
     font-size: 0.8rem;
     color: #6c757d;
-}
-
-/* Эмодзи */
-.twitch-emoji {
-    width: 1.2em;
-    height: 1.2em;
-    vertical-align: middle;
-    margin: 0 2px;
 }
 
 /* Пустое состояние */

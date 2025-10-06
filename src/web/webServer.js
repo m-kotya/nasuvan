@@ -587,6 +587,19 @@ function initWebServer(app, io) {
       }
     });
     
+    // Обработчик уведомления о выборе победителя от фронтенда
+    socket.on('winnerSelectedChat', (data) => {
+      console.log('Получено уведомление о выборе победителя:', data);
+      
+      // Отправляем сообщение в чат всем подключенным клиентам
+      io.emit('twitchMessage', {
+        channel: 'system',
+        username: 'Система',
+        message: data.message,
+        timestamp: new Date().toISOString()
+      });
+    });
+    
     socket.on('disconnect', () => {
       console.log('WebSocket соединение закрыто');
     });

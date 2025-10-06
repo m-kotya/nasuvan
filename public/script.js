@@ -381,6 +381,14 @@ function handleSelectWinner() {
             showWinner(data.winner);
             addChatMessage('winner', 'Система', `Победитель: @${data.winner}!`);
             showNotification(`Победитель: ${data.winner}`, 'success');
+            
+            // Отправляем уведомление в чат через WebSocket
+            if (socket && socket.connected) {
+                socket.emit('winnerSelectedChat', {
+                    winner: data.winner,
+                    message: `Поздравляем @${data.winner}! Вы выиграли розыгрыш! Пожалуйста, напишите любое сообщение в чат для подтверждения.`
+                });
+            }
         } else {
             showNotification('Не удалось выбрать победителя', 'error');
         }
@@ -436,6 +444,14 @@ function handleReroll() {
             showWinner(data.winner);
             addChatMessage('winner', 'Система', `Новый победитель: @${data.winner}!`);
             showNotification(`Новый победитель: ${data.winner}`, 'success');
+            
+            // Отправляем уведомление в чат через WebSocket
+            if (socket && socket.connected) {
+                socket.emit('winnerSelectedChat', {
+                    winner: data.winner,
+                    message: `Поздравляем @${data.winner}! Вы выиграли розыгрыш! Пожалуйста, напишите любое сообщение в чат для подтверждения.`
+                });
+            }
         } else {
             showNotification('Не удалось выбрать нового победителя', 'error');
         }
@@ -456,18 +472,53 @@ function handleCloseWinner() {
     winnerSection.style.display = 'none';
     currentWinner = null;
     stopWinnerTimer();
+    
+    // Удаляем оверлей
+    const overlay = document.getElementById('modalOverlay');
+    if (overlay) {
+        overlay.remove();
+    }
 }
 
-// Функция отображения победителя
+// Функция отображения победителя в модальном окне
 function showWinner(winner) {
     currentWinner = winner;
     winnerName.textContent = winner;
+    
+    // Показываем модальное окно
     winnerSection.style.display = 'block';
+    
+    // Добавляем оверлей для затемнения фона
+    let overlay = document.getElementById('modalOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'modalOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        `;
+        document.body.appendChild(overlay);
+    }
     
     // Сброс таймера и запуск
     winnerSeconds = 0;
     updateWinnerTimer();
     startWinnerTimer();
+    
+    // Центрируем модальное окно
+    winnerSection.style.position = 'fixed';
+    winnerSection.style.top = '50%';
+    winnerSection.style.left = '50%';
+    winnerSection.style.transform = 'translate(-50%, -50%)';
+    winnerSection.style.zIndex = '1000';
 }
 
 // Функция запуска таймера победителя
@@ -591,6 +642,7 @@ function processEmojis(text) {
         ':D': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/3/default/light/1.0" alt=":D" class="twitch-emoji">',
         ';)': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/4/default/light/1.0" alt=";)" class="twitch-emoji">',
         ':P': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/5/default/light/1.0" alt=":P" class="twitch-emoji">',
+        ':p': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/5/default/light/1.0" alt=":p" class="twitch-emoji">',
         ':o': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/6/default/light/1.0" alt=":o" class="twitch-emoji">',
         ':O': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/6/default/light/1.0" alt=":O" class="twitch-emoji">',
         'Kappa': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/25/default/light/1.0" alt="Kappa" class="twitch-emoji">',
@@ -602,12 +654,21 @@ function processEmojis(text) {
         'LUL': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/305954160/default/light/1.0" alt="LUL" class="twitch-emoji">',
         'OMEGALUL': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/305954159/default/light/1.0" alt="OMEGALUL" class="twitch-emoji">',
         'Pepega': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/305954157/default/light/1.0" alt="Pepega" class="twitch-emoji">',
-        'monkaS': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/305954158/default/light/1.0" alt="monkaS" class="twitch-emoji">'
+        'monkaS': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/305954158/default/light/1.0" alt="monkaS" class="twitch-emoji">',
+        'FeelsGoodMan': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/304486302/default/light/1.0" alt="FeelsGoodMan" class="twitch-emoji">',
+        'FeelsBadMan': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/304486300/default/light/1.0" alt="FeelsBadMan" class="twitch-emoji">',
+        'KEKW': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/304486305/default/light/1.0" alt="KEKW" class="twitch-emoji">',
+        'monkaHmm': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/304486309/default/light/1.0" alt="monkaHmm" class="twitch-emoji">',
+        'Sadge': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/304486310/default/light/1.0" alt="Sadge" class="twitch-emoji">',
+        'Clap': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/433/default/light/1.0" alt="Clap" class="twitch-emoji">',
+        'Heart': '<img src="https://static-cdn.jtvnw.net/emoticons/v2/434/default/light/1.0" alt="Heart" class="twitch-emoji">'
     };
     
     let processedText = text;
     for (const [emojiCode, emojiHtml] of Object.entries(emojiMap)) {
-        processedText = processedText.replace(new RegExp(escapeRegExp(emojiCode), 'g'), emojiHtml);
+        // Используем регулярное выражение с флагом 'gi' для замены всех вхождений
+        const regex = new RegExp(escapeRegExp(emojiCode), 'gi');
+        processedText = processedText.replace(regex, emojiHtml);
     }
     
     return processedText;
@@ -671,6 +732,16 @@ document.addEventListener('DOMContentLoaded', () => {
     startBtn.disabled = false;
     resetBtn.disabled = true;
     winnerBtn.style.display = 'none';
+    
+    // Добавляем обработчик для закрытия модального окна при клике вне его области
+    document.addEventListener('click', function(event) {
+        if (winnerSection.style.display === 'block' && 
+            !winnerSection.contains(event.target) && 
+            event.target !== winnerBtn &&
+            !event.target.closest('#winnerSection')) {
+            handleCloseWinner();
+        }
+    });
     
     // Добавляем приветственное сообщение в чат
     addChatMessage('system', 'Система', 'Добро пожаловать в Twitch Giveaway Bot!');
