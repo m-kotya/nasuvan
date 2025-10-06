@@ -1,6 +1,3 @@
-// Подключение к WebSocket
-const socket = io();
-
 // Элементы DOM
 const authBtn = document.getElementById('authBtn');
 const channelNameInput = document.getElementById('channelName');
@@ -156,35 +153,6 @@ function loadGiveawaysHistory(channelName) {
         giveawaysHistory.innerHTML = '<p>Ошибка загрузки истории розыгрышей</p>';
     });
 }
-
-// Обработчики WebSocket событий
-socket.on('giveawayStarted', (data) => {
-    const item = document.createElement('div');
-    item.className = 'giveaway-item';
-    item.innerHTML = `
-        <h3>${data.prize}</h3>
-        <p><strong>Ключевое слово:</strong> ${data.keyword}</p>
-        <p><strong>Статус:</strong> Активен</p>
-    `;
-    
-    activeGiveawaysList.appendChild(item);
-});
-
-socket.on('giveawayEnded', (data) => {
-    // Обновляем отображение активных розыгрышей
-    activeGiveawaysList.innerHTML = '<p>Нет активных розыгрышей</p>';
-    
-    // Перезагружаем историю
-    const channelName = channelNameInput.value.trim();
-    if (channelName) {
-        loadGiveawaysHistory(channelName);
-    }
-});
-
-socket.on('participantAdded', (data) => {
-    // Можно добавить отображение количества участников в реальном времени
-    console.log(`Участник добавлен: ${data.username}`);
-});
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', () => {

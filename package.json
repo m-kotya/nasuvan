@@ -1,13 +1,11 @@
 {
   "name": "twitch-giveaway-bot",
   "version": "1.0.0",
-  "description": "Twitch бот для проведения розыгрышей с веб-интерфейсом",
+  "description": "Twitch бот для проведения розыгрышей с сохранением данных в Supabase",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "test": "jest",
-    "build": "echo 'Build step for Railway deployment'"
+    "dev": "nodemon src/index.js"
   },
   "keywords": [
     "twitch",
@@ -27,7 +25,6 @@
     "dotenv": "^16.3.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1",
-    "jest": "^29.7.0"
+    "nodemon": "^3.0.1"
   }
 }

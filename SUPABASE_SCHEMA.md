@@ -53,9 +53,3 @@ CREATE INDEX idx_giveaways_active ON giveaways(is_active);
 CREATE INDEX idx_participants_giveaway_id ON participants(giveaway_id);
 CREATE INDEX idx_participants_username ON participants(username);
 ```
-
-## Использование с Railway
-
-После создания таблиц в Supabase, укажите URL и ключ в переменных окружения Railway:
-- SUPABASE_URL - URL вашего проекта Supabase
-- SUPABASE_KEY - анонимный ключ доступа к вашему проекту
