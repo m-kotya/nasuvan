@@ -1,5 +1,6 @@
 // Элементы DOM
 const authBtn = document.getElementById('authBtn');
+const logoutBtn = document.getElementById('logoutBtn');
 const keywordInput = document.getElementById('keywordInput');
 const startBtn = document.getElementById('startBtn');
 const resetBtn = document.getElementById('resetBtn');
@@ -16,6 +17,7 @@ let isAuthenticated = false;
 
 // Обработчики событий
 authBtn.addEventListener('click', handleAuth);
+logoutBtn.addEventListener('click', handleLogout);
 startBtn.addEventListener('click', handleStart);
 resetBtn.addEventListener('click', handleReset);
 
@@ -38,7 +40,7 @@ function initWebSocket() {
         console.error('Ошибка WebSocket подключения:', error);
         addChatMessage('system', 'Система', 'Ошибка подключения к серверу: ' + error.message);
         // Показываем кнопку авторизации при ошибке подключения
-        authBtn.style.display = 'block';
+        updateAuthButtons(false);
     });
     
     // Обработчик получения нового сообщения из Twitch чата
@@ -91,12 +93,12 @@ function checkAuthStatus() {
         if (response.status === 401) {
             // Пользователь не авторизован
             isAuthenticated = false;
-            authBtn.style.display = 'block';
+            updateAuthButtons(false);
             addChatMessage('system', 'Система', 'Для начала работы необходимо авторизоваться через Twitch');
         } else if (response.ok) {
             // Пользователь авторизован
             isAuthenticated = true;
-            authBtn.style.display = 'none';
+            updateAuthButtons(true);
             addChatMessage('system', 'Система', 'Вы успешно авторизованы через Twitch');
         } else {
             // Другая ошибка
@@ -106,9 +108,20 @@ function checkAuthStatus() {
     .catch(error => {
         console.error('Ошибка проверки статуса авторизации:', error);
         // В случае ошибки показываем кнопку авторизации
-        authBtn.style.display = 'block';
+        updateAuthButtons(false);
         addChatMessage('system', 'Система', 'Ошибка проверки авторизации. Пожалуйста, авторизуйтесь через Twitch');
     });
+}
+
+// Функция обновления видимости кнопок авторизации/выхода
+function updateAuthButtons(isLoggedIn) {
+    if (isLoggedIn) {
+        authBtn.style.display = 'none';
+        logoutBtn.style.display = 'block';
+    } else {
+        authBtn.style.display = 'block';
+        logoutBtn.style.display = 'none';
+    }
 }
 
 // Функция обработки авторизации
@@ -120,6 +133,17 @@ function handleAuth() {
     
     // Перенаправляем на маршрут авторизации Twitch
     window.location.href = '/auth/twitch';
+}
+
+// Функция обработки выхода из системы
+function handleLogout() {
+    // Показываем индикатор загрузки
+    const originalText = logoutBtn.innerHTML;
+    logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Выход...';
+    logoutBtn.disabled = true;
+    
+    // Перенаправляем на маршрут выхода
+    window.location.href = '/auth/logout';
 }
 
 // Функция запуска розыгрыша
@@ -352,10 +376,16 @@ document.addEventListener('DOMContentLoaded', () => {
         addChatMessage('system', 'Система', 'Подключение к чату Twitch установлено');
         window.history.replaceState({}, document.title, "/");
         isAuthenticated = true;
-        authBtn.style.display = 'none';
+        updateAuthButtons(true);
+    } else if (window.location.search.includes('logout=success')) {
+        showNotification('Вы успешно вышли из системы', 'info');
+        addChatMessage('system', 'Система', 'Вы вышли из системы');
+        window.history.replaceState({}, document.title, "/");
+        isAuthenticated = false;
+        updateAuthButtons(false);
     } else {
         // Показываем кнопку авторизации по умолчанию
-        authBtn.style.display = 'block';
+        updateAuthButtons(false);
     }
     
     // Инициализируем WebSocket соединение

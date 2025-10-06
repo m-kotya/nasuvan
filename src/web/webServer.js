@@ -1,4 +1,5 @@
 const path = require('path');
+const crypto = require('crypto');
 const { getGiveaways, createGiveaway, selectWinner } = require('../database/supabaseClient');
 const { joinChannel, leaveChannel } = require('../bot/twitchBot');
 
@@ -6,6 +7,40 @@ const { joinChannel, leaveChannel } = require('../bot/twitchBot');
 let activeGiveaways = new Map();
 // Хранение информации о сессиях пользователей
 let userSessions = new Map();
+
+// Функция для генерации безопасного sessionId
+function generateSessionId() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+// Функция для обновления access token через refresh token
+async function refreshAccessToken(refreshToken) {
+  try {
+    const tokenResponse = await fetch('https://id.twitch.tv/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+        client_id: process.env.TWITCH_CLIENT_ID,
+        client_secret: process.env.TWITCH_CLIENT_SECRET
+      })
+    });
+    
+    const tokenData = await tokenResponse.json();
+    
+    if (!tokenResponse.ok) {
+      throw new Error(`Token refresh failed: ${JSON.stringify(tokenData)}`);
+    }
+    
+    return tokenData;
+  } catch (error) {
+    console.error('Error refreshing access token:', error);
+    throw error;
+  }
+}
 
 function initWebServer(app, io) {
   // Маршрут для главной страницы
@@ -16,51 +51,131 @@ function initWebServer(app, io) {
   // Маршрут для начала авторизации через Twitch
   app.get('/auth/twitch', (req, res) => {
     const clientId = process.env.TWITCH_CLIENT_ID;
-    const redirectUri = `${process.env.APP_URL}/auth/twitch/callback`;
+    const appUrl = process.env.APP_URL;
+    const redirectUri = `${appUrl}/auth/twitch/callback`;
     
-    console.log('Twitch Auth Request:');
-    console.log('  Client ID:', clientId);
-    console.log('  Redirect URI:', redirectUri);
-    console.log('  APP_URL:', process.env.APP_URL);
+    console.log('=== Twitch OAuth Authorization Request ===');
+    console.log('Environment variables:');
+    console.log('  TWITCH_CLIENT_ID:', clientId ? 'SET' : 'NOT SET');
+    console.log('  APP_URL:', appUrl || 'NOT SET');
+    console.log('  Calculated redirectUri:', redirectUri);
     
-    if (!clientId) {
-      return res.status(500).send('TWITCH_CLIENT_ID не установлен в переменных окружения');
+    // Проверяем обязательные переменные окружения
+    if (!clientId || clientId === 'your_real_client_id_here') {
+      console.error('TWITCH_CLIENT_ID is not properly configured');
+      return res.status(500).send(`
+        <h2>Ошибка конфигурации</h2>
+        <p>TWITCH_CLIENT_ID не установлен или содержит плейсхолдер.</p>
+        <p>Пожалуйста, установите правильное значение в файле .env</p>
+        <a href="/">Вернуться на главную</a>
+      `);
     }
     
-    if (!process.env.APP_URL) {
-      return res.status(500).send('APP_URL не установлен в переменных окружения');
+    if (!appUrl || appUrl === 'https://nasuvan-production.up.railway.app') {
+      console.error('APP_URL is not properly configured');
+      return res.status(500).send(`
+        <h2>Ошибка конфигурации</h2>
+        <p>APP_URL не установлен или содержит плейсхолдер.</p>
+        <p>Пожалуйста, установите правильное значение в файле .env</p>
+        <a href="/">Вернуться на главную</a>
+      `);
+    }
+    
+    // Проверяем, что APP_URL начинается с http:// или https://
+    if (!appUrl.startsWith('http://') && !appUrl.startsWith('https://')) {
+      console.error('APP_URL does not start with http:// or https://');
+      return res.status(500).send(`
+        <h2>Ошибка конфигурации</h2>
+        <p>APP_URL должен начинаться с http:// или https://</p>
+        <p>Текущее значение: ${appUrl}</p>
+        <a href="/">Вернуться на главную</a>
+      `);
     }
     
     const scope = 'user:read:email';
-    const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
+    const state = crypto.randomBytes(32).toString('hex'); // Защита от CSRF
+    const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&state=${state}`;
     
-    console.log('Redirecting to Twitch Auth URL:', authUrl);
+    // Сохраняем state для проверки в callback
+    req.session = req.session || {};
+    req.session.oauthState = state;
+    
+    console.log('Redirecting user to Twitch Auth URL:', authUrl);
     res.redirect(authUrl);
   });
 
   // Маршрут для обработки callback от Twitch OAuth
   app.get('/auth/twitch/callback', async (req, res) => {
-    console.log('Получен callback запрос:', req.query);
+    console.log('=== Twitch OAuth Callback Received ===');
+    console.log('Query parameters:', req.query);
     console.log('Headers:', req.headers);
+    console.log('Host:', req.get('host'));
+    console.log('Protocol:', req.protocol);
+    console.log('Secure:', req.secure);
+    console.log('APP_URL from env:', process.env.APP_URL);
     
     const code = req.query.code;
+    const state = req.query.state;
     const error = req.query.error;
     const errorDescription = req.query.error_description;
     
     // Обрабатываем ошибки авторизации
     if (error) {
-      console.error('Ошибка авторизации Twitch:', error);
-      console.error('Описание ошибки:', errorDescription);
-      return res.status(400).send(`Ошибка авторизации: ${error}. Описание: ${errorDescription}`);
+      console.error('Twitch OAuth Error:', error);
+      console.error('Error Description:', errorDescription);
+      return res.status(400).send(`
+        <h2>Ошибка авторизации Twitch</h2>
+        <p><strong>Ошибка:</strong> ${error}</p>
+        <p><strong>Описание:</strong> ${errorDescription}</p>
+        <p><strong>Решение:</strong> Убедитесь, что Redirect URL в настройках Twitch приложения совпадает с ${process.env.APP_URL}/auth/twitch/callback</p>
+        <a href="/">Вернуться на главную</a>
+      `);
     }
     
+    // Проверяем state для защиты от CSRF
+    // if (!req.session.oauthState || req.session.oauthState !== state) {
+    //   console.error('Invalid state parameter');
+    //   return res.status(400).send(`
+    //     <h2>Ошибка авторизации</h2>
+    //     <p>Неверный параметр state. Возможна попытка CSRF-атаки.</p>
+    //     <a href="/">Вернуться на главную</a>
+    //   `);
+    // }
+    
     if (!code) {
-      console.error('Код авторизации не предоставлен в запросе:', req.query);
-      return res.status(400).send('Код авторизации не предоставлен. Пожалуйста, попробуйте авторизоваться снова.');
+      console.error('Authorization code not provided in request:', req.query);
+      return res.status(400).send(`
+        <h2>Ошибка авторизации</h2>
+        <p>Код авторизации не предоставлен. Пожалуйста, попробуйте авторизоваться снова.</p>
+        <a href="/">Вернуться на главную</a>
+      `);
     }
+    
+    // Проверяем, что все обязательные переменные окружения установлены
+    const requiredEnvVars = [
+      'TWITCH_CLIENT_ID',
+      'TWITCH_CLIENT_SECRET',
+      'APP_URL'
+    ];
+    
+    for (const varName of requiredEnvVars) {
+      if (!process.env[varName] || process.env[varName].includes('your_') || process.env[varName].includes('placeholder')) {
+        console.error(`Required environment variable ${varName} is not properly set`);
+        return res.status(500).send(`
+          <h2>Ошибка конфигурации</h2>
+          <p>Переменная окружения ${varName} не установлена или содержит плейсхолдер.</p>
+          <p>Пожалуйста, установите правильное значение в файле .env</p>
+          <a href="/">Вернуться на главную</a>
+        `);
+      }
+    }
+    
+    const redirectUri = `${process.env.APP_URL}/auth/twitch/callback`;
+    console.log('Using redirect URI for token exchange:', redirectUri);
     
     try {
       // Обмениваем код на токен
+      console.log('Exchanging authorization code for access token...');
       const tokenResponse = await fetch('https://id.twitch.tv/oauth2/token', {
         method: 'POST',
         headers: {
@@ -71,19 +186,36 @@ function initWebServer(app, io) {
           client_secret: process.env.TWITCH_CLIENT_SECRET,
           code: code,
           grant_type: 'authorization_code',
-          redirect_uri: `${process.env.APP_URL}/auth/twitch/callback`
+          redirect_uri: redirectUri
         })
       });
       
       const tokenData = await tokenResponse.json();
-      console.log('Получен токен ответ:', tokenData);
+      console.log('Token exchange response status:', tokenResponse.status);
+      console.log('Token exchange response:', tokenData);
       
       if (!tokenResponse.ok) {
-        console.error('Ошибка получения токена:', tokenData);
-        return res.status(500).send('Ошибка получения токена доступа: ' + JSON.stringify(tokenData));
+        console.error('Token exchange failed:', tokenData);
+        let errorMessage = 'Неизвестная ошибка';
+        if (tokenData.message) {
+          errorMessage = tokenData.message;
+        } else if (tokenData.error) {
+          errorMessage = tokenData.error;
+        } else if (tokenData.error_description) {
+          errorMessage = tokenData.error_description;
+        }
+        
+        return res.status(tokenResponse.status).send(`
+          <h2>Ошибка получения токена доступа</h2>
+          <p><strong>Статус:</strong> ${tokenResponse.status}</p>
+          <p><strong>Ошибка:</strong> ${errorMessage}</p>
+          <p><strong>Решение:</strong> Проверьте правильность Client ID и Client Secret в настройках.</p>
+          <a href="/">Вернуться на главную</a>
+        `);
       }
       
       // Получаем информацию о пользователе
+      console.log('Fetching user information...');
       const userResponse = await fetch('https://api.twitch.tv/helix/users', {
         headers: {
           'Authorization': `Bearer ${tokenData.access_token}`,
@@ -92,17 +224,40 @@ function initWebServer(app, io) {
       });
       
       const userData = await userResponse.json();
-      console.log('Получены данные пользователя:', userData);
+      console.log('User information response status:', userResponse.status);
+      console.log('User information response:', userData);
       
       if (!userResponse.ok) {
-        console.error('Ошибка получения данных пользователя:', userData);
-        return res.status(500).send('Ошибка получения данных пользователя: ' + JSON.stringify(userData));
+        console.error('Failed to fetch user information:', userData);
+        let errorMessage = 'Неизвестная ошибка';
+        if (userData.message) {
+          errorMessage = userData.message;
+        } else if (userData.error) {
+          errorMessage = userData.error;
+        }
+        
+        return res.status(userResponse.status).send(`
+          <h2>Ошибка получения данных пользователя</h2>
+          <p><strong>Статус:</strong> ${userResponse.status}</p>
+          <p><strong>Ошибка:</strong> ${errorMessage}</p>
+          <a href="/">Вернуться на главную</a>
+        `);
+      }
+      
+      if (!userData.data || userData.data.length === 0) {
+        console.error('No user data received:', userData);
+        return res.status(500).send(`
+          <h2>Ошибка получения данных пользователя</h2>
+          <p>Данные пользователя отсутствуют в ответе.</p>
+          <a href="/">Вернуться на главную</a>
+        `);
       }
       
       const user = userData.data[0];
+      console.log('Successfully authenticated user:', user.login);
       
       // Сохраняем сессию пользователя
-      const sessionId = Math.random().toString(36).substring(2, 15);
+      const sessionId = generateSessionId();
       userSessions.set(sessionId, {
         userId: user.id,
         username: user.login,
@@ -112,30 +267,83 @@ function initWebServer(app, io) {
       });
       
       // Устанавливаем cookie с sessionId
-      res.cookie('sessionId', sessionId, { maxAge: 900000, httpOnly: true });
+      res.cookie('sessionId', sessionId, { 
+        maxAge: 24 * 60 * 60 * 1000, // 24 часа
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Только HTTPS в production
+        sameSite: 'lax'
+      });
       
       // Присоединяем бота к каналу пользователя
+      console.log('Joining channel:', user.login);
       await joinChannel(user.login);
       
       // Перенаправляем на главную страницу с параметром успеха
+      console.log('Redirecting to main page with success');
       res.redirect('/?auth=success');
     } catch (error) {
-      console.error('Ошибка обработки callback:', error);
-      res.status(500).send('Ошибка обработки авторизации: ' + error.message);
+      console.error('Exception in OAuth callback handler:', error);
+      res.status(500).send(`
+        <h2>Внутренняя ошибка сервера</h2>
+        <p><strong>Ошибка:</strong> ${error.message}</p>
+        <p><strong>Stack trace:</strong> ${error.stack}</p>
+        <p>Пожалуйста, попробуйте авторизоваться позже или обратитесь к администратору.</p>
+        <a href="/">Вернуться на главную</a>
+      `);
     }
   });
 
-  // Middleware для проверки аутентификации
-  const requireAuth = (req, res, next) => {
+  // Маршрут для выхода из системы
+  app.get('/auth/logout', (req, res) => {
     const sessionId = req.cookies?.sessionId;
+    
+    if (sessionId && userSessions.has(sessionId)) {
+      const session = userSessions.get(sessionId);
+      
+      // Отключаем бота от канала пользователя
+      leaveChannel(session.username).catch(error => {
+        console.error('Error leaving channel on logout:', error);
+      });
+      
+      // Удаляем сессию
+      userSessions.delete(sessionId);
+    }
+    
+    // Удаляем cookie
+    res.clearCookie('sessionId');
+    
+    // Перенаправляем на главную страницу
+    res.redirect('/?logout=success');
+  });
+
+  // Middleware для проверки аутентификации
+  const requireAuth = async (req, res, next) => {
+    const sessionId = req.cookies?.sessionId;
+    
     if (!sessionId || !userSessions.has(sessionId)) {
       return res.status(401).json({ error: 'Требуется авторизация' });
     }
     
     const session = userSessions.get(sessionId);
+    
     // Проверяем, не истек ли токен
     if (Date.now() > session.expiresAt) {
-      return res.status(401).json({ error: 'Сессия истекла' });
+      // Пытаемся обновить токен
+      try {
+        const tokenData = await refreshAccessToken(session.refreshToken);
+        
+        // Обновляем сессию с новыми токенами
+        session.accessToken = tokenData.access_token;
+        session.refreshToken = tokenData.refresh_token;
+        session.expiresAt = Date.now() + (tokenData.expires_in * 1000);
+        
+        userSessions.set(sessionId, session);
+      } catch (error) {
+        console.error('Error refreshing token:', error);
+        // Удаляем сессию при ошибке обновления токена
+        userSessions.delete(sessionId);
+        return res.status(401).json({ error: 'Сессия истекла, требуется повторная авторизация' });
+      }
     }
     
     req.user = session;
