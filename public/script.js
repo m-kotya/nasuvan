@@ -1,21 +1,26 @@
 // Элементы DOM
 const authBtn = document.getElementById('authBtn');
-const channelNameInput = document.getElementById('channelName');
-const joinChannelBtn = document.getElementById('joinChannelBtn');
-const leaveChannelBtn = document.getElementById('leaveChannelBtn');
+const chatInput = document.getElementById('chatInput');
+const sendChatBtn = document.getElementById('sendChatBtn');
 const giveawayKeywordInput = document.getElementById('giveawayKeyword');
 const giveawayPrizeInput = document.getElementById('giveawayPrize');
 const startGiveawayBtn = document.getElementById('startGiveawayBtn');
 const endGiveawayBtn = document.getElementById('endGiveawayBtn');
-const activeGiveawaysList = document.getElementById('activeGiveawaysList');
-const giveawaysHistory = document.getElementById('giveawaysHistory');
+const selectWinnerBtn = document.getElementById('selectWinnerBtn');
+const chatMessages = document.getElementById('chatMessages');
+const winnersList = document.getElementById('winnersList');
 
 // Обработчики событий
 authBtn.addEventListener('click', handleAuth);
-joinChannelBtn.addEventListener('click', handleJoinChannel);
-leaveChannelBtn.addEventListener('click', handleLeaveChannel);
+sendChatBtn.addEventListener('click', handleSendChat);
+chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        handleSendChat();
+    }
+});
 startGiveawayBtn.addEventListener('click', handleStartGiveaway);
 endGiveawayBtn.addEventListener('click', handleEndGiveaway);
+selectWinnerBtn.addEventListener('click', handleSelectWinner);
 
 // Функция обработки авторизации
 function handleAuth() {
@@ -28,104 +33,46 @@ function handleAuth() {
     window.location.href = '/auth/twitch';
 }
 
-// Функция добавления бота в канал
-function handleJoinChannel() {
-    const channelName = channelNameInput.value.trim();
+// Функция отправки сообщения в чат
+function handleSendChat() {
+    const message = chatInput.value.trim();
+    if (!message) return;
     
-    if (!channelName) {
-        showNotification('Пожалуйста, введите имя канала', 'error');
-        return;
-    }
+    // Добавляем сообщение в чат
+    addChatMessage('user', 'Вы', message);
+    chatInput.value = '';
     
-    // Показываем индикатор загрузки
-    const originalText = joinChannelBtn.innerHTML;
-    joinChannelBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Добавление...';
-    joinChannelBtn.disabled = true;
-    
-    fetch(`/api/channels/${channelName}/join`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            showNotification(`Ошибка: ${data.error}`, 'error');
-        } else {
-            showNotification(data.message, 'success');
-            loadGiveawaysHistory(channelName);
-        }
-    })
-    .catch(error => {
-        console.error('Ошибка:', error);
-        showNotification('Произошла ошибка при добавлении бота в канал', 'error');
-    })
-    .finally(() => {
-        // Восстанавливаем кнопку
-        joinChannelBtn.innerHTML = originalText;
-        joinChannelBtn.disabled = false;
-    });
+    // Имитация ответа бота
+    setTimeout(() => {
+        addChatMessage('bot', 'Бот', 'Сообщение получено!');
+    }, 1000);
 }
 
-// Функция удаления бота из канала
-function handleLeaveChannel() {
-    const channelName = channelNameInput.value.trim();
+// Функция добавления сообщения в чат
+function addChatMessage(type, user, text) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${type}`;
     
-    if (!channelName) {
-        showNotification('Пожалуйста, введите имя канала', 'error');
-        return;
-    }
+    const now = new Date();
+    const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     
-    // Показываем индикатор загрузки
-    const originalText = leaveChannelBtn.innerHTML;
-    leaveChannelBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Удаление...';
-    leaveChannelBtn.disabled = true;
+    messageDiv.innerHTML = `
+        <span class="message-user">${user}:</span>
+        <span class="message-text">${text}</span>
+        <span class="message-time">${timeString}</span>
+    `;
     
-    fetch(`/api/channels/${channelName}/leave`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            showNotification(`Ошибка: ${data.error}`, 'error');
-        } else {
-            showNotification(data.message, 'success');
-            activeGiveawaysList.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-gifts"></i>
-                    <p>Нет активных розыгрышей</p>
-                </div>
-            `;
-            giveawaysHistory.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-history"></i>
-                    <p>История розыгрышей пуста</p>
-                </div>
-            `;
-        }
-    })
-    .catch(error => {
-        console.error('Ошибка:', error);
-        showNotification('Произошла ошибка при удалении бота из канала', 'error');
-    })
-    .finally(() => {
-        // Восстанавливаем кнопку
-        leaveChannelBtn.innerHTML = originalText;
-        leaveChannelBtn.disabled = false;
-    });
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 // Функция начала розыгрыша
 function handleStartGiveaway() {
-    const channelName = channelNameInput.value.trim();
     const keyword = giveawayKeywordInput.value.trim();
     const prize = giveawayPrizeInput.value.trim();
     
-    if (!channelName) {
-        showNotification('Пожалуйста, введите имя канала', 'error');
-        return;
-    }
-    
     if (!keyword) {
-        showNotification('Пожалуйста, введите ключевое слово', 'error');
+        showNotification('Пожалуйста, введите кодовое слово', 'error');
         return;
     }
     
@@ -139,31 +86,10 @@ function handleStartGiveaway() {
     startGiveawayBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Начало...';
     startGiveawayBtn.disabled = true;
     
-    // В реальной реализации здесь будет отправка команды боту через Twitch чат
+    // Имитация начала розыгрыша
     setTimeout(() => {
-        showNotification(`Розыгрыш "${prize}" начат с ключевым словом "${keyword}" в канале ${channelName}`, 'success');
-        
-        // Добавляем розыгрыш в список активных
-        const giveawayItem = document.createElement('div');
-        giveawayItem.className = 'giveaway-item';
-        giveawayItem.innerHTML = `
-            <h3>${prize}</h3>
-            <p><strong>Ключевое слово:</strong> ${keyword}</p>
-            <p><strong>Канал:</strong> ${channelName}</p>
-            <p><strong>Статус:</strong> <span style="color: #28a745;">Активен</span></p>
-            <p><strong>Дата начала:</strong> ${new Date().toLocaleString()}</p>
-        `;
-        
-        // Удаляем пустое состояние, если оно есть
-        if (activeGiveawaysList.querySelector('.empty-state')) {
-            activeGiveawaysList.innerHTML = '';
-        }
-        
-        activeGiveawaysList.prepend(giveawayItem);
-        
-        // Очищаем форму
-        giveawayKeywordInput.value = '';
-        giveawayPrizeInput.value = '';
+        addChatMessage('system', 'Система', `Розыгрыш "${prize}" начат! Кодовое слово: "${keyword}"`);
+        showNotification(`Розыгрыш "${prize}" начат с кодовым словом "${keyword}"`, 'success');
         
         // Восстанавливаем кнопку
         startGiveawayBtn.innerHTML = originalText;
@@ -173,48 +99,15 @@ function handleStartGiveaway() {
 
 // Функция завершения розыгрыша
 function handleEndGiveaway() {
-    const channelName = channelNameInput.value.trim();
-    
-    if (!channelName) {
-        showNotification('Пожалуйста, введите имя канала', 'error');
-        return;
-    }
-    
     // Показываем индикатор загрузки
     const originalText = endGiveawayBtn.innerHTML;
     endGiveawayBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Завершение...';
     endGiveawayBtn.disabled = true;
     
-    // В реальной реализации здесь будет отправка команды боту через Twitch чат
+    // Имитация завершения розыгрыша
     setTimeout(() => {
-        showNotification(`Розыгрыш в канале ${channelName} завершен. Победитель: User123`, 'success');
-        
-        // Перемещаем активные розыгрыши в историю
-        const activeItems = activeGiveawaysList.querySelectorAll('.giveaway-item');
-        if (activeItems.length > 0) {
-            // Удаляем пустое состояние из истории, если оно есть
-            if (giveawaysHistory.querySelector('.empty-state')) {
-                giveawaysHistory.innerHTML = '';
-            }
-            
-            // Перемещаем все активные розыгрыши в историю
-            activeItems.forEach(item => {
-                // Добавляем информацию о победителе
-                const winnerInfo = document.createElement('p');
-                winnerInfo.innerHTML = '<strong>Победитель:</strong> <span class="winner">User123</span>';
-                item.appendChild(winnerInfo);
-                
-                giveawaysHistory.prepend(item);
-            });
-            
-            // Показываем пустое состояние для активных розыгрышей
-            activeGiveawaysList.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-gifts"></i>
-                    <p>Нет активных розыгрышей</p>
-                </div>
-            `;
-        }
+        addChatMessage('system', 'Система', 'Розыгрыш завершен!');
+        showNotification('Розыгрыш завершен', 'success');
         
         // Восстанавливаем кнопку
         endGiveawayBtn.innerHTML = originalText;
@@ -222,55 +115,51 @@ function handleEndGiveaway() {
     }, 1000);
 }
 
-// Загрузка истории розыгрышей
-function loadGiveawaysHistory(channelName) {
-    if (!channelName) return;
-    
+// Функция выбора победителя
+function handleSelectWinner() {
     // Показываем индикатор загрузки
-    giveawaysHistory.innerHTML = `
-        <div style="text-align: center; padding: 20px;">
-            <i class="fas fa-spinner fa-spin"></i> Загрузка истории...
+    const originalText = selectWinnerBtn.innerHTML;
+    selectWinnerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Выбор...';
+    selectWinnerBtn.disabled = true;
+    
+    // Имитация выбора победителя
+    setTimeout(() => {
+        const winners = ['User123', 'GamerPro', 'TwitchFan', 'StreamLover', 'ChatHero'];
+        const randomWinner = winners[Math.floor(Math.random() * winners.length)];
+        const prize = giveawayPrizeInput.value.trim() || 'Приз';
+        
+        addChatMessage('system', 'Система', `Победитель: ${randomWinner}! Поздравляем!`);
+        addWinner(randomWinner, prize);
+        showNotification(`Победитель: ${randomWinner}!`, 'success');
+        
+        // Восстанавливаем кнопку
+        selectWinnerBtn.innerHTML = originalText;
+        selectWinnerBtn.disabled = false;
+    }, 1500);
+}
+
+// Функция добавления победителя в список
+function addWinner(name, prize) {
+    // Удаляем пустое состояние, если оно есть
+    if (winnersList.querySelector('.empty-state')) {
+        winnersList.innerHTML = '';
+    }
+    
+    const winnerDiv = document.createElement('div');
+    winnerDiv.className = 'winner-item';
+    
+    const now = new Date();
+    const timeString = `${now.getDate()}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    
+    winnerDiv.innerHTML = `
+        <div>
+            <span class="winner-name">${name}</span>
+            <div class="winner-prize">${prize}</div>
         </div>
+        <div class="winner-time">${timeString}</div>
     `;
     
-    fetch(`/api/giveaways/${channelName}`)
-    .then(response => response.json())
-    .then(giveaways => {
-        if (giveaways.length === 0) {
-            giveawaysHistory.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-history"></i>
-                    <p>История розыгрышей пуста</p>
-                </div>
-            `;
-            return;
-        }
-        
-        let html = '';
-        giveaways.forEach(giveaway => {
-            html += `
-                <div class="giveaway-item">
-                    <h3>${giveaway.prize}</h3>
-                    <p><strong>Ключевое слово:</strong> ${giveaway.keyword}</p>
-                    <p><strong>Дата начала:</strong> ${new Date(giveaway.started_at).toLocaleString()}</p>
-                    <p><strong>Статус:</strong> ${giveaway.is_active ? '<span style="color: #28a745;">Активен</span>' : '<span style="color: #dc3545;">Завершен</span>'}</p>
-                    ${giveaway.winner ? `<p><strong>Победитель:</strong> <span class="winner">${giveaway.winner}</span></p>` : ''}
-                    ${giveaway.ended_at ? `<p><strong>Дата завершения:</strong> ${new Date(giveaway.ended_at).toLocaleString()}</p>` : ''}
-                </div>
-            `;
-        });
-        
-        giveawaysHistory.innerHTML = html;
-    })
-    .catch(error => {
-        console.error('Ошибка загрузки истории:', error);
-        giveawaysHistory.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Ошибка загрузки истории розыгрышей</p>
-            </div>
-        `;
-    });
+    winnersList.prepend(winnerDiv);
 }
 
 // Функция показа уведомлений
@@ -305,4 +194,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.location.search.includes('auth=success')) {
         showNotification('Авторизация через Twitch прошла успешно!', 'success');
     }
+    
+    // Добавляем приветственное сообщение
+    setTimeout(() => {
+        addChatMessage('bot', 'Бот', 'Бот розыгрышей готов к работе!');
+    }, 1000);
 });

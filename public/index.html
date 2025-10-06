@@ -24,38 +24,43 @@
             <div class="dashboard">
                 <div class="card">
                     <div class="card-header">
-                        <h2><i class="fas fa-gamepad"></i> Управление каналом</h2>
+                        <h2><i class="fas fa-comments"></i> Чат Twitch</h2>
                     </div>
                     <div class="card-body">
-                        <div class="form-group">
-                            <label for="channelName"><i class="fas fa-hashtag"></i> Имя канала Twitch:</label>
-                            <input type="text" id="channelName" placeholder="Введите имя канала" class="form-control">
-                        </div>
-                        <div class="button-group">
-                            <button id="joinChannelBtn" class="btn btn-success">
-                                <i class="fas fa-plus-circle"></i> Добавить бота
-                            </button>
-                            <button id="leaveChannelBtn" class="btn btn-danger">
-                                <i class="fas fa-minus-circle"></i> Удалить бота
-                            </button>
+                        <div id="chatContainer" class="chat-container">
+                            <div id="chatMessages" class="chat-messages">
+                                <div class="chat-message system">
+                                    <span class="message-text">Добро пожаловать в чат розыгрышей!</span>
+                                    <span class="message-time">--:--</span>
+                                </div>
+                                <div class="chat-message user">
+                                    <span class="message-user">Streamer:</span>
+                                    <span class="message-text">Введите кодовое слово для начала розыгрыша</span>
+                                    <span class="message-time">--:--</span>
+                                </div>
+                            </div>
+                            <div class="chat-input-container">
+                                <input type="text" id="chatInput" placeholder="Введите сообщение..." class="form-control">
+                                <button id="sendChatBtn" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h2><i class="fas fa-gift"></i> Управление розыгрышами</h2>
+                        <h2><i class="fas fa-key"></i> Управление розыгрышем</h2>
                     </div>
                     <div class="card-body">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="giveawayKeyword"><i class="fas fa-key"></i> Ключевое слово:</label>
-                                <input type="text" id="giveawayKeyword" placeholder="Введите ключевое слово" class="form-control">
-                            </div>
-                            <div class="form-group">
-                                <label for="giveawayPrize"><i class="fas fa-trophy"></i> Приз:</label>
-                                <input type="text" id="giveawayPrize" placeholder="Введите описание приза" class="form-control">
-                            </div>
+                        <div class="form-group">
+                            <label for="giveawayKeyword"><i class="fas fa-bullhorn"></i> Кодовое слово для розыгрыша:</label>
+                            <input type="text" id="giveawayKeyword" placeholder="Введите кодовое слово" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="giveawayPrize"><i class="fas fa-gift"></i> Приз:</label>
+                            <input type="text" id="giveawayPrize" placeholder="Введите описание приза" class="form-control">
                         </div>
                         <div class="button-group">
                             <button id="startGiveawayBtn" class="btn btn-success">
@@ -64,33 +69,22 @@
                             <button id="endGiveawayBtn" class="btn btn-warning">
                                 <i class="fas fa-stop"></i> Завершить розыгрыш
                             </button>
+                            <button id="selectWinnerBtn" class="btn btn-primary">
+                                <i class="fas fa-trophy"></i> Выбрать победителя
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h2><i class="fas fa-history"></i> Активные розыгрыши</h2>
+                        <h2><i class="fas fa-trophy"></i> Последние победители</h2>
                     </div>
                     <div class="card-body">
-                        <div id="activeGiveawaysList" class="giveaways-list">
+                        <div id="winnersList" class="winners-list">
                             <div class="empty-state">
-                                <i class="fas fa-gifts"></i>
-                                <p>Нет активных розыгрышей</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h2><i class="fas fa-archive"></i> История розыгрышей</h2>
-                    </div>
-                    <div class="card-body">
-                        <div id="giveawaysHistory" class="giveaways-list">
-                            <div class="empty-state">
-                                <i class="fas fa-history"></i>
-                                <p>История розыгрышей пуста</p>
+                                <i class="fas fa-trophy"></i>
+                                <p>Победителей пока нет</p>
                             </div>
                         </div>
                     </div>
