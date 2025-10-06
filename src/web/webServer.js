@@ -502,8 +502,13 @@ function initWebServer(app, io) {
   io.on('connection', (socket) => {
     console.log('Новое WebSocket соединение');
     
-    // Здесь можно добавить логику для обработки сообщений от клиента
-    // Например, для присоединения к каналу пользователя
+    // Отправляем тестовое сообщение при подключении
+    socket.emit('twitchMessage', {
+      channel: 'system',
+      username: 'Система',
+      message: 'WebSocket соединение установлено',
+      timestamp: new Date().toISOString()
+    });
     
     socket.on('disconnect', () => {
       console.log('WebSocket соединение закрыто');

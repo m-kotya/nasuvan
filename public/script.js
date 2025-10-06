@@ -56,6 +56,24 @@ function initWebSocket() {
         }
     });
     
+    // Обработчик подключения к Twitch
+    socket.on('twitchConnected', (data) => {
+        console.log('Бот подключен к Twitch:', data);
+        addChatMessage('system', 'Система', data.message);
+    });
+    
+    // Обработчик присоединения к каналу
+    socket.on('channelJoined', (data) => {
+        console.log('Бот присоединился к каналу:', data);
+        addChatMessage('system', 'Система', data.message);
+    });
+    
+    // Обработчик выхода из канала
+    socket.on('channelLeft', (data) => {
+        console.log('Бот покинул канал:', data);
+        addChatMessage('system', 'Система', data.message);
+    });
+    
     // Обработчик добавления участника
     socket.on('participantAdded', (data) => {
         console.log('Получено уведомление о новом участнике:', data);
