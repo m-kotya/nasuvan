@@ -45,6 +45,7 @@ function initWebSocket() {
     
     // Обработчик получения нового сообщения из Twitch чата
     socket.on('twitchMessage', (data) => {
+        console.log('Получено сообщение из Twitch чата:', data);
         // Добавляем сообщение в чат
         addChatMessage('user', data.username, data.message);
         
@@ -57,6 +58,7 @@ function initWebSocket() {
     
     // Обработчик добавления участника
     socket.on('participantAdded', (data) => {
+        console.log('Получено уведомление о новом участнике:', data);
         addParticipant(data.username);
     });
     
@@ -394,4 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Деактивируем кнопки управления по умолчанию
     startBtn.disabled = false;
     resetBtn.disabled = true;
+    
+    // Добавляем приветственное сообщение в чат
+    addChatMessage('system', 'Система', 'Добро пожаловать в Twitch Giveaway Bot!');
 });

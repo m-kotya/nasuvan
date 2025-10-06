@@ -13,8 +13,8 @@ const client = new tmi.Client({
     secure: true
   },
   identity: {
-    username: process.env.TWITCH_BOT_USERNAME,
-    password: process.env.TWITCH_OAUTH_TOKEN
+    username: process.env.TWITCH_BOT_USERNAME || 'test_bot',
+    password: process.env.TWITCH_OAUTH_TOKEN || 'oauth:test_token'
   },
   channels: []
 });
@@ -23,7 +23,44 @@ function initBot(socketIo) {
   // Сохраняем ссылку на WebSocket сервер
   io = socketIo;
   
-  client.connect().catch(console.error);
+  // Обрабатываем ошибки подключения
+  client.on('disconnected', (reason) => {
+    console.log('Отключен от Twitch:', reason);
+  });
+  
+  client.on('reconnect', () => {
+    console.log('Попытка переподключения к Twitch');
+  });
+  
+  client.on('connected', (address, port) => {
+    console.log(`Подключен к Twitch по адресу ${address}:${port}`);
+  });
+  
+  client.on('logon', () => {
+    console.log('Успешная аутентификация в Twitch');
+  });
+  
+  client.on('notice', (channel, msgid, message) => {
+    console.log('Twitch notice:', channel, msgid, message);
+  });
+  
+  client.on('join', (channel, username, self) => {
+    if (self) {
+      console.log(`Бот присоединился к каналу ${channel}`);
+    }
+  });
+  
+  client.on('part', (channel, username, self) => {
+    if (self) {
+      console.log(`Бот покинул канал ${channel}`);
+    }
+  });
+
+  // Подключение к Twitch
+  client.connect().catch(error => {
+    console.error('Ошибка подключения к Twitch:', error.message);
+    // Не прерываем работу приложения при ошибке подключения
+  });
 
   // Подписка на сообщения в чате
   client.on('message', async (channel, tags, message, self) => {
@@ -45,28 +82,35 @@ function initBot(socketIo) {
     }
 
     // Проверяем, есть ли активный розыгрыш с таким ключевым словом
-    const giveaway = activeGiveaways.get(`${channelName}:${lowerMessage}`);
-    
-    if (giveaway) {
-      // Добавляем участника в розыгрыш
-      const participant = await addParticipant(giveaway.id, username);
-      if (participant) {
-        // Отправляем уведомление в чат
-        client.say(channel, `@${username} добавлен в розыгрыш!`);
-        
-        // Отправляем обновление через WebSocket
-        if (io) {
-          io.emit('participantAdded', {
-            giveawayId: giveaway.id,
-            username: username,
-            count: giveaway.participants.length + 1
-          });
+    for (const [key, giveaway] of activeGiveaways.entries()) {
+      if (giveaway.channel === channelName && giveaway.keyword === lowerMessage) {
+        // Добавляем участника в розыгрыш
+        const participant = await addParticipant(giveaway.id, username);
+        if (participant) {
+          // Отправляем уведомление в чат
+          try {
+            await client.say(channel, `@${username} добавлен в розыгрыш!`);
+          } catch (error) {
+            console.error('Ошибка отправки сообщения в чат:', error.message);
+          }
+          
+          // Отправляем обновление через WebSocket
+          if (io) {
+            io.emit('participantAdded', {
+              giveawayId: giveaway.id,
+              username: username,
+              count: giveaway.participants ? giveaway.participants.length + 1 : 1
+            });
+          }
+          
+          // Добавляем участника в локальный список
+          if (!giveaway.participants) {
+            giveaway.participants = [];
+          }
+          giveaway.participants.push(username);
         }
-        
-        // Добавляем участника в локальный список
-        giveaway.participants.push(username);
+        return;
       }
-      return;
     }
 
     // Команды для управления ботом (доступны только модераторам и стримеру)
@@ -91,7 +135,11 @@ function initBot(socketIo) {
             });
             
             // Отправляем уведомление в чат
-            client.say(channel, `Розыгрыш "${prize}" начался! Напишите "${keyword}" чтобы принять участие!`);
+            try {
+              await client.say(channel, `Розыгрыш "${prize}" начался! Напишите "${keyword}" чтобы принять участие!`);
+            } catch (error) {
+              console.error('Ошибка отправки сообщения в чат:', error.message);
+            }
             
             // Отправляем обновление через WebSocket
             if (io) {
@@ -103,10 +151,18 @@ function initBot(socketIo) {
               });
             }
           } else {
-            client.say(channel, 'Ошибка при создании розыгрыша.');
+            try {
+              await client.say(channel, 'Ошибка при создании розыгрыша.');
+            } catch (error) {
+              console.error('Ошибка отправки сообщения в чат:', error.message);
+            }
           }
         } else {
-          client.say(channel, 'Использование: !startgiveaway <ключевое слово> <приз>');
+          try {
+            await client.say(channel, 'Использование: !startgiveaway <ключевое слово> <приз>');
+          } catch (error) {
+            console.error('Ошибка отправки сообщения в чат:', error.message);
+          }
         }
       } else if (message.startsWith('!endgiveaway')) {
         // Завершаем все активные розыгрыши в канале
@@ -118,9 +174,17 @@ function initBot(socketIo) {
             const winner = await selectWinner(giveaway.id);
             
             if (winner) {
-              client.say(channel, `Розыгрыш "${giveaway.prize}" завершен! Победитель: @${winner}`);
+              try {
+                await client.say(channel, `Розыгрыш "${giveaway.prize}" завершен! Победитель: @${winner}`);
+              } catch (error) {
+                console.error('Ошибка отправки сообщения в чат:', error.message);
+              }
             } else {
-              client.say(channel, `Розыгрыш "${giveaway.prize}" завершен! Участников не было.`);
+              try {
+                await client.say(channel, `Розыгрыш "${giveaway.prize}" завершен! Участников не было.`);
+              } catch (error) {
+                console.error('Ошибка отправки сообщения в чат:', error.message);
+              }
             }
             
             // Удаляем розыгрыш из активных
@@ -139,15 +203,14 @@ function initBot(socketIo) {
         }
         
         if (endedCount === 0) {
-          client.say(channel, 'Нет активных розыгрышей в этом канале.');
+          try {
+            await client.say(channel, 'Нет активных розыгрышей в этом канале.');
+          } catch (error) {
+            console.error('Ошибка отправки сообщения в чат:', error.message);
+          }
         }
       }
     }
-  });
-
-  // Подписка на подключение к каналу
-  client.on('connected', (address, port) => {
-    console.log(`Подключен к Twitch по адресу ${address}:${port}`);
   });
 
   console.log('Twitch бот инициализирован');

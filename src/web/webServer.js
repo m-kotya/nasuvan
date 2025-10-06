@@ -97,6 +97,7 @@ function initWebServer(app, io) {
     }
     
     // Необходимые scope для полноценной работы бота:
+    // - user:read:email - для получения email пользователя
     // - channel:read:redemptions - для чтения сообщений в чате
     // - channel:manage:redemptions - для управления розыгрышами
     // - chat:read - для чтения сообщений в чате
@@ -104,6 +105,7 @@ function initWebServer(app, io) {
     // - whispers:read - для чтения личных сообщений
     // - whispers:edit - для отправки личных сообщений
     const scopes = [
+      'user:read:email',
       'channel:read:redemptions',
       'channel:manage:redemptions',
       'chat:read',
@@ -388,7 +390,7 @@ function initWebServer(app, io) {
           channel: channelName
         };
         
-        activeGiveaways.set(`${channelName}:${keyword}`, giveawayInfo);
+        activeGiveaways.set(`${channelName}:${keyword.toLowerCase()}`, giveawayInfo);
         
         // Отправляем уведомление через WebSocket
         io.emit('giveawayStarted', {
@@ -416,14 +418,15 @@ function initWebServer(app, io) {
       
       // Завершаем все активные розыгрыши в канале
       let endedCount = 0;
+      const keysToDelete = [];
       
       for (const [key, giveaway] of activeGiveaways.entries()) {
         if (giveaway.channel === channelName) {
           // Выбираем победителя
           const winner = await selectWinner(giveaway.id);
           
-          // Удаляем розыгрыш из активных
-          activeGiveaways.delete(key);
+          // Добавляем ключ для удаления
+          keysToDelete.push(key);
           endedCount++;
           
           // Отправляем уведомление через WebSocket
@@ -434,6 +437,9 @@ function initWebServer(app, io) {
           });
         }
       }
+      
+      // Удаляем завершенные розыгрыши
+      keysToDelete.forEach(key => activeGiveaways.delete(key));
       
       return res.json({ 
         success: true, 

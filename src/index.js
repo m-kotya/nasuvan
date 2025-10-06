@@ -33,15 +33,55 @@ app.get('/health', (req, res) => {
 });
 
 // Инициализация компонентов
-const supabaseClient = initDatabase();
-if (!supabaseClient) {
-  console.error('Ошибка инициализации базы данных. Проверьте переменные окружения.');
-  process.exit(1);
+try {
+  const supabaseClient = initDatabase();
+  if (!supabaseClient) {
+    console.warn('Предупреждение: Ошибка инициализации базы данных. Приложение будет работать в тестовом режиме.');
+  }
+} catch (error) {
+  console.warn('Предупреждение: Ошибка инициализации базы данных. Приложение будет работать в тестовом режиме.', error.message);
 }
 
 // Инициализируем бота с передачей ссылки на WebSocket сервер
-initBot(io);
-initWebServer(app, io);
+try {
+  initBot(io);
+} catch (error) {
+  console.warn('Предупреждение: Ошибка инициализации бота. Функции Twitch могут быть недоступны.', error.message);
+}
+
+try {
+  initWebServer(app, io);
+} catch (error) {
+  console.error('Критическая ошибка инициализации веб-сервера:', error);
+  process.exit(1);
+}
+
+// Обработка ошибок сервера
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`Порт ${error.port} уже используется. Пожалуйста, освободите порт или измените PORT в .env файле.`);
+    process.exit(1);
+  } else {
+    console.error('Ошибка сервера:', error);
+  }
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('Получен сигнал SIGTERM. Завершение работы...');
+  server.close(() => {
+    console.log('Сервер остановлен.');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('Получен сигнал SIGINT. Завершение работы...');
+  server.close(() => {
+    console.log('Сервер остановлен.');
+    process.exit(0);
+  });
+});
 
 // Запуск сервера с учетом переменных окружения Railway
 const PORT = process.env.PORT || process.env.RAILWAY_PORT || 3000;
