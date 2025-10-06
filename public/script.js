@@ -93,11 +93,14 @@ function checkAuthStatus() {
             isAuthenticated = false;
             authBtn.style.display = 'block';
             addChatMessage('system', 'Система', 'Для начала работы необходимо авторизоваться через Twitch');
-        } else {
+        } else if (response.ok) {
             // Пользователь авторизован
             isAuthenticated = true;
             authBtn.style.display = 'none';
             addChatMessage('system', 'Система', 'Вы успешно авторизованы через Twitch');
+        } else {
+            // Другая ошибка
+            throw new Error('Ошибка проверки авторизации: ' + response.status);
         }
     })
     .catch(error => {
@@ -150,7 +153,14 @@ function handleStart() {
             prize: 'Участие в розыгрыше' // Простой текст, так как приз не нужен
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Ошибка при запуске розыгрыша');
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             currentKeyword = keyword;
@@ -161,13 +171,12 @@ function handleStart() {
             // Активируем кнопку сброса
             resetBtn.disabled = false;
         } else {
-            showNotification(data.error || 'Ошибка при запуске розыгрыша', 'error');
-            startBtn.disabled = false;
+            throw new Error(data.error || 'Ошибка при запуске розыгрыша');
         }
     })
     .catch(error => {
         console.error('Ошибка при запуске розыгрыша:', error);
-        showNotification('Ошибка при запуске розыгрыша', 'error');
+        showNotification('Ошибка при запуске розыгрыша: ' + error.message, 'error');
         startBtn.disabled = false;
     })
     .finally(() => {
@@ -196,7 +205,14 @@ function handleReset() {
             'Content-Type': 'application/json'
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Ошибка при сбросе розыгрыша');
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         // Очищаем список участников
         participants = [];
@@ -215,7 +231,7 @@ function handleReset() {
     })
     .catch(error => {
         console.error('Ошибка при сбросе розыгрыша:', error);
-        showNotification('Ошибка при сбросе розыгрыша', 'error');
+        showNotification('Ошибка при сбросе розыгрыша: ' + error.message, 'error');
         
         // Все равно очищаем локальный список
         participants = [];

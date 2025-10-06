@@ -30,9 +30,20 @@ function initWebServer(app, io) {
 
   // Маршрут для обработки callback от Twitch OAuth
   app.get('/auth/twitch/callback', async (req, res) => {
+    console.log('Получен callback запрос:', req.query);
+    
     const code = req.query.code;
+    const error = req.query.error;
+    
+    // Обрабатываем ошибки авторизации
+    if (error) {
+      console.error('Ошибка авторизации Twitch:', error);
+      return res.status(400).send(`Ошибка авторизации: ${error}`);
+    }
+    
     if (!code) {
-      return res.status(400).send('Код авторизации не предоставлен');
+      console.error('Код авторизации не предоставлен в запросе:', req.query);
+      return res.status(400).send('Код авторизации не предоставлен. Пожалуйста, попробуйте авторизоваться снова.');
     }
     
     try {
@@ -52,10 +63,11 @@ function initWebServer(app, io) {
       });
       
       const tokenData = await tokenResponse.json();
+      console.log('Получен токен:', tokenData);
       
       if (!tokenResponse.ok) {
         console.error('Ошибка получения токена:', tokenData);
-        return res.status(500).send('Ошибка получения токена доступа');
+        return res.status(500).send('Ошибка получения токена доступа: ' + JSON.stringify(tokenData));
       }
       
       // Получаем информацию о пользователе
@@ -67,10 +79,11 @@ function initWebServer(app, io) {
       });
       
       const userData = await userResponse.json();
+      console.log('Получены данные пользователя:', userData);
       
       if (!userResponse.ok) {
         console.error('Ошибка получения данных пользователя:', userData);
-        return res.status(500).send('Ошибка получения данных пользователя');
+        return res.status(500).send('Ошибка получения данных пользователя: ' + JSON.stringify(userData));
       }
       
       const user = userData.data[0];
@@ -95,7 +108,7 @@ function initWebServer(app, io) {
       res.redirect('/?auth=success');
     } catch (error) {
       console.error('Ошибка обработки callback:', error);
-      res.status(500).send('Ошибка обработки авторизации');
+      res.status(500).send('Ошибка обработки авторизации: ' + error.message);
     }
   });
 
