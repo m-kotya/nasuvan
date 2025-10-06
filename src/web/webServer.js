@@ -116,6 +116,11 @@ function initWebServer(app, io) {
     next();
   };
 
+  // Тестовый маршрут для проверки авторизации
+  app.get('/api/giveaways/test', requireAuth, (req, res) => {
+    res.json({ message: 'Авторизация успешна', user: req.user.username });
+  });
+
   // API маршрут для начала розыгрыша
   app.post('/api/start-giveaway', requireAuth, async (req, res) => {
     try {

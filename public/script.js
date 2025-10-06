@@ -37,6 +37,8 @@ function initWebSocket() {
     socket.on('connect_error', (error) => {
         console.error('Ошибка WebSocket подключения:', error);
         addChatMessage('system', 'Система', 'Ошибка подключения к серверу: ' + error.message);
+        // Показываем кнопку авторизации при ошибке подключения
+        authBtn.style.display = 'block';
     });
     
     // Обработчик получения нового сообщения из Twitch чата
@@ -126,6 +128,12 @@ function handleStart() {
         return;
     }
     
+    // Проверяем, авторизован ли пользователь
+    if (!isAuthenticated) {
+        showNotification('Пожалуйста, сначала авторизуйтесь через Twitch', 'error');
+        return;
+    }
+    
     // Показываем индикатор загрузки
     const originalText = startBtn.innerHTML;
     startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Запуск...';
@@ -170,6 +178,12 @@ function handleStart() {
 
 // Функция перезапуска (сброса) розыгрыша
 function handleReset() {
+    // Проверяем, авторизован ли пользователь
+    if (!isAuthenticated) {
+        showNotification('Пожалуйста, сначала авторизуйтесь через Twitch', 'error');
+        return;
+    }
+    
     // Показываем индикатор загрузки
     const originalText = resetBtn.innerHTML;
     resetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Сброс...';
@@ -321,6 +335,11 @@ document.addEventListener('DOMContentLoaded', () => {
         showNotification('Авторизация через Twitch прошла успешно!', 'success');
         addChatMessage('system', 'Система', 'Подключение к чату Twitch установлено');
         window.history.replaceState({}, document.title, "/");
+        isAuthenticated = true;
+        authBtn.style.display = 'none';
+    } else {
+        // Показываем кнопку авторизации по умолчанию
+        authBtn.style.display = 'block';
     }
     
     // Инициализируем WebSocket соединение
@@ -329,7 +348,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // Деактивируем кнопки управления по умолчанию
     startBtn.disabled = false;
     resetBtn.disabled = true;
-    
-    // Показываем кнопку авторизации по умолчанию
-    authBtn.style.display = 'block';
 });
