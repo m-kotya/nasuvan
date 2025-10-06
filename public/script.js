@@ -76,8 +76,16 @@ function initWebSocket() {
             const winnerChat = document.getElementById('winnerChat');
             const messageDiv = document.createElement('div');
             messageDiv.className = 'winner-chat-message winner-response';
-            const timeString = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            messageDiv.innerHTML = `[${timeString}] <strong>${data.username}:</strong> ${processEmojis(data.message)}`;
+            
+            // Форматируем время как [00:18:32]
+            const now = new Date();
+            const timeString = `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}]`;
+            
+            messageDiv.innerHTML = `
+                <span class="winner-chat-time">${timeString}</span>
+                <span class="winner-chat-user">${data.username}:</span>
+                <span class="winner-chat-text">${processEmojis(data.message)}</span>
+            `;
             winnerChat.appendChild(messageDiv);
             winnerChat.scrollTop = winnerChat.scrollHeight;
         }
@@ -94,6 +102,7 @@ function initWebSocket() {
         console.log('Бот подключен к Twitch:', data);
         addChatMessage('system', 'Система', data.message);
     });
+    
     
     // Обработчик присоединения к каналу
     socket.on('channelJoined', (data) => {
@@ -554,9 +563,12 @@ function stopWinnerTimer() {
 
 // Функция обновления отображения таймера
 function updateWinnerTimer() {
-    const minutes = Math.floor(winnerSeconds / 60);
+    const hours = Math.floor(winnerSeconds / 3600);
+    const minutes = Math.floor((winnerSeconds % 3600) / 60);
     const seconds = winnerSeconds % 60;
-    winnerTimer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Форматируем как HH:MM:SS
+    winnerTimer.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
 // Функция добавления участника

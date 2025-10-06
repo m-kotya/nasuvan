@@ -271,8 +271,8 @@ header h1 i {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     z-index: 10000;
     text-align: center;
-    min-width: 500px;
-    max-width: 90vw;
+    min-width: 600px;
+    max-width: 95vw;
     backdrop-filter: blur(10px);
     border: 2px solid rgba(255, 255, 255, 0.2);
     display: none;
@@ -286,7 +286,7 @@ header h1 i {
     margin: 0;
     width: auto;
     height: auto;
-    max-height: 90vh;
+    max-height: 95vh;
     overflow: auto;
 }
 
@@ -306,11 +306,19 @@ header h1 i {
 }
 
 #winnerName {
-    font-size: 28px;
+    font-size: 36px;
     font-weight: bold;
     margin: 15px 0;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     color: #FFD700;
+    display: inline-block;
+    animation: winnerPulse 2s infinite;
+}
+
+@keyframes winnerPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 
 .winner-message {
@@ -318,7 +326,7 @@ header h1 i {
     padding: 15px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
-    min-height: 200px;
+    min-height: 250px;
 }
 
 .winner-message p {
@@ -328,27 +336,45 @@ header h1 i {
 }
 
 .winner-chat-container {
-    max-height: 200px;
+    max-height: 250px;
     overflow-y: auto;
     margin-top: 10px;
     text-align: left;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
-    padding: 10px;
-    min-height: 120px;
+    padding: 15px;
+    min-height: 150px;
 }
 
 .winner-chat-message {
-    margin: 5px 0;
-    padding: 5px;
-    border-radius: 4px;
-    font-size: 13px;
+    margin: 8px 0;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 14px;
     word-wrap: break-word;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .winner-chat-message.winner-response {
     background: rgba(255, 215, 0, 0.2);
-    border-left: 3px solid #FFD700;
+    border-left: 4px solid #FFD700;
+}
+
+.winner-chat-time {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: 'Courier New', monospace;
+}
+
+.winner-chat-user {
+    font-weight: bold;
+    color: #FFD700;
+}
+
+.winner-chat-text {
+    flex: 1;
 }
 
 .winner-timer {
