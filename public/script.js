@@ -503,6 +503,13 @@ function showWinner(winner) {
     // Показываем модальное окно
     winnerSection.style.display = 'block';
     
+    // Убеждаемся, что модальное окно остается по центру
+    winnerSection.style.position = 'fixed';
+    winnerSection.style.top = '50%';
+    winnerSection.style.left = '50%';
+    winnerSection.style.transform = 'translate(-50%, -50%)';
+    winnerSection.style.zIndex = '10000';
+    
     // Добавляем оверлей для затемнения фона
     let overlay = document.getElementById('modalOverlay');
     if (!overlay) {
@@ -745,6 +752,15 @@ document.addEventListener('DOMContentLoaded', () => {
             !winnerSection.contains(event.target) && 
             event.target.id === 'modalOverlay') {
             handleCloseWinner();
+        }
+    });
+    
+    // Обработчик изменения размера окна для центрирования модального окна
+    window.addEventListener('resize', function() {
+        if (winnerSection.style.display === 'block') {
+            winnerSection.style.top = '50%';
+            winnerSection.style.left = '50%';
+            winnerSection.style.transform = 'translate(-50%, -50%)';
         }
     });
     
