@@ -18,6 +18,9 @@ body {
     max-width: 1600px;
     margin: 0 auto;
     padding: 20px;
+    height: calc(100vh - 40px); /* Высота экрана минус отступы */
+    display: flex;
+    flex-direction: column;
 }
 
 /* Заголовок */
@@ -111,7 +114,9 @@ header h1 i {
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
-    align-items: flex-start;
+    align-items: stretch;
+    flex: 1; /* Занимаем всё доступное пространство */
+    min-height: 0; /* Предотвращаем переполнение */
 }
 
 .left-column {
@@ -125,6 +130,8 @@ header h1 i {
 .right-column {
     flex: 2;
     min-width: 400px;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Кнопки */
@@ -223,11 +230,8 @@ header h1 i {
     transition: transform 0.3s ease;
     display: flex;
     flex-direction: column;
-    height: fit-content;
-}
-
-.card:hover {
-    transform: translateY(-5px);
+    height: 100%;
+    min-height: 300px;
 }
 
 .card-header {
@@ -235,18 +239,7 @@ header h1 i {
     color: white;
     padding: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.card-header h2 {
-    font-size: 1.4rem;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.card-header h2 i {
-    margin-right: 10px;
+    flex-shrink: 0; /* Предотвращаем сжатие заголовка */
 }
 
 .card-body {
@@ -254,6 +247,7 @@ header h1 i {
     flex: 1;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Предотвращаем переполнение */
 }
 
 /* Формы */
@@ -291,8 +285,8 @@ header h1 i {
 /* Список участников */
 .participants-list {
     flex: 1;
-    min-height: 450px;
-    max-height: 650px; /* Увеличенная высота для выравнивания с чатом */
+    min-height: 200px;
+    max-height: 650px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -375,7 +369,8 @@ header h1 i {
 .chat-container {
     display: flex;
     flex-direction: column;
-    height: 700px; /* Большое окно чата */
+    flex: 1;
+    min-height: 500px;
 }
 
 .chat-messages {
@@ -474,6 +469,7 @@ footer {
 @media (max-width: 1200px) {
     .main-layout {
         flex-direction: column;
+        height: auto; /* Сбрасываем фиксированную высоту на мобильных */
     }
     
     .left-column, .right-column {
@@ -507,6 +503,11 @@ footer {
     .header-right {
         flex-direction: column;
         gap: 10px;
+    }
+    
+    /* Сбрасываем минимальную высоту карточек на мобильных */
+    .card {
+        min-height: 200px;
     }
 }
 
@@ -553,6 +554,17 @@ footer {
     
     .header-left h1 {
         font-size: 1.5rem;
+    }
+    
+    /* Убедимся, что карточки имеют одинаковую высоту на мобильных устройствах */
+    .left-column .card,
+    .right-column .card {
+        height: auto;
+    }
+    
+    /* Сбрасываем фиксированную высоту макета на мобильных */
+    .main-layout {
+        height: auto;
     }
 }
 

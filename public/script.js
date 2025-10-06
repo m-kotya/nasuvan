@@ -799,7 +799,44 @@ function addWinner(winnerName) {
     }
 }
 
-// Инициализация
+// Функция для добавления тестового контента (только для тестирования выравнивания)
+function addTestContent() {
+  // Добавляем тестовых участников
+  const participantsList = document.getElementById('participantsList');
+  if (participantsList && participantsList.querySelector('.empty-state')) {
+    participantsList.innerHTML = '';
+    
+    for (let i = 1; i <= 15; i++) {
+      const participantItem = document.createElement('div');
+      participantItem.className = 'participant-item';
+      participantItem.innerHTML = `
+        <span class="participant-name">Участник ${i}</span>
+        <span class="participant-time">${new Date().toLocaleTimeString()}</span>
+      `;
+      participantsList.appendChild(participantItem);
+    }
+  }
+  
+  // Добавляем тестовые сообщения в чат
+  const chatMessages = document.getElementById('chatMessages');
+  if (chatMessages) {
+    for (let i = 1; i <= 20; i++) {
+      const chatMessage = document.createElement('div');
+      chatMessage.className = 'chat-message user';
+      chatMessage.innerHTML = `
+        <span class="message-user">Пользователь ${i}</span>
+        <span class="message-text">Тестовое сообщение ${i}</span>
+        <span class="message-time">${new Date().toLocaleTimeString()}</span>
+      `;
+      chatMessages.appendChild(chatMessage);
+    }
+    
+    // Прокручиваем чат вниз
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+}
+
+// Добавляем тестовый контент после загрузки страницы
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Веб-интерфейс загружен');
     
@@ -844,4 +881,7 @@ document.addEventListener('DOMContentLoaded', () => {
             winnerSection.style.transform = 'translate(-50%, -50%)';
         }
     });
+    
+    // Добавляем тестовый контент для проверки выравнивания
+    setTimeout(addTestContent, 1000);
 });

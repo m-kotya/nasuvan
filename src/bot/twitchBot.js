@@ -409,7 +409,7 @@ async function announceWinner(channelName, winner, hasTelegram) {
       const formattedChannel = channelName.startsWith('#') ? channelName : `#${channelName}`;
       
       // Отправляем сообщение о победителе
-      await client.say(formattedChannel, `Поздравляем @${winner}! Вы выиграли розыгрыш! У вас есть 15 секунд, чтобы ответить в чат для подтверждения.`);
+      await client.say(formattedChannel, `Поздравляем @${winner}! Вы выиграли розыгрыш! У вас есть 25 секунд чтобы скинуть свой ТГ.`);
     }
   } catch (error) {
     console.error('Ошибка отправки сообщения о победителе в чат:', error.message);
