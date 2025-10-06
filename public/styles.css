@@ -292,7 +292,7 @@ header h1 i {
 .participants-list {
     flex: 1;
     min-height: 200px;
-    max-height: 300px;
+    max-height: 650px; /* Увеличенная высота для выравнивания с чатом */
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -484,8 +484,8 @@ footer {
         height: 500px;
     }
     
-    .participants-list, .winners-list {
-        max-height: 250px;
+    .participants-list {
+        max-height: 400px;
     }
     
     .winners-list {
@@ -532,8 +532,8 @@ footer {
         height: 400px;
     }
     
-    .participants-list, .winners-list {
-        max-height: 200px;
+    .participants-list {
+        max-height: 300px;
     }
     
     .winners-list {
