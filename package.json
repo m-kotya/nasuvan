@@ -6,7 +6,12 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "local": "node -r dotenv/config src/index.js"
+    "local": "node -r dotenv/config src/index.js",
+    "test": "node run_all_tests.js",
+    "test:participants": "node test_participants.js",
+    "test:supabase": "node test_supabase.js",
+    "test:twitch": "node test_twitch_bot.js",
+    "test:web": "node test_web_interface.js"
   },
   "keywords": [
     "twitch",
@@ -17,15 +22,20 @@
   ],
   "author": "Developer",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/twitch-giveaway-bot.git"
+  },
   "dependencies": {
-    "express": "^4.18.2",
-    "socket.io": "^4.7.2",
-    "tmi.js": "^1.8.5",
-    "supabase": "^1.0.0",
     "@supabase/supabase-js": "^2.38.0",
+    "cookie-parser": "^1.4.6",
     "dotenv": "^16.3.1",
+    "express": "^4.18.2",
     "node-fetch": "^3.3.2",
-    "cookie-parser": "^1.4.6"
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.8.1",
+    "supabase": "^1.0.0",
+    "tmi.js": "^1.8.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

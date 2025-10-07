@@ -19,6 +19,9 @@ function generateSessionId() {
 
 // Функция для обновления access token через refresh token
 async function refreshAccessToken(refreshToken) {
+  console.log('=== НАЧАЛО ФУНКЦИИ refreshAccessToken ===');
+  console.log('Попытка обновления access token');
+  
   try {
     const tokenResponse = await fetch('https://id.twitch.tv/oauth2/token', {
       method: 'POST',
@@ -36,17 +39,23 @@ async function refreshAccessToken(refreshToken) {
     const tokenData = await tokenResponse.json();
     
     if (!tokenResponse.ok) {
+      console.error('Token refresh failed:', tokenData);
       throw new Error(`Token refresh failed: ${JSON.stringify(tokenData)}`);
     }
     
+    console.log('Токен успешно обновлен');
+    console.log('=== КОНЕЦ ФУНКЦИИ refreshAccessToken ===');
     return tokenData;
   } catch (error) {
     console.error('Error refreshing access token:', error);
+    console.log('=== КОНЕЦ ФУНКЦИИ refreshAccessToken ===');
     throw error;
   }
 }
 
 function initWebServer(app, io) {
+  console.log('=== НАЧАЛО ФУНКЦИИ initWebServer ===');
+  
   // Проверка Railway переменных
   const isRailway = process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_ENVIRONMENT_NAME;
   console.log('Running on Railway:', isRailway ? 'YES' : 'NO');
@@ -62,16 +71,19 @@ function initWebServer(app, io) {
 
   // Маршрут для главной страницы
   app.get('/', (req, res) => {
+    console.log('Запрос главной страницы');
     res.sendFile(path.join(__dirname, '../../public/index.html'));
   });
 
   // Маршрут для страницы победителей
   app.get('/winners', (req, res) => {
+    console.log('Запрос страницы победителей');
     res.sendFile(path.join(__dirname, '../../public/winners.html'));
   });
 
   // Маршрут для начала авторизации через Twitch
   app.get('/auth/twitch', (req, res) => {
+    console.log('=== НАЧАЛО ОБРАБОТКИ /auth/twitch ===');
     const clientId = process.env.TWITCH_CLIENT_ID;
     const appUrl = process.env.APP_URL;
     
@@ -109,7 +121,7 @@ function initWebServer(app, io) {
     
     // Проверяем, что APP_URL начинается с http:// или https://
     if (!appUrl.startsWith('http://') && !appUrl.startsWith('https://')) {
-      console.error('APP_URL does not start with http:// or https://');
+      console.error('APP_URL does not start with http:// или https://');
       return res.status(500).send(`
         <h2>Ошибка конфигурации</h2>
         <p>APP_URL должен начинаться с http:// или https://</p>
@@ -142,10 +154,12 @@ function initWebServer(app, io) {
     
     console.log('Redirecting user to Twitch Auth URL:', authUrl);
     res.redirect(authUrl);
+    console.log('=== КОНЕЦ ОБРАБОТКИ /auth/twitch ===');
   });
 
   // Маршрут для обработки callback от Twitch OAuth
   app.get('/auth/twitch/callback', async (req, res) => {
+    console.log('=== НАЧАЛО ОБРАБОТКИ /auth/twitch/callback ===');
     console.log('=== Twitch OAuth Callback Received ===');
     console.log('Query parameters:', req.query);
     console.log('Headers:', req.headers);
@@ -323,10 +337,12 @@ function initWebServer(app, io) {
         <a href="/">Вернуться на главную</a>
       `);
     }
+    console.log('=== КОНЕЦ ОБРАБОТКИ /auth/twitch/callback ===');
   });
 
   // Маршрут для выхода из системы
   app.get('/auth/logout', (req, res) => {
+    console.log('=== НАЧАЛО ОБРАБОТКИ /auth/logout ===');
     const sessionId = req.cookies?.sessionId;
     
     if (sessionId && userSessions.has(sessionId)) {
@@ -346,20 +362,26 @@ function initWebServer(app, io) {
     
     // Перенаправляем на главную страницу
     res.redirect('/?logout=success');
+    console.log('=== КОНЕЦ ОБРАБОТКИ /auth/logout ===');
   });
 
   // Middleware для проверки аутентификации
   const requireAuth = async (req, res, next) => {
+    console.log('=== НАЧАЛО MIDDLEWARE requireAuth ===');
     const sessionId = req.cookies?.sessionId;
     
     if (!sessionId || !userSessions.has(sessionId)) {
+      console.log('Сессия не найдена или отсутствует');
+      console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
       return res.status(401).json({ error: 'Требуется авторизация' });
     }
     
     const session = userSessions.get(sessionId);
+    console.log('Найдена сессия:', { userId: session.userId, username: session.username });
     
     // Проверяем, не истек ли токен
     if (Date.now() > session.expiresAt) {
+      console.log('Токен истек, попытка обновления');
       // Пытаемся обновить токен
       try {
         const tokenData = await refreshAccessToken(session.refreshToken);
@@ -370,25 +392,32 @@ function initWebServer(app, io) {
         session.expiresAt = Date.now() + (tokenData.expires_in * 1000);
         
         userSessions.set(sessionId, session);
+        console.log('Токен успешно обновлен');
       } catch (error) {
         console.error('Error refreshing token:', error);
         // Удаляем сессию при ошибке обновления токена
         userSessions.delete(sessionId);
+        console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
         return res.status(401).json({ error: 'Сессия истекла, требуется повторная авторизация' });
       }
     }
     
     req.user = session;
+    console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
     next();
   };
 
   // Тестовый маршрут для проверки авторизации
   app.get('/api/giveaways/test', requireAuth, (req, res) => {
+    console.log('=== НАЧАЛО ОБРАБОТКИ /api/giveaways/test ===');
+    console.log('Тест авторизации успешен для пользователя:', req.user.username);
     res.json({ message: 'Авторизация успешна', user: req.user.username });
+    console.log('=== КОНЕЦ ОБРАБОТКИ /api/giveaways/test ===');
   });
 
   // API маршрут для начала розыгрыша
   app.post('/api/start-giveaway', requireAuth, async (req, res) => {
+    console.log('=== НАЧАЛО ОБРАБОТКИ /api/start-giveaway ===');
     try {
       const { keyword, prize } = req.body;
       
@@ -396,6 +425,7 @@ function initWebServer(app, io) {
       
       if (!keyword) {
         console.log('Ошибка: Кодовое слово обязательно');
+        console.log('=== КОНЕЦ ОБРАБОТКИ /api/start-giveaway ===');
         return res.status(400).json({ error: 'Кодовое слово обязательно' });
       }
       
@@ -445,23 +475,28 @@ function initWebServer(app, io) {
           activeGiveawaysSize: activeGiveaways.size
         });
         
+        console.log('=== КОНЕЦ ОБРАБОТКИ /api/start-giveaway ===');
         return res.json({ success: true, giveaway: giveawayInfo });
       } else {
         console.error('Не удалось создать розыгрыш - отсутствует ID');
+        console.log('=== КОНЕЦ ОБРАБОТКИ /api/start-giveaway ===');
         return res.status(500).json({ error: 'Ошибка при создании розыгрыша' });
       }
     } catch (error) {
       console.error('Ошибка при создании розыгрыша:', error);
       console.error('Stack trace:', error.stack);
+      console.log('=== КОНЕЦ ОБРАБОТКИ /api/start-giveaway ===');
       res.status(500).json({ error: 'Внутренняя ошибка сервера: ' + error.message });
     }
   });
 
   // API маршрут для завершения розыгрыша
   app.post('/api/end-giveaway', requireAuth, async (req, res) => {
+    console.log('=== НАЧАЛО ОБРАБОТКИ /api/end-giveaway ===');
     try {
       // Получаем имя канала авторизованного пользователя
       const channelName = req.user.username;
+      console.log('Завершение розыгрышей для канала:', channelName);
       
       // Завершаем все активные розыгрыши в канале
       let endedCount = 0;
@@ -470,13 +505,17 @@ function initWebServer(app, io) {
       
       for (const [key, giveaway] of activeGiveaways.entries()) {
         if (giveaway.channel === channelName) {
+          console.log('Завершение розыгрыша:', { giveawayId: giveaway.id, prize: giveaway.prize });
+          
           // Выбираем победителя
           const winnerResult = await selectWinner(giveaway.id);
+          console.log('Результат выбора победителя:', winnerResult);
           
           // Объявляем победителя в чате Twitch, если есть победитель
           if (winnerResult && winnerResult.winner) {
             try {
               const { announceWinner } = require('../bot/twitchBot');
+              console.log('Объявление победителя в чате Twitch');
               await announceWinner(channelName, winnerResult.winner, false); // false - так как у нас нет Telegram интеграции
             } catch (error) {
               console.error('Ошибка при объявлении победителя в чате Twitch:', error);
@@ -484,6 +523,7 @@ function initWebServer(app, io) {
             
             // Сохраняем победителя в таблице winners
             const prize = giveaway.prize || 'Участие в розыгрыше';
+            console.log('Сохранение победителя в таблице winners');
             const winnerRecord = await addWinner(winnerResult.winner, channelName, prize);
             
             // Сохраняем данные победителя для ответа
@@ -501,6 +541,7 @@ function initWebServer(app, io) {
           endedCount++;
           
           // Отправляем уведомление через WebSocket
+          console.log('Отправка уведомления о завершении розыгрыша через WebSocket');
           io.emit('giveawayEnded', {
             id: giveaway.id,
             winner: winnerResult ? winnerResult.winner : null,
@@ -510,8 +551,10 @@ function initWebServer(app, io) {
       }
       
       // Удаляем завершенные розыгрыши
+      console.log('Удаление завершенных розыгрышей:', keysToDelete.length);
       keysToDelete.forEach(key => activeGiveaways.delete(key));
       
+      console.log('=== КОНЕЦ ОБРАБОТКИ /api/end-giveaway ===');
       return res.json({ 
         success: true, 
         message: `Завершено розыгрышей: ${endedCount}`,
@@ -520,54 +563,69 @@ function initWebServer(app, io) {
       });
     } catch (error) {
       console.error('Ошибка при завершении розыгрыша:', error);
+      console.log('=== КОНЕЦ ОБРАБОТКИ /api/end-giveaway ===');
       res.status(500).json({ error: 'Внутренняя ошибка сервера' });
     }
   });
 
   // API маршрут для выбора победителя
   app.post('/api/select-winner', requireAuth, async (req, res) => {
+    console.log('=== НАЧАЛО ОБРАБОТКИ /api/select-winner ===');
     try {
       // Получаем имя канала авторизованного пользователя
       const channelName = req.user.username;
+      console.log('Выбор победителя для канала:', channelName);
       
       // Находим активный розыгрыш для этого канала
       let activeGiveaway = null;
       for (const [key, giveaway] of activeGiveaways.entries()) {
         if (giveaway.channel === channelName) {
           activeGiveaway = giveaway;
+          console.log('Найден активный розыгрыш:', { giveawayId: giveaway.id, prize: giveaway.prize });
           break;
         }
       }
       
       if (!activeGiveaway) {
+        console.log('Активный розыгрыш не найден');
+        console.log('=== КОНЕЦ ОБРАБОТКИ /api/select-winner ===');
         return res.status(400).json({ error: 'Нет активного розыгрыша' });
       }
       
       // Проверяем, есть ли участники (проверяем как в локальном массиве, так и в базе данных)
       if ((!activeGiveaway.participants || activeGiveaway.participants.length === 0) && 
           (!req.body.participants || req.body.participants.length === 0)) {
-      return res.status(400).json({ error: 'Нет участников для выбора победителя' });
+        console.log('Нет участников для выбора победителя');
+        console.log('=== КОНЕЦ ОБРАБОТКИ /api/select-winner ===');
+        return res.status(400).json({ error: 'Нет участников для выбора победителя' });
       }
       
       // Если участники переданы в запросе, обновляем локальный список
       if (req.body.participants && Array.isArray(req.body.participants)) {
+        console.log('Обновление локального списка участников');
         activeGiveaway.participants = req.body.participants;
       }
       
       // Проверяем, что есть участники
       if (!activeGiveaway.participants || activeGiveaway.participants.length === 0) {
+        console.log('Нет участников для выбора победителя (после обновления)');
+        console.log('=== КОНЕЦ ОБРАБОТКИ /api/select-winner ===');
         return res.status(400).json({ error: 'Нет участников для выбора победителя' });
       }
       
       // Выбираем случайного победителя из участников
+      console.log('Выбор случайного победителя из участников:', activeGiveaway.participants.length);
       const winnerIndex = Math.floor(Math.random() * activeGiveaway.participants.length);
       const winner = activeGiveaway.participants[winnerIndex];
+      console.log('Выбран победитель:', winner);
       
       // Сохраняем победителя в таблице winners
       const prize = activeGiveaway.prize || 'Участие в розыгрыше';
+      console.log('Сохранение победителя в таблице winners');
       const winnerData = await addWinner(winner, channelName, prize);
       
       // Отправляем уведомление через WebSocket
+      console.log('Отправка уведомления о выборе победителя через WebSocket');
       io.emit('winnerSelected', {
         winner: winner,
         channel: channelName,
@@ -578,11 +636,13 @@ function initWebServer(app, io) {
       // Объявляем победителя в чате Twitch
       try {
         const { announceWinner } = require('../bot/twitchBot');
+        console.log('Объявление победителя в чате Twitch');
         await announceWinner(channelName, winner, false); // false - так как у нас нет Telegram интеграции
       } catch (error) {
         console.error('Ошибка при объявлении победителя в чате Twitch:', error);
       }
       
+      console.log('=== КОНЕЦ ОБРАБОТКИ /api/select-winner ===');
       return res.json({ 
         success: true, 
         winner: winner,
@@ -590,102 +650,73 @@ function initWebServer(app, io) {
       });
     } catch (error) {
       console.error('Ошибка при выборе победителя:', error);
+      console.log('=== КОНЕЦ ОБРАБОТКИ /api/select-winner ===');
       res.status(500).json({ error: 'Внутренняя ошибка сервера' });
     }
   });
 
   // API маршрут для получения последних победителей
   app.get('/api/winners', requireAuth, async (req, res) => {
+    console.log('=== НАЧАЛО ОБРАБОТКИ /api/winners ===');
     try {
       // Получаем имя канала авторизованного пользователя
       const channelName = req.user.username;
       console.log('Запрос победителей для канала:', channelName);
       
       // Получаем историю победителей из новой таблицы
+      console.log('Получение истории победителей');
       const winners = await getWinnersHistory(channelName, 50);
       
-      console.log('Получена история победителей:', winners);
+      console.log('Получена история победителей:', winners.length);
+      console.log('=== КОНЕЦ ОБРАБОТКИ /api/winners ===');
       return res.json(winners);
     } catch (error) {
       console.error('Ошибка при получении истории победителей:', error);
+      console.log('=== КОНЕЦ ОБРАБОТКИ /api/winners ===');
       res.status(500).json({ error: 'Внутренняя ошибка сервера' });
     }
   });
-  
+
   // API маршрут для обновления Telegram победителя
   app.post('/api/update-telegram', requireAuth, async (req, res) => {
+    console.log('=== НАЧАЛО ОБРАБОТКИ /api/update-telegram ===');
     try {
       const { username, telegram } = req.body;
+      console.log('Обновление Telegram для победителя:', { username, telegram });
       
       if (!username || !telegram) {
+        console.log('Требуется указать имя пользователя и Telegram');
+        console.log('=== КОНЕЦ ОБРАБОТКИ /api/update-telegram ===');
         return res.status(400).json({ error: 'Требуется указать имя пользователя и Telegram' });
       }
       
       // Получаем имя канала авторизованного пользователя
       const channelName = req.user.username;
+      console.log('Канал пользователя:', channelName);
       
       // Обновляем Telegram победителя
+      console.log('Обновление Telegram победителя в базе данных');
       const updatedWinner = await updateWinnerTelegram(username, channelName, telegram);
       
       if (!updatedWinner) {
+        console.log('Не удалось обновить Telegram победителя');
+        console.log('=== КОНЕЦ ОБРАБОТКИ /api/update-telegram ===');
         return res.status(500).json({ error: 'Не удалось обновить Telegram победителя' });
       }
       
+      console.log('Telegram победителя успешно обновлен');
+      console.log('=== КОНЕЦ ОБРАБОТКИ /api/update-telegram ===');
       return res.json({ success: true, winner: updatedWinner });
     } catch (error) {
       console.error('Ошибка при обновлении Telegram победителя:', error);
-      res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-    }
-  });
-
-  // Маршруты
-  app.get('/api/giveaways/:channel', async (req, res) => {
-    try {
-      const { channel } = req.params;
-      const giveaways = await getGiveaways(channel);
-      res.json(giveaways);
-    } catch (error) {
-      console.error('Ошибка при получении розыгрышей:', error);
-      res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-    }
-  });
-
-  // Маршрут для добавления бота в канал
-  app.post('/api/channels/:channelName/join', async (req, res) => {
-    try {
-      const { channelName } = req.params;
-      const success = await joinChannel(channelName);
-      
-      if (success) {
-        res.json({ message: `Бот успешно добавлен в канал ${channelName}` });
-      } else {
-        res.status(500).json({ error: `Ошибка при добавлении бота в канал ${channelName}` });
-      }
-    } catch (error) {
-      console.error('Ошибка при добавлении бота в канал:', error);
-      res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-    }
-  });
-
-  // Маршрут для удаления бота из канала
-  app.post('/api/channels/:channelName/leave', async (req, res) => {
-    try {
-      const { channelName } = req.params;
-      const success = await leaveChannel(channelName);
-      
-      if (success) {
-        res.json({ message: `Бот успешно удален из канала ${channelName}` });
-      } else {
-        res.status(500).json({ error: `Ошибка при удалении бота из канала ${channelName}` });
-      }
-    } catch (error) {
-      console.error('Ошибка при удалении бота из канала:', error);
+      console.log('=== КОНЕЦ ОБРАБОТКИ /api/update-telegram ===');
       res.status(500).json({ error: 'Внутренняя ошибка сервера' });
     }
   });
 
   // WebSocket соединения
   io.on('connection', (socket) => {
+    console.log('=== НОВОЕ WEBSOCKET СОЕДИНЕНИЕ ===');
     console.log('Новое WebSocket соединение');
     
     // Отправляем тестовое сообщение при подключении
@@ -698,6 +729,7 @@ function initWebServer(app, io) {
     
     // Обработчик добавления участника от фронтенда
     socket.on('addParticipant', (data) => {
+      console.log('=== НАЧАЛО ОБРАБОТКИ addParticipant (от фронтенда) ===');
       console.log('Получен запрос на добавление участника:', data);
       
       // Находим активный розыгрыш для канала
@@ -716,17 +748,23 @@ function initWebServer(app, io) {
         }
         
         if (!activeGiveaway.participants.includes(data.username)) {
+          console.log('Добавление участника в локальный список:', data.username);
           activeGiveaway.participants.push(data.username);
-          console.log(`Участник ${data.username} добавлен в розыгрыш ${activeGiveaway.id}`);
+          console.log('Участник добавлен в локальный список. Текущие участники:', activeGiveaway.participants);
+        } else {
+          console.log('Участник уже есть в локальном списке:', data.username);
         }
       }
+      console.log('=== КОНЕЦ ОБРАБОТКИ addParticipant (от фронтенда) ===');
     });
     
     // Обработчик уведомления о выборе победителя от фронтенда
     socket.on('winnerSelectedChat', (data) => {
+      console.log('=== НАЧАЛО ОБРАБОТКИ winnerSelectedChat ===');
       console.log('Получено уведомление о выборе победителя:', data);
       
       // Отправляем сообщение в чат всем подключенным клиентам
+      console.log('Отправка сообщения в чат всем подключенным клиентам');
       io.emit('twitchMessage', {
         channel: data.channel || 'system',
         username: 'Система',
@@ -742,14 +780,17 @@ function initWebServer(app, io) {
       } catch (error) {
         console.error('Ошибка при отправке сообщения в Twitch чат:', error);
       }
+      console.log('=== КОНЕЦ ОБРАБОТКИ winnerSelectedChat ===');
     });
     
     socket.on('disconnect', () => {
       console.log('WebSocket соединение закрыто');
+      console.log('=== ЗАКРЫТИЕ WEBSOCKET СОЕДИНЕНИЯ ===');
     });
   });
 
   console.log('Веб-сервер инициализирован');
+  console.log('=== КОНЕЦ ФУНКЦИИ initWebServer ===');
 }
 
 module.exports = {

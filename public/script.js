@@ -41,6 +41,8 @@ closeWinnerBtn.addEventListener('click', handleCloseWinner);
 
 // Функция инициализации WebSocket соединения
 function initWebSocket() {
+    console.log('=== НАЧАЛО ФУНКЦИИ initWebSocket ===');
+    
     // Создаем WebSocket соединение с сервером
     socket = io();
     
@@ -62,106 +64,16 @@ function initWebSocket() {
         updateAuthButtons(false);
     });
     
-    // Обработчик получения нового сообщения из Twitch чата
-    socket.on('twitchMessage', (data) => {
-        // Добавляем сообщение в чат
-        addChatMessage('user', data.username, data.message);
-    });
-    
-    // Обработчик ошибок Twitch
-    socket.on('twitchError', (data) => {
-        console.log('Ошибка Twitch:', data);
-        // Не показываем системные сообщения
-    });
-    
-    // Обработчик подключения к Twitch
-    socket.on('twitchConnected', (data) => {
-        console.log('Бот подключен к Twitch:', data);
-        // Не показываем системные сообщения
-    });
-    
-    // Обработчик присоединения к каналу
-    socket.on('channelJoined', (data) => {
-        console.log('Бот присоединился к каналу:', data);
-        // Не показываем системные сообщения
-    });
-    
-    // Обработчик выхода из канала
-    socket.on('channelLeft', (data) => {
-        console.log('Бот покинул канал:', data);
-        // Не показываем системные сообщения
-    });
-    
-    // Обработчик добавления участника
-    socket.on('participantAdded', (data) => {
-        console.log('Получено уведомление о новом участнике:', data);
-        console.log('Текущее состояние розыгрыша:', { currentKeyword, giveawayActive, participants });
-        addParticipant(data.username);
-    });
-    
-    // Добавим отладочный обработчик для всех событий
-    socket.onAny((event, ...args) => {
-        console.log('Получено WebSocket событие:', event, args);
-    });
-    
-    // Обработчик начала розыгрыша
-    socket.on('giveawayStarted', (data) => {
-        console.log('Получено событие giveawayStarted:', data);
-        currentKeyword = data.keyword.toLowerCase(); // Приводим к нижнему регистру для корректного сравнения
-        giveawayActive = true;
-        // Не показываем системные сообщения
-        showNotification(`Розыгрыш начат с кодовым словом "${data.keyword}"`, 'success');
-        
-        // Активируем кнопки управления
-        startBtn.disabled = true;
-        resetBtn.disabled = false;
-        winnerBtn.style.display = 'block';
-        
-        console.log('Розыгрыш начат:', { currentKeyword, data });
-        
-        // Выводим информацию о состоянии для отладки
-        console.log('Состояние после начала розыгрыша:', { 
-            giveawayActive: giveawayActive, 
-            currentKeyword: currentKeyword, 
-            participantsCount: participants.length 
-        });
-    });
-    
-    // Обработчик завершения розыгрыша
-    socket.on('giveawayEnded', (data) => {
-        if (data.winner) {
-            // Не показываем системные сообщения
-            // Добавляем победителя в список
-            addWinner(data.winner);
-        } else {
-            // Не показываем системные сообщения
-        }
-        
-        // Деактивируем кнопки управления
-        startBtn.disabled = false;
-        resetBtn.disabled = true;
-        winnerBtn.style.display = 'none';
-        
-        // Скрываем секцию победителя
-        winnerSection.style.display = 'none';
-        currentWinner = null;
-    });
-    
-    // Обработчик выбора победителя
-    socket.on('winnerSelected', (data) => {
-        showWinner(data.winner);
-        // Не добавляем победителя сразу, ждем его ответа
-    });
-    
-    socket.on('disconnect', () => {
-        console.log('WebSocket соединение закрыто');
-    });
+    console.log('=== КОНЕЦ ФУНКЦИИ initWebSocket ===');
 }
 
 // Функция проверки статуса авторизации
 function checkAuthStatus() {
+    console.log('=== НАЧАЛО ФУНКЦИИ checkAuthStatus ===');
+    
     fetch('/api/giveaways/test', { method: 'GET' })
     .then(response => {
+        console.log('Ответ от сервера при проверке авторизации:', { status: response.status });
         if (response.status === 401) {
             // Пользователь не авторизован
             isAuthenticated = false;
@@ -185,56 +97,81 @@ function checkAuthStatus() {
         console.error('Ошибка проверки статуса авторизации:', error);
         // В случае ошибки показываем кнопку авторизации
         updateAuthButtons(false);
+    })
+    .finally(() => {
+        console.log('=== КОНЕЦ ФУНКЦИИ checkAuthStatus ===');
     });
 }
 
 // Функция обновления видимости кнопок авторизации/выхода
 function updateAuthButtons(isLoggedIn) {
+    console.log('=== НАЧАЛО ФУНКЦИИ updateAuthButtons ===');
+    console.log('Обновление видимости кнопок:', { isLoggedIn });
+    
     if (isLoggedIn) {
         authBtn.style.display = 'none';
         userStatus.style.display = 'flex';
         usernameDisplay.textContent = currentUsername;
+        console.log('Показываем панель пользователя');
     } else {
         authBtn.style.display = 'block';
         userStatus.style.display = 'none';
         currentUsername = '';
+        console.log('Показываем кнопку авторизации');
     }
+    
+    console.log('=== КОНЕЦ ФУНКЦИИ updateAuthButtons ===');
 }
 
 // Функция обработки авторизации
 function handleAuth() {
+    console.log('=== НАЧАЛО ФУНКЦИИ handleAuth ===');
+    
     // Показываем индикатор загрузки
     const originalText = authBtn.innerHTML;
     authBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Перенаправление...';
     authBtn.disabled = true;
     
     // Перенаправляем на маршрут авторизации Twitch
+    console.log('Перенаправление на авторизацию Twitch');
     window.location.href = '/auth/twitch';
+    
+    console.log('=== КОНЕЦ ФУНКЦИИ handleAuth ===');
 }
 
 // Функция обработки выхода из системы
 function handleLogout() {
+    console.log('=== НАЧАЛО ФУНКЦИИ handleLogout ===');
+    
     // Показываем индикатор загрузки
     const originalText = logoutBtn.innerHTML;
     logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Выход...';
     logoutBtn.disabled = true;
     
     // Перенаправляем на маршрут выхода
+    console.log('Перенаправление на выход из системы');
     window.location.href = '/auth/logout';
+    
+    console.log('=== КОНЕЦ ФУНКЦИИ handleLogout ===');
 }
 
 // Функция запуска розыгрыша
 function handleStart() {
+    console.log('=== НАЧАЛО ФУНКЦИИ handleStart ===');
     const keyword = keywordInput.value.trim();
     
     if (!keyword) {
+        console.log('Кодовое слово не введено');
         showNotification('Пожалуйста, введите кодовое слово', 'error');
+        console.log('=== КОНЕЦ ФУНКЦИИ handleStart ===');
         return;
     }
     
     // Проверяем, авторизован ли пользователь
     if (!isAuthenticated) {
+        console.log('Пользователь не авторизован');
         showNotification('Пожалуйста, сначала авторизуйтесь через Twitch', 'error');
+        console.log('=== КОНЕЦ ФУНКЦИИ handleStart ===');
         return;
     }
     
@@ -294,14 +231,19 @@ function handleStart() {
     .finally(() => {
         // Восстанавливаем кнопку
         startBtn.innerHTML = originalText;
+        console.log('=== КОНЕЦ ФУНКЦИИ handleStart ===');
     });
 }
 
 // Функция перезапуска (сброса) розыгрыша
 function handleReset() {
+    console.log('=== НАЧАЛО ФУНКЦИИ handleReset ===');
+    
     // Проверяем, авторизован ли пользователь
     if (!isAuthenticated) {
+        console.log('Пользователь не авторизован');
         showNotification('Пожалуйста, сначала авторизуйтесь через Twitch', 'error');
+        console.log('=== КОНЕЦ ФУНКЦИИ handleReset ===');
         return;
     }
     
@@ -318,6 +260,7 @@ function handleReset() {
         }
     })
     .then(response => {
+        console.log('Ответ от сервера при сбросе розыгрыша:', { status: response.status, ok: response.ok });
         if (!response.ok) {
             return response.json().then(data => {
                 throw new Error(data.error || 'Ошибка при сбросе розыгрыша');
@@ -376,18 +319,25 @@ function handleReset() {
     .finally(() => {
         // Восстанавливаем кнопку
         resetBtn.innerHTML = originalText;
+        console.log('=== КОНЕЦ ФУНКЦИИ handleReset ===');
     });
 }
 
 // Функция выбора победителя
 function handleSelectWinner() {
+    console.log('=== НАЧАЛО ФУНКЦИИ handleSelectWinner ===');
+    
     if (!isAuthenticated) {
+        console.log('Пользователь не авторизован');
         showNotification('Пожалуйста, сначала авторизуйтесь через Twitch', 'error');
+        console.log('=== КОНЕЦ ФУНКЦИИ handleSelectWinner ===');
         return;
     }
     
     if (participants.length === 0) {
+        console.log('Нет участников для выбора победителя');
         showNotification('Нет участников для выбора победителя', 'error');
+        console.log('=== КОНЕЦ ФУНКЦИИ handleSelectWinner ===');
         return;
     }
     
@@ -407,6 +357,7 @@ function handleSelectWinner() {
         })
     })
     .then(response => {
+        console.log('Ответ от сервера при выборе победителя:', { status: response.status, ok: response.ok });
         if (!response.ok) {
             return response.json().then(data => {
                 throw new Error(data.error || 'Ошибка при выборе победителя');
@@ -442,18 +393,25 @@ function handleSelectWinner() {
         // Восстанавливаем кнопку
         winnerBtn.innerHTML = originalText;
         winnerBtn.disabled = false;
+        console.log('=== КОНЕЦ ФУНКЦИИ handleSelectWinner ===');
     });
 }
 
 // Функция реролла (повторного выбора победителя)
 function handleReroll() {
+    console.log('=== НАЧАЛО ФУНКЦИИ handleReroll ===');
+    
     if (!isAuthenticated) {
+        console.log('Пользователь не авторизован');
         showNotification('Пожалуйста, сначала авторизуйтесь через Twitch', 'error');
+        console.log('=== КОНЕЦ ФУНКЦИИ handleReroll ===');
         return;
     }
     
     if (participants.length === 0) {
+        console.log('Нет участников для выбора победителя');
         showNotification('Нет участников для выбора победителя', 'error');
+        console.log('=== КОНЕЦ ФУНКЦИИ handleReroll ===');
         return;
     }
     
@@ -473,6 +431,7 @@ function handleReroll() {
         })
     })
     .then(response => {
+        console.log('Ответ от сервера при реролле:', { status: response.status, ok: response.ok });
         if (!response.ok) {
             return response.json().then(data => {
                 throw new Error(data.error || 'Ошибка при реролле');
@@ -508,11 +467,14 @@ function handleReroll() {
         // Восстанавливаем кнопку
         rerollBtn.innerHTML = originalText;
         rerollBtn.disabled = false;
+        console.log('=== КОНЕЦ ФУНКЦИИ handleReroll ===');
     });
 }
 
 // Функция закрытия секции победителя
 function handleCloseWinner() {
+    console.log('=== НАЧАЛО ФУНКЦИИ handleCloseWinner ===');
+    
     winnerSection.style.display = 'none';
     currentWinner = null;
     stopWinnerTimer();
@@ -532,17 +494,24 @@ function handleCloseWinner() {
     if (overlay) {
         overlay.remove();
     }
+    
+    console.log('=== КОНЕЦ ФУНКЦИИ handleCloseWinner ===');
 }
 
 // Функция отображения победителя в модальном окне
 function showWinner(winner) {
+    console.log('=== НАЧАЛО ФУНКЦИИ showWinner ===');
+    console.log('Отображение победителя:', winner);
+    
     currentWinner = winner;
     winnerName.textContent = winner;
     winnerResponded = false; // Сброс флага ответа
     
     // Очищаем чат в модальном окне
     const winnerChat = document.getElementById('winnerChat');
-    winnerChat.innerHTML = '';
+    if (winnerChat) {
+        winnerChat.innerHTML = '';
+    }
     
     // Показываем модальное окно
     winnerSection.style.display = 'block';
@@ -576,6 +545,8 @@ function showWinner(winner) {
     winnerSeconds = 0;
     updateWinnerTimer();
     startWinnerTimer();
+    
+    console.log('=== КОНЕЦ ФУНКЦИИ showWinner ===');
 }
 
 // Функция запуска таймера победителя
@@ -608,30 +579,37 @@ function updateWinnerTimer() {
 
 // Функция добавления участника
 function addParticipant(username) {
+    console.log('=== НАЧАЛО ФУНКЦИИ addParticipant ===');
     console.log('Добавление участника:', { username, currentKeyword, participants });
     
     // Проверяем, активен ли розыгрыш
     if (!giveawayActive || !currentKeyword) {
         console.log('Розыгрыш не активен или не задано ключевое слово');
+        console.log('=== КОНЕЦ ФУНКЦИИ addParticipant ===');
         return;
     }
     
     // Проверяем, есть ли уже такой участник
     if (participants.includes(username)) {
+        console.log('Участник уже в списке:', username);
         // Добавляем сообщение в чат о том, что участник уже в списке
         addChatMessage('already-participant', username, `Написал кодовое слово: "${currentKeyword}" (уже в списке)`);
+        console.log('=== КОНЕЦ ФУНКЦИИ addParticipant ===');
         return;
     }
     
     // Добавляем участника
+    console.log('Добавление участника в массив:', username);
     participants.push(username);
     console.log('Участник добавлен в массив:', { username, participantsCount: participants.length });
     updateParticipantsList();
     
     // Добавляем сообщение в чат
+    console.log('Добавление сообщения в чат для участника:', username);
     addChatMessage('participant', username, `Написал кодовое слово: "${currentKeyword}"`);
     
     // Показываем уведомление
+    console.log('Показ уведомления об добавлении участника:', username);
     showNotification(`Участник ${username} добавлен`, 'success');
     
     // Дополнительная отладочная информация
@@ -641,10 +619,13 @@ function addParticipant(username) {
       participantsCount: participants.length,
       participants: [...participants]
     });
+    
+    console.log('=== КОНЕЦ ФУНКЦИИ addParticipant ===');
 }
 
 // Функция обновления списка участников
 function updateParticipantsList() {
+    console.log('=== НАЧАЛО ФУНКЦИИ updateParticipantsList ===');
     console.log('Обновление списка участников:', { participantsCount: participants.length, participants: [...participants] });
     
     // Обновляем счетчик
@@ -652,16 +633,19 @@ function updateParticipantsList() {
     
     // Если нет участников, показываем пустое состояние
     if (participants.length === 0) {
+        console.log('Нет участников, показываем пустое состояние');
         participantsList.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-user-friends"></i>
                 <p>Участников пока нет</p>
             </div>
         `;
+        console.log('=== КОНЕЦ ФУНКЦИИ updateParticipantsList ===');
         return;
     }
     
     // Создаем список участников
+    console.log('Создание списка участников');
     let html = '';
     participants.forEach(participant => {
         const now = new Date();
@@ -675,20 +659,28 @@ function updateParticipantsList() {
         `;
     });
     
+    console.log('Обновление HTML списка участников');
     participantsList.innerHTML = html;
     console.log('Список участников обновлен, HTML элементов:', participantsList.children.length);
+    console.log('=== КОНЕЦ ФУНКЦИИ updateParticipantsList ===');
 }
 
 // Функция добавления сообщения в чат с поддержкой эмодзи
 function addChatMessage(type, user, text) {
+    console.log('=== НАЧАЛО ФУНКЦИИ addChatMessage ===');
+    console.log('Добавление сообщения в чат:', { type, user, text });
+    
     // Не показываем системные сообщения
     if (type === 'system') {
+        console.log('Системное сообщение, игнорируем');
+        console.log('=== КОНЕЦ ФУНКЦИИ addChatMessage ===');
         return;
     }
     
     // Проверяем, есть ли пустое состояние в чате, и если да, то удаляем его
     const emptyState = chatMessages.querySelector('.empty-state');
     if (emptyState) {
+        console.log('Удаление пустого состояния чата');
         emptyState.remove();
     }
     
@@ -697,6 +689,7 @@ function addChatMessage(type, user, text) {
     
     // Проверяем, есть ли пользователь уже в списке участников
     if (participants.includes(user) && type === 'user') {
+        console.log('Пользователь уже в списке участников, добавляем класс already-participant');
         messageDiv.classList.add('already-participant');
     }
     
@@ -711,8 +704,10 @@ function addChatMessage(type, user, text) {
         <span class="message-time">${timeString}</span>
     `;
     
+    console.log('Добавление сообщения в DOM');
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+    console.log('=== КОНЕЦ ФУНКЦИИ addChatMessage ===');
 }
 
 // Функция обработки эмодзи в тексте
@@ -759,14 +754,20 @@ function processEmojis(text) {
 
 // Вспомогательная функция для экранирования специальных символов в регулярных выражениях
 function escapeRegExp(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return string.replace(/[.*+?^${}()()|[\]\\]/g, '\\$&');
 }
 
 // Функция показа уведомлений
 function showNotification(message, type = 'info') {
+    console.log('=== НАЧАЛО ФУНКЦИИ showNotification ===');
+    console.log('Показ уведомления:', { message, type });
+    
     // Удаляем предыдущие уведомления
     const existingNotifications = document.querySelectorAll('.notification');
-    existingNotifications.forEach(notification => notification.remove());
+    if (existingNotifications.length > 0) {
+        console.log('Удаление предыдущих уведомлений:', existingNotifications.length);
+        existingNotifications.forEach(notification => notification.remove());
+    }
     
     // Создаем новое уведомление
     const notification = document.createElement('div');
@@ -778,20 +779,28 @@ function showNotification(message, type = 'info') {
         ${message}
     `;
     
+    console.log('Добавление уведомления в DOM');
     document.body.appendChild(notification);
     
     // Автоматически удаляем уведомление через 5 секунд
     setTimeout(() => {
+        console.log('Удаление уведомления по таймеру');
         notification.remove();
     }, 5000);
+    
+    console.log('=== КОНЕЦ ФУНКЦИИ showNotification ===');
 }
 
 // Функция добавления победителя в список
 function addWinner(winnerName) {
+    console.log('=== НАЧАЛО ФУНКЦИИ addWinner ===');
+    console.log('Добавление победителя:', winnerName);
+    
     // Проверяем, есть ли уже такой победитель в списке
     const existingWinner = winners.find(w => w.name === winnerName);
     if (existingWinner) {
         console.log('Победитель уже есть в списке:', winnerName);
+        console.log('=== КОНЕЦ ФУНКЦИИ addWinner ===');
         return;
     }
     
@@ -808,6 +817,8 @@ function addWinner(winnerName) {
     if (winners.length > 10) {
         winners = winners.slice(0, 10);
     }
+    
+    console.log('=== КОНЕЦ ФУНКЦИИ addWinner ===');
 }
 
 // Функция для обновления Telegram победителя
@@ -883,6 +894,7 @@ function addTestContent() {
 
 // Добавляем тестовый контент после загрузки страницы
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== НАЧАЛО DOMContentLoaded ===');
     console.log('Веб-интерфейс загружен');
     
     // Проверяем, успешно ли прошла авторизация
@@ -929,4 +941,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Добавляем тестовый контент для проверки выравнивания (только для тестирования)
     // setTimeout(addTestContent, 1000);
+    
+    console.log('=== КОНЕЦ DOMContentLoaded ===');
 });
