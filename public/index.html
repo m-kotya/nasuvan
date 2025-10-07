@@ -15,19 +15,22 @@
                     <h1><i class="fab fa-twitch"></i> Twitch Giveaway Bot</h1>
                 </div>
                 <div class="header-right">
-                    <a href="/winners" class="btn btn-secondary winners-btn" target="_blank">
-                        <i class="fas fa-trophy"></i> Победители
-                    </a>
-                    <div class="auth-section">
-                        <div id="userStatus" class="user-status" style="display: none;">
-                            <div class="user-info">
-                                <div class="online-indicator"></div>
-                                <span id="usernameDisplay" class="username"></span>
-                            </div>
-                            <button id="logoutBtn" class="btn btn-secondary">
-                                <i class="fas fa-sign-out-alt"></i> Выйти
-                            </button>
+                    <div id="userStatus" class="user-status" style="display: none;">
+                        <div class="user-info">
+                            <div class="online-indicator"></div>
+                            <span id="usernameDisplay" class="username"></span>
                         </div>
+                        <a href="/winners" class="btn btn-secondary">
+                            <i class="fas fa-history"></i> История
+                        </a>
+                        <a href="/updateTelegram.html" class="btn btn-secondary">
+                            <i class="fab fa-telegram"></i> Telegram
+                        </a>
+                        <button id="logoutBtn" class="btn btn-danger">
+                            <i class="fas fa-sign-out-alt"></i> Выйти
+                        </button>
+                    </div>
+                    <div id="authSection">
                         <button id="authBtn" class="btn btn-primary" style="display: block;">
                             <i class="fas fa-sign-in-alt"></i> Авторизация
                         </button>

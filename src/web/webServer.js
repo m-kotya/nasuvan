@@ -1,6 +1,6 @@
 const path = require('path');
 const crypto = require('crypto');
-const { getGiveaways, createGiveaway, selectWinner, supabase } = require('../database/supabaseClient');
+const { getGiveaways, createGiveaway, selectWinner, addWinner, supabase } = require('../database/supabaseClient');
 const { joinChannel, leaveChannel } = require('../bot/twitchBot');
 
 // Хранение активных розыгрышей в памяти (в реальном приложении лучше использовать БД)
@@ -412,15 +412,19 @@ function initWebServer(app, io) {
       // Проверяем, что мы получили данные (даже фиктивные)
       if (giveawayData && giveawayData.id) {
         // Сохраняем информацию о розыгрыше
+        const normalizedKeyword = keyword.toLowerCase();
         const giveawayInfo = {
           id: giveawayData.id,
-          keyword: keyword.toLowerCase(),
+          keyword: normalizedKeyword,
           prize: prize || 'Участие в розыгрыше',
           participants: [],
           channel: channelName
         };
         
-        activeGiveaways.set(`${channelName}:${keyword.toLowerCase()}`, giveawayInfo);
+        const giveawayKey = `${channelName}:${normalizedKeyword}`;
+        console.log('Сохранение розыгрыша:', { giveawayKey, giveawayInfo });
+        activeGiveaways.set(giveawayKey, giveawayInfo);
+        console.log('Розыгрыш сохранен. Текущие розыгрыши:', Array.from(activeGiveaways.entries()));
         
         // Отправляем уведомление через WebSocket
         io.emit('giveawayStarted', {
@@ -431,6 +435,16 @@ function initWebServer(app, io) {
         });
         
         console.log('Розыгрыш успешно создан и сохранен:', giveawayInfo);
+        console.log('Текущие розыгрыши в activeGiveaways:', Array.from(activeGiveaways.entries()));
+        
+        // Дополнительная отладочная информация
+        console.log('Отладочная информация после создания розыгрыша:', {
+          channelName,
+          keyword: normalizedKeyword,
+          giveawayKey,
+          activeGiveawaysSize: activeGiveaways.size
+        });
+        
         return res.json({ success: true, giveaway: giveawayInfo });
       } else {
         console.error('Не удалось создать розыгрыш - отсутствует ID');
@@ -468,9 +482,17 @@ function initWebServer(app, io) {
               console.error('Ошибка при объявлении победителя в чате Twitch:', error);
             }
             
+            // Сохраняем победителя в таблице winners
+            const prize = giveaway.prize || 'Участие в розыгрыше';
+            const winnerRecord = await addWinner(winnerResult.winner, channelName, prize);
+            
             // Сохраняем данные победителя для ответа
             if (!winnerData) {
-              winnerData = { id: giveaway.id, winner: winnerResult.winner };
+              winnerData = { 
+                id: giveaway.id, 
+                winner: winnerResult.winner,
+                winnerRecord: winnerRecord
+              };
             }
           }
           
@@ -541,11 +563,16 @@ function initWebServer(app, io) {
       const winnerIndex = Math.floor(Math.random() * activeGiveaway.participants.length);
       const winner = activeGiveaway.participants[winnerIndex];
       
+      // Сохраняем победителя в таблице winners
+      const prize = activeGiveaway.prize || 'Участие в розыгрыше';
+      const winnerData = await addWinner(winner, channelName, prize);
+      
       // Отправляем уведомление через WebSocket
       io.emit('winnerSelected', {
         winner: winner,
         channel: channelName,
-        giveawayId: activeGiveaway.id
+        giveawayId: activeGiveaway.id,
+        winnerData: winnerData
       });
       
       // Объявляем победителя в чате Twitch
@@ -558,7 +585,8 @@ function initWebServer(app, io) {
       
       return res.json({ 
         success: true, 
-        winner: winner
+        winner: winner,
+        winnerData: winnerData
       });
     } catch (error) {
       console.error('Ошибка при выборе победителя:', error);
@@ -573,30 +601,39 @@ function initWebServer(app, io) {
       const channelName = req.user.username;
       console.log('Запрос победителей для канала:', channelName);
       
-      // Проверяем, инициализирован ли клиент Supabase
-      if (!supabase) {
-        console.error('Supabase client not initialized');
-        return res.status(500).json({ error: 'Database not available' });
-      }
+      // Получаем историю победителей из новой таблицы
+      const winners = await getWinnersHistory(channelName, 50);
       
-      // Получаем последние 10 завершенных розыгрышей с победителями
-      const { data, error } = await supabase
-        .from('giveaways')
-        .select('*')
-        .eq('channel', channelName)
-        .not('winner', 'is', null)
-        .order('ended_at', { ascending: false })
-        .limit(10);
-
-      if (error) {
-        console.error('Ошибка при получении победителей:', error);
-        return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-      }
-      
-      console.log('Получены победители:', data);
-      return res.json(data);
+      console.log('Получена история победителей:', winners);
+      return res.json(winners);
     } catch (error) {
-      console.error('Ошибка при получении победителей:', error);
+      console.error('Ошибка при получении истории победителей:', error);
+      res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+    }
+  });
+  
+  // API маршрут для обновления Telegram победителя
+  app.post('/api/update-telegram', requireAuth, async (req, res) => {
+    try {
+      const { username, telegram } = req.body;
+      
+      if (!username || !telegram) {
+        return res.status(400).json({ error: 'Требуется указать имя пользователя и Telegram' });
+      }
+      
+      // Получаем имя канала авторизованного пользователя
+      const channelName = req.user.username;
+      
+      // Обновляем Telegram победителя
+      const updatedWinner = await updateWinnerTelegram(username, channelName, telegram);
+      
+      if (!updatedWinner) {
+        return res.status(500).json({ error: 'Не удалось обновить Telegram победителя' });
+      }
+      
+      return res.json({ success: true, winner: updatedWinner });
+    } catch (error) {
+      console.error('Ошибка при обновлении Telegram победителя:', error);
       res.status(500).json({ error: 'Внутренняя ошибка сервера' });
     }
   });

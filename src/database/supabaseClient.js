@@ -97,11 +97,13 @@ async function createGiveaway(channel, keyword, prize) {
   // Приводим ключевое слово к нижнему регистру для корректного сравнения
   const normalizedKeyword = keyword.toLowerCase();
   
+  console.log('Создание розыгрыша с параметрами:', { channel, originalKeyword: keyword, normalizedKeyword, prize });
+  
   // Проверяем, инициализирован ли клиент
   if (!supabase) {
     console.warn('Supabase клиент не инициализирован, используем фиктивные данные');
     // Возвращаем фиктивные данные для тестирования
-    return {
+    const fakeData = {
       id: Date.now(),
       channel,
       keyword: normalizedKeyword,
@@ -109,9 +111,11 @@ async function createGiveaway(channel, keyword, prize) {
       started_at: new Date(),
       is_active: true
     };
+    console.log('Возвращаем фиктивные данные розыгрыша:', fakeData);
+    return fakeData;
   }
   
-  console.log('Попытка создания розыгрыша:', { channel, keyword: normalizedKeyword, prize });
+  console.log('Попытка создания розыгрыша в Supabase:', { channel, keyword: normalizedKeyword, prize });
   
   try {
     const { data, error } = await supabase
@@ -131,7 +135,7 @@ async function createGiveaway(channel, keyword, prize) {
       console.error('Ошибка при создании розыгрыша в Supabase:', error);
       console.error('Детали ошибки:', JSON.stringify(error, null, 2));
       // Возвращаем фиктивные данные для тестирования
-      return {
+      const fakeData = {
         id: Date.now(),
         channel,
         keyword: normalizedKeyword,
@@ -139,6 +143,8 @@ async function createGiveaway(channel, keyword, prize) {
         started_at: new Date(),
         is_active: true
       };
+      console.log('Возвращаем фиктивные данные из-за ошибки:', fakeData);
+      return fakeData;
     }
     
     console.log('Успешно создан розыгрыш в Supabase:', data);
@@ -147,7 +153,7 @@ async function createGiveaway(channel, keyword, prize) {
   } catch (error) {
     console.error('Исключение при создании розыгрыша:', error);
     // Возвращаем фиктивные данные для тестирования
-    return {
+    const fakeData = {
       id: Date.now(),
       channel,
       keyword: normalizedKeyword,
@@ -155,14 +161,26 @@ async function createGiveaway(channel, keyword, prize) {
       started_at: new Date(),
       is_active: true
     };
+    console.log('Возвращаем фиктивные данные из-за исключения:', fakeData);
+    return fakeData;
   }
 }
 
 async function addParticipant(giveawayId, username) {
+  console.log('Попытка добавления участника:', { giveawayId, username });
+  
   // Проверяем, инициализирован ли клиент
   if (!supabase) {
-    console.error('Supabase клиент не инициализирован');
-    return null;
+    console.warn('Supabase клиент не инициализирован, используем фиктивную реализацию');
+    // Возвращаем фиктивные данные для тестирования
+    const fakeData = {
+      id: Date.now(),
+      giveaway_id: giveawayId,
+      username: username,
+      participated_at: new Date()
+    };
+    console.log('Возвращаем фиктивные данные участника:', fakeData);
+    return fakeData;
   }
   
   const { data, error } = await supabase
@@ -180,7 +198,8 @@ async function addParticipant(giveawayId, username) {
     console.error('Ошибка при добавлении участника:', error);
     return null;
   }
-
+  
+  console.log('Участник успешно добавлен:', data[0]);
   return data[0];
 }
 
@@ -282,11 +301,139 @@ async function getGiveaways(channel) {
   return data;
 }
 
+// Функция для добавления победителя в таблицу winners
+async function addWinner(username, channel, prize, telegram = null) {
+  console.log('Попытка добавления победителя:', { username, channel, prize, telegram });
+  
+  // Проверяем, инициализирован ли клиент
+  if (!supabase) {
+    console.warn('Supabase клиент не инициализирован, используем фиктивную реализацию');
+    // Возвращаем фиктивные данные для тестирования
+    const fakeData = {
+      id: Date.now(),
+      username,
+      channel,
+      prize,
+      telegram,
+      win_time: new Date(),
+      total_wins: 1,
+      created_at: new Date()
+    };
+    console.log('Возвращаем фиктивные данные победителя:', fakeData);
+    return fakeData;
+  }
+  
+  try {
+    // Проверяем, есть ли уже запись о победителе в этой таблице
+    const { data: existingWinner, error: fetchError } = await supabase
+      .from('winners')
+      .select('id, total_wins')
+      .eq('username', username)
+      .eq('channel', channel)
+      .order('win_time', { ascending: false })
+      .limit(1)
+      .single();
+    
+    let totalWins = 1;
+    if (existingWinner && !fetchError) {
+      totalWins = existingWinner.total_wins + 1;
+    }
+    
+    // Добавляем победителя в таблицу
+    const { data, error } = await supabase
+      .from('winners')
+      .insert([
+        {
+          username,
+          channel,
+          prize,
+          telegram,
+          win_time: new Date(),
+          total_wins: totalWins
+        }
+      ])
+      .select();
+
+    if (error) {
+      console.error('Ошибка при добавлении победителя:', error);
+      return null;
+    }
+    
+    console.log('Победитель успешно добавлен:', data[0]);
+    return data[0];
+  } catch (error) {
+    console.error('Исключение при добавлении победителя:', error);
+    return null;
+  }
+}
+
+// Функция для получения истории победителей
+async function getWinnersHistory(channel, limit = 10) {
+  // Проверяем, инициализирован ли клиент
+  if (!supabase) {
+    console.error('Supabase клиент не инициализирован');
+    return [];
+  }
+  
+  try {
+    const { data, error } = await supabase
+      .from('winners')
+      .select('*')
+      .eq('channel', channel)
+      .order('win_time', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Ошибка при получении истории победителей:', error);
+      return [];
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Исключение при получении истории победителей:', error);
+    return [];
+  }
+}
+
+// Функция для обновления Telegram победителя
+async function updateWinnerTelegram(username, channel, telegram) {
+  // Проверяем, инициализирован ли клиент
+  if (!supabase) {
+    console.warn('Supabase клиент не инициализирован');
+    return null;
+  }
+  
+  try {
+    const { data, error } = await supabase
+      .from('winners')
+      .update({ telegram: telegram })
+      .eq('username', username)
+      .eq('channel', channel)
+      .order('win_time', { ascending: false })
+      .limit(1)
+      .select();
+
+    if (error) {
+      console.error('Ошибка при обновлении Telegram победителя:', error);
+      return null;
+    }
+    
+    console.log('Telegram победителя успешно обновлен:', data[0]);
+    return data[0];
+  } catch (error) {
+    console.error('Исключение при обновлении Telegram победителя:', error);
+    return null;
+  }
+}
+
 module.exports = {
   initDatabase,
   createGiveaway,
   addParticipant,
   selectWinner,
   getGiveaways,
+  addWinner,
+  getWinnersHistory,
+  updateWinnerTelegram,
   supabase
 };

@@ -327,9 +327,6 @@ a:hover {
     padding: 0.85rem;
     background: rgba(58, 58, 90, 0.6);
     border-radius: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     font-size: 0.95rem;
     transition: all 0.3s ease;
     animation: itemAppear 0.3s ease;
@@ -351,12 +348,60 @@ a:hover {
     transform: translateX(5px);
 }
 
-.participant-name, .winner-name {
+.winner-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.winner-name {
+    font-weight: 600;
+    color: #9146ff;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.winner-trophy {
+    color: #ff9800;
+}
+
+.winner-total-wins {
+    background: rgba(255, 152, 0, 0.2);
+    color: #ff9800;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.winner-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.winner-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.winner-prize, .winner-telegram, .winner-time {
+    color: #aaa;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.participant-name {
     font-weight: 600;
     color: #9146ff;
 }
 
-.participant-time, .winner-time {
+.participant-time {
     color: #aaa;
     font-size: 0.85rem;
 }

@@ -15,6 +15,9 @@
                     <h1><i class="fab fa-twitch"></i> История победителей</h1>
                 </div>
                 <div class="header-right">
+                    <a href="/updateTelegram.html" class="btn btn-secondary">
+                        <i class="fab fa-telegram"></i> Обновить Telegram
+                    </a>
                     <a href="/" class="btn btn-primary">
                         <i class="fas fa-arrow-left"></i> Назад к розыгрышам
                     </a>
@@ -90,30 +93,43 @@
 
             let html = '';
             winnersData.forEach(winnerData => {
-                if (winnerData.winner) {
-                    // Форматируем дату как день/месяц/год
-                    const date = new Date(winnerData.ended_at);
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    const dateString = `${day}/${month}/${year}`;
-                    
-                    // Форматируем время как 24-часовой формат часы:минуты
-                    const hours = date.getHours().toString().padStart(2, '0');
-                    const minutes = date.getMinutes().toString().padStart(2, '0');
-                    const timeString = `${hours}:${minutes}`;
-                    
-                    html += `
-                        <div class="winner-item">
-                            <div>
-                                <span class="winner-name"><i class="fas fa-trophy winner-trophy"></i> ${winnerData.winner}</span>
+                // Форматируем дату как день/месяц/год
+                const date = new Date(winnerData.win_time);
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                const dateString = `${day}/${month}/${year}`;
+                
+                // Форматируем время как 24-часовой формат часы:минуты
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                const timeString = `${hours}:${minutes}`;
+                
+                // Получаем приз или используем значение по умолчанию
+                const prize = winnerData.prize || 'Участие в розыгрыше';
+                
+                // Получаем Telegram или показываем "Не указан"
+                const telegram = winnerData.telegram || 'Не указан';
+                
+                html += `
+                    <div class="winner-item">
+                        <div class="winner-header">
+                            <span class="winner-name"><i class="fas fa-trophy winner-trophy"></i> ${winnerData.username}</span>
+                            <span class="winner-total-wins">Побед: ${winnerData.total_wins}</span>
+                        </div>
+                        <div class="winner-details">
+                            <div class="winner-info">
+                                <span class="winner-prize"><i class="fas fa-gift"></i> ${prize}</span>
                             </div>
-                            <div>
-                                <span class="winner-time">${dateString} ${timeString}</span>
+                            <div class="winner-info">
+                                <span class="winner-telegram"><i class="fab fa-telegram"></i> ${telegram}</span>
+                            </div>
+                            <div class="winner-info">
+                                <span class="winner-time"><i class="far fa-clock"></i> ${dateString} ${timeString}</span>
                             </div>
                         </div>
-                    `;
-                }
+                    </div>
+                `;
             });
             
             winnersList.innerHTML = html;

@@ -1,5 +1,5 @@
 const tmi = require('tmi.js');
-const { createGiveaway, addParticipant, selectWinner, supabase } = require('../database/supabaseClient');
+const { createGiveaway, addParticipant, selectWinner, addWinner, supabase } = require('../database/supabaseClient');
 
 // Хранение активных розыгрышей
 let activeGiveaways = new Map();
@@ -18,6 +18,11 @@ const client = new tmi.Client({
     password: process.env.TWITCH_OAUTH_TOKEN
   },
   channels: []
+});
+
+console.log('Конфигурация клиента Twitch:', {
+  username: process.env.TWITCH_BOT_USERNAME,
+  password: process.env.TWITCH_OAUTH_TOKEN ? 'Установлен' : 'Не установлен'
 });
 
 function initBot(socketIo) {
@@ -121,15 +126,27 @@ function initBot(socketIo) {
         });
     }
   }
+  
+  console.log('Конфигурация бота:', {
+    TWITCH_BOT_USERNAME: process.env.TWITCH_BOT_USERNAME,
+    TWITCH_OAUTH_TOKEN: process.env.TWITCH_OAUTH_TOKEN ? 'Установлен' : 'Не установлен',
+    hasPlaceholders: (process.env.TWITCH_BOT_USERNAME === 'your_bot_username' || 
+                     process.env.TWITCH_OAUTH_TOKEN === 'oauth:your_token_here')
+  });
 
   // Подписка на сообщения в чате
   client.on('message', async (channel, tags, message, self) => {
+    console.log('Обработчик сообщений вызван:', { channel, tags, message, self });
     // Игнорируем сообщения от самого бота
     if (self) return;
 
     const channelName = channel.replace('#', '');
     const username = tags.username;
     const lowerMessage = message.toLowerCase();
+    
+    console.log('Получено сообщение из Twitch чата:', { channelName, username, message, lowerMessage });
+    console.log('Текущие подключенные каналы:', Array.from(connectedChannels));
+    console.log('Канал сообщения подключен:', connectedChannels.has(channelName));
 
     // Отправляем сообщение через WebSocket всем подключенным клиентам
     if (io) {
@@ -142,10 +159,19 @@ function initBot(socketIo) {
     }
 
     // Проверяем, есть ли активный розыгрыш с таким ключевым словом
+    console.log('Проверка розыгрышей:', { channelName, lowerMessage, activeGiveaways: Array.from(activeGiveaways.entries()) });
+    let foundGiveaway = false;
+    
+    // Проверяем точное совпадение ключевого слова
     for (const [key, giveaway] of activeGiveaways.entries()) {
+      console.log('Проверка розыгрыша:', { key, giveaway, channelMatch: giveaway.channel === channelName, keywordMatch: giveaway.keyword === lowerMessage });
       if (giveaway.channel === channelName && giveaway.keyword === lowerMessage) {
+        foundGiveaway = true;
+        console.log('Найден подходящий розыгрыш:', { giveawayId: giveaway.id, channel: giveaway.channel, keyword: giveaway.keyword });
+        
         // Добавляем участника в розыгрыш
         const participant = await addParticipant(giveaway.id, username);
+        console.log('Добавление участника:', { giveawayId: giveaway.id, username, participant });
         if (participant) {
           // Отправляем уведомление в чат (только если есть учетные данные бота и они не плейсхолдеры)
           try {
@@ -160,11 +186,21 @@ function initBot(socketIo) {
           
           // Отправляем обновление через WebSocket
           if (io) {
+            console.log('Отправка события participantAdded:', { giveawayId: giveaway.id, username, channelName });
             io.emit('participantAdded', {
               giveawayId: giveaway.id,
               username: username,
               count: giveaway.participants ? giveaway.participants.length + 1 : 1,
               channel: channelName // Добавляем имя канала
+            });
+            
+            // Дополнительная отладочная информация
+            console.log('Событие participantAdded отправлено. Данные:', {
+              giveawayId: giveaway.id,
+              username: username,
+              participantsCount: giveaway.participants ? giveaway.participants.length + 1 : 1,
+              channel: channelName,
+              activeGiveawaysSize: activeGiveaways.size
             });
           }
           
@@ -180,6 +216,22 @@ function initBot(socketIo) {
         return;
       }
     }
+    
+    // Если не найдено подходящих розыгрышей
+    if (!foundGiveaway) {
+      console.log('Розыгрыш не найден для:', { channelName, lowerMessage });
+      // Выводим все активные розыгрыши для отладки
+      console.log('Активные розыгрыши:', Array.from(activeGiveaways.entries()).map(([key, giveaway]) => ({
+        key,
+        channel: giveaway.channel,
+        keyword: giveaway.keyword,
+        id: giveaway.id
+      })));
+    }
+    
+    if (!foundGiveaway) {
+      console.log('Розыгрыш не найден для:', { channelName, lowerMessage });
+    }
 
     // Команды для управления ботом (доступны только модераторам и стримеру)
     if (tags.mod || tags.badges?.broadcaster) {
@@ -194,13 +246,20 @@ function initBot(socketIo) {
           
           if (giveawayData) {
             // Сохраняем информацию о розыгрыше
-            activeGiveaways.set(`${channelName}:${keyword.toLowerCase()}`, {
+            const normalizedKeyword = keyword.toLowerCase();
+            const giveawayKey = `${channelName}:${normalizedKeyword}`;
+            const giveawayInfo = {
               id: giveawayData.id,
-              keyword: keyword.toLowerCase(),
+              keyword: normalizedKeyword,
               prize: prize,
               participants: [],
               channel: channelName
-            });
+            };
+            
+            activeGiveaways.set(giveawayKey, giveawayInfo);
+            
+            console.log('Розыгрыш создан и сохранен:', { giveawayKey, giveawayInfo });
+            console.log('Текущие активные розыгрыши:', Array.from(activeGiveaways.entries()));
             
             // Отправляем уведомление в чат (только если есть учетные данные бота и они не плейсхолдеры)
             try {
@@ -241,15 +300,26 @@ function initBot(socketIo) {
               await client.say(channel, 'Использование: !startgiveaway <ключевое слово> <приз>');
             }
           } catch (error) {
-            console.error('Ошибка отправки сообщения в чат:', error.message);
+              console.error('Ошибка отправки сообщения в чат:', error.message);
             }
           }
         } else if (message.startsWith('!endgiveaway')) {
           // Завершаем все активные розыгрыши в канале
           let endedCount = 0;
           
+          // Выводим информацию о текущих розыгрышах перед завершением
+          console.log('Розыгрыши перед завершением:', Array.from(activeGiveaways.entries()).map(([key, giveaway]) => ({
+            key,
+            channel: giveaway.channel,
+            keyword: giveaway.keyword,
+            id: giveaway.id
+          })));
+          
           for (const [key, giveaway] of activeGiveaways.entries()) {
+            console.log('Проверка розыгрыша для завершения:', { key, giveawayChannel: giveaway.channel, channelName });
             if (giveaway.channel === channelName) {
+              console.log('Завершение розыгрыша:', { giveawayId: giveaway.id, prize: giveaway.prize });
+              
               // Выбираем победителя
               const winnerResult = await selectWinner(giveaway.id);
               
@@ -287,6 +357,8 @@ function initBot(socketIo) {
                   channel: channelName
                 });
               }
+              
+              console.log('Розыгрыш завершен и удален:', { key, giveawayId: giveaway.id });
             }
           }
           
@@ -310,6 +382,13 @@ function initBot(socketIo) {
 
 // Функция для добавления бота в канал
 async function joinChannel(channelName) {
+  console.log('Попытка добавления канала:', { channelName, 
+    TWITCH_BOT_USERNAME: process.env.TWITCH_BOT_USERNAME,
+    TWITCH_OAUTH_TOKEN: process.env.TWITCH_OAUTH_TOKEN ? 'Установлен' : 'Не установлен',
+    hasPlaceholders: (process.env.TWITCH_BOT_USERNAME === 'your_bot_username' || 
+                     process.env.TWITCH_OAUTH_TOKEN === 'oauth:your_token_here')
+  });
+  
   // Проверяем, есть ли учетные данные бота и что они не являются плейсхолдерами
   if (!process.env.TWITCH_BOT_USERNAME || !process.env.TWITCH_OAUTH_TOKEN || 
       process.env.TWITCH_BOT_USERNAME === 'your_bot_username' || 
@@ -325,10 +404,12 @@ async function joinChannel(channelName) {
     }
     // Добавляем канал в список подключенных для тестирования
     connectedChannels.add(channelName);
+    console.log('Канал добавлен в тестовом режиме:', { channelName, connectedChannels: Array.from(connectedChannels) });
     return true;
   }
   
   try {
+    console.log(`Попытка присоединения к каналу ${channelName}`);
     await client.join(channelName);
     console.log(`Бот присоединился к каналу ${channelName}`);
     connectedChannels.add(channelName);
@@ -342,6 +423,7 @@ async function joinChannel(channelName) {
       });
     }
     
+    console.log(`Успешное подключение к каналу ${channelName}. Текущие подключенные каналы:`, Array.from(connectedChannels));
     return true;
   } catch (error) {
     console.error(`Ошибка при присоединении к каналу ${channelName}:`, error);
@@ -410,6 +492,26 @@ async function announceWinner(channelName, winner, hasTelegram) {
       
       // Отправляем сообщение о победителе
       await client.say(formattedChannel, `Поздравляем @${winner}! Вы выиграли розыгрыш! У вас есть 25 секунд чтобы скинуть свой ТГ.`);
+      
+      // Сохраняем победителя в таблице winners
+      // Нам нужно найти активный розыгрыш для этого канала, чтобы получить приз
+      let activeGiveaway = null;
+      for (const [key, giveaway] of activeGiveaways.entries()) {
+        if (giveaway.channel === channelName) {
+          activeGiveaway = giveaway;
+          break;
+        }
+      }
+      
+      if (activeGiveaway) {
+        const prize = activeGiveaway.prize || 'Участие в розыгрыше';
+        const winnerData = await addWinner(winner, channelName, prize);
+        console.log('Победитель сохранен в таблице winners:', winnerData);
+      } else {
+        // Если не нашли активный розыгрыш, сохраняем с призом по умолчанию
+        const winnerData = await addWinner(winner, channelName, 'Участие в розыгрыше');
+        console.log('Победитель сохранен в таблице winners (по умолчанию):', winnerData);
+      }
     }
   } catch (error) {
     console.error('Ошибка отправки сообщения о победителе в чат:', error.message);

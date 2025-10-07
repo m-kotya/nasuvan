@@ -95,12 +95,19 @@ function initWebSocket() {
     // Обработчик добавления участника
     socket.on('participantAdded', (data) => {
         console.log('Получено уведомление о новом участнике:', data);
+        console.log('Текущее состояние розыгрыша:', { currentKeyword, giveawayActive, participants });
         addParticipant(data.username);
+    });
+    
+    // Добавим отладочный обработчик для всех событий
+    socket.onAny((event, ...args) => {
+        console.log('Получено WebSocket событие:', event, args);
     });
     
     // Обработчик начала розыгрыша
     socket.on('giveawayStarted', (data) => {
-        currentKeyword = data.keyword;
+        console.log('Получено событие giveawayStarted:', data);
+        currentKeyword = data.keyword.toLowerCase(); // Приводим к нижнему регистру для корректного сравнения
         giveawayActive = true;
         // Не показываем системные сообщения
         showNotification(`Розыгрыш начат с кодовым словом "${data.keyword}"`, 'success');
@@ -109,6 +116,15 @@ function initWebSocket() {
         startBtn.disabled = true;
         resetBtn.disabled = false;
         winnerBtn.style.display = 'block';
+        
+        console.log('Розыгрыш начат:', { currentKeyword, data });
+        
+        // Выводим информацию о состоянии для отладки
+        console.log('Состояние после начала розыгрыша:', { 
+            giveawayActive: giveawayActive, 
+            currentKeyword: currentKeyword, 
+            participantsCount: participants.length 
+        });
     });
     
     // Обработчик завершения розыгрыша
@@ -227,6 +243,8 @@ function handleStart() {
     startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Запуск...';
     startBtn.disabled = true;
     
+    console.log('Отправка запроса на начало розыгрыша:', { keyword });
+    
     // Отправляем запрос на сервер для начала розыгрыша
     fetch('/api/start-giveaway', {
         method: 'POST',
@@ -239,6 +257,7 @@ function handleStart() {
         })
     })
     .then(response => {
+        console.log('Ответ от сервера при начале розыгрыша:', { status: response.status, ok: response.ok });
         if (!response.ok) {
             return response.json().then(data => {
                 throw new Error(data.error || 'Ошибка при запуске розыгрыша');
@@ -247,14 +266,22 @@ function handleStart() {
         return response.json();
     })
     .then(data => {
+        console.log('Данные от сервера при начале розыгрыша:', data);
         if (data.success) {
-            currentKeyword = keyword;
+            currentKeyword = keyword.toLowerCase(); // Приводим к нижнему регистру для корректного сравнения
             giveawayActive = true;
             showNotification(`Розыгрыш начат с кодовым словом "${keyword}"`, 'success');
             
             // Активируем кнопку сброса и кнопку выбора победителя
             resetBtn.disabled = false;
             winnerBtn.style.display = 'block';
+            
+            // Дополнительная отладочная информация
+            console.log('Состояние после начала розыгрыша:', { 
+              giveawayActive: giveawayActive, 
+              currentKeyword: currentKeyword, 
+              participantsCount: participants.length 
+            });
         } else {
             throw new Error(data.error || 'Ошибка при запуске розыгрыша');
         }
@@ -581,6 +608,14 @@ function updateWinnerTimer() {
 
 // Функция добавления участника
 function addParticipant(username) {
+    console.log('Добавление участника:', { username, currentKeyword, participants });
+    
+    // Проверяем, активен ли розыгрыш
+    if (!giveawayActive || !currentKeyword) {
+        console.log('Розыгрыш не активен или не задано ключевое слово');
+        return;
+    }
+    
     // Проверяем, есть ли уже такой участник
     if (participants.includes(username)) {
         // Добавляем сообщение в чат о том, что участник уже в списке
@@ -590,6 +625,7 @@ function addParticipant(username) {
     
     // Добавляем участника
     participants.push(username);
+    console.log('Участник добавлен в массив:', { username, participantsCount: participants.length });
     updateParticipantsList();
     
     // Добавляем сообщение в чат
@@ -597,10 +633,20 @@ function addParticipant(username) {
     
     // Показываем уведомление
     showNotification(`Участник ${username} добавлен`, 'success');
+    
+    // Дополнительная отладочная информация
+    console.log('Состояние после добавления участника:', { 
+      giveawayActive: giveawayActive, 
+      currentKeyword: currentKeyword, 
+      participantsCount: participants.length,
+      participants: [...participants]
+    });
 }
 
 // Функция обновления списка участников
 function updateParticipantsList() {
+    console.log('Обновление списка участников:', { participantsCount: participants.length, participants: [...participants] });
+    
     // Обновляем счетчик
     participantsCount.textContent = `(${participants.length})`;
     
@@ -630,6 +676,7 @@ function updateParticipantsList() {
     });
     
     participantsList.innerHTML = html;
+    console.log('Список участников обновлен, HTML элементов:', participantsList.children.length);
 }
 
 // Функция добавления сообщения в чат с поддержкой эмодзи
@@ -761,6 +808,40 @@ function addWinner(winnerName) {
     if (winners.length > 10) {
         winners = winners.slice(0, 10);
     }
+}
+
+// Функция для обновления Telegram победителя
+function updateWinnerTelegram(username, telegram) {
+    console.log('Обновление Telegram для победителя:', { username, telegram });
+    
+    // Отправляем запрос на сервер для обновления Telegram
+    fetch('/api/update-telegram', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, telegram })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Ошибка при обновлении Telegram');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            console.log('Telegram успешно обновлен:', data.winner);
+            showNotification(`Telegram для ${username} успешно обновлен`, 'success');
+        } else {
+            throw new Error(data.error || 'Ошибка при обновлении Telegram');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка при обновлении Telegram:', error);
+        showNotification('Ошибка при обновлении Telegram: ' + error.message, 'error');
+    });
 }
 
 // Функция для добавления тестового контента (только для тестирования выравнивания)
