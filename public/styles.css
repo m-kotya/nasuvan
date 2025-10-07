@@ -1,0 +1,704 @@
+/* Современный дизайн с анимациями */
+
+/* Общие стили */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    line-height: 1.6;
+    color: #e0e0e0;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+    font-size: 16px;
+    animation: bgShift 20s ease infinite;
+}
+
+@keyframes bgShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Заголовок */
+header {
+    background: rgba(30, 30, 46, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 1rem 2rem;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.header-left h1 {
+    color: #9146ff;
+    font-size: 1.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Кнопки с анимациями */
+.btn {
+    padding: 0.85rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font-size: 0.95rem;
+    background: rgba(45, 45, 65, 0.8);
+    color: #e0e0e0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #9146ff, #7d3ae0);
+    color: white;
+    box-shadow: 0 4px 15px rgba(145, 70, 255, 0.3);
+}
+
+.btn-success {
+    background: linear-gradient(45deg, #4caf50, #43a047);
+    color: white;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.btn-warning {
+    background: linear-gradient(45deg, #ff9800, #f57c00);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+.btn-info {
+    background: linear-gradient(45deg, #2196f3, #1e88e5);
+    color: white;
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+}
+
+.btn-secondary {
+    background: linear-gradient(45deg, #607d8b, #546e7a);
+    color: white;
+    box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Анимация появления кнопки победителя */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#winnerBtn {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Ссылки */
+a {
+    color: #9146ff;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #7d3ae0;
+    text-decoration: underline;
+}
+
+/* Основной макет */
+.main-layout {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 25px;
+    flex: 1;
+    animation: slideUp 0.7s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.left-column {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* Карточки */
+.card {
+    background: rgba(30, 30, 46, 0.8);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(10px);
+    animation: cardAppear 0.6s ease-out;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes cardAppear {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card-header {
+    background: rgba(45, 45, 65, 0.9);
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-header h2 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #e0e0e0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Формы */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.85rem;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(45, 45, 65, 0.8);
+    color: #e0e0e0;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #9146ff;
+    box-shadow: 0 0 0 3px rgba(145, 70, 255, 0.2);
+}
+
+.form-control::placeholder {
+    color: #888;
+}
+
+.button-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-top: auto;
+}
+
+/* Списки */
+.participants-list, .winners-list {
+    flex: 1;
+    min-height: 250px;
+    max-height: 500px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background: rgba(45, 45, 65, 0.6);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.participant-item, .winner-item {
+    padding: 0.85rem;
+    background: rgba(58, 58, 90, 0.6);
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    animation: itemAppear 0.3s ease;
+}
+
+@keyframes itemAppear {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.participant-item:hover, .winner-item:hover {
+    background: rgba(68, 68, 110, 0.8);
+    transform: translateX(5px);
+}
+
+.participant-name, .winner-name {
+    font-weight: 600;
+    color: #9146ff;
+}
+
+.participant-time, .winner-time {
+    color: #aaa;
+    font-size: 0.85rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2.5rem;
+    color: #888;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.empty-state i {
+    font-size: 2.5rem;
+    color: #444;
+    opacity: 0.5;
+}
+
+/* Чат */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 450px;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    background: rgba(45, 45, 65, 0.6);
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.chat-message {
+    padding: 0.85rem;
+    background: rgba(58, 58, 90, 0.6);
+    border-radius: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    animation: messageAppear 0.3s ease;
+}
+
+@keyframes messageAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.chat-message.user {
+    background: rgba(58, 42, 95, 0.8);
+    border-left: 3px solid #9146ff;
+}
+
+.chat-message.participant {
+    background: rgba(46, 74, 58, 0.8);
+    border-left: 3px solid #4caf50;
+}
+
+.chat-message.winner {
+    background: rgba(90, 74, 46, 0.8);
+    border-left: 3px solid #ff9800;
+}
+
+.message-user {
+    font-weight: 600;
+    color: #9146ff;
+}
+
+.message-text {
+    flex: 1;
+}
+
+.message-time {
+    color: #aaa;
+    font-size: 0.85rem;
+}
+
+/* Статус пользователя */
+.user-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(45, 45, 65, 0.8);
+    padding: 0.75rem 1.25rem;
+    border-radius: 25px;
+    backdrop-filter: blur(10px);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.online-indicator {
+    width: 10px;
+    height: 10px;
+    background-color: #4caf50;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #4caf50;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+}
+
+.username {
+    font-weight: 600;
+    color: #e0e0e0;
+}
+
+/* Секция победителя */
+#winnerSection {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: rgba(30, 30, 46, 0.95);
+    color: #e0e0e0;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    min-width: 450px;
+    max-width: 95vw;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: modalAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes modalAppear {
+    to {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.winner-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+}
+
+.winner-content h2 {
+    color: #ff9800;
+    font-size: 2rem;
+    margin: 0;
+}
+
+.winner-content h3 {
+    color: #9146ff;
+    font-size: 2rem;
+    margin: 0.5rem 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    animation: winnerGlow 2s infinite;
+}
+
+@keyframes winnerGlow {
+    0% { text-shadow: 0 0 5px rgba(145, 70, 255, 0.5); }
+    50% { text-shadow: 0 0 20px rgba(145, 70, 255, 0.8); }
+    100% { text-shadow: 0 0 5px rgba(145, 70, 255, 0.5); }
+}
+
+.winner-timer {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #9146ff;
+}
+
+.winner-message {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.winner-message p {
+    margin: 0;
+    color: #aaa;
+}
+
+/* Фиксированный размер чата в модальном окне с невидимым скроллбаром */
+.winner-chat-container {
+    flex: 1;
+    min-height: 200px;
+    max-height: 200px; /* Фиксированная высота */
+    overflow-y: auto;
+    background: rgba(45, 45, 65, 0.6);
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    
+    /* Скрытие скроллбара для разных браузеров */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE и Edge */
+}
+
+.winner-chat-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.winner-chat-message {
+    padding: 0.75rem;
+    background: rgba(58, 58, 90, 0.8);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.winner-chat-message.winner-response {
+    background: rgba(90, 74, 46, 0.8);
+    border-left: 3px solid #ff9800;
+}
+
+.winner-chat-time {
+    color: #888;
+    font-size: 0.8rem;
+    font-family: 'Courier New', monospace;
+}
+
+.winner-chat-user {
+    font-weight: 600;
+    color: #9146ff;
+}
+
+.winner-chat-text {
+    flex: 1;
+}
+
+.winner-actions {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+/* Подвал */
+footer {
+    text-align: center;
+    padding: 1.5rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    margin-top: auto;
+    backdrop-filter: blur(10px);
+    background: transparent;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: slideUp 0.8s ease-out;
+}
+
+/* Адаптивность */
+@media (max-width: 1024px) {
+    .main-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .header-right {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .button-group {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    #winnerSection {
+        min-width: 350px;
+        padding: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    header {
+        padding: 1rem;
+    }
+    
+    .header-left h1 {
+        font-size: 1.5rem;
+    }
+    
+    .card-body {
+        padding: 1.25rem;
+    }
+    
+    .button-group {
+        grid-template-columns: 1fr;
+    }
+    
+    .user-status {
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+    
+    #winnerSection {
+        min-width: 300px;
+        padding: 1.5rem;
+    }
+    
+    .winner-content h3 {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .chat-messages {
+        min-height: 300px;
+    }
+    
+    .participants-list, .winners-list {
+        min-height: 200px;
+        max-height: 300px;
+    }
+}
