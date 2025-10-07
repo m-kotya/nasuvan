@@ -67,6 +67,12 @@ function initWebSocket() {
         handleTwitchMessage(data);
     });
     
+    // Функция обработки сообщений из Twitch чата
+    function handleTwitchMessage(data) {
+        // Добавляем сообщение в чат
+        addChatMessage('user', data.user, data.message);
+    }
+    
     // Обработчик ошибок Twitch
     socket.on('twitchError', (data) => {
         console.log('Ошибка Twitch:', data);

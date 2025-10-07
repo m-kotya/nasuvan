@@ -313,7 +313,7 @@ a:hover {
 .participants-list, .winners-list {
     flex: 1;
     min-height: 250px;
-    max-height: 500px;
+    max-height: 650px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -383,7 +383,7 @@ a:hover {
     display: flex;
     flex-direction: column;
     flex: 1;
-    min-height: 450px;
+    min-height: 650px;
 }
 
 .chat-messages {
@@ -625,7 +625,7 @@ footer {
     backdrop-filter: blur(10px);
     background: transparent;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: none;
     animation: slideUp 0.8s ease-out;
 }
 
