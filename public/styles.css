@@ -9,12 +9,11 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: #333;
-    background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c);
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
+    background: #1a1a1a; /* Темный фон вместо градиента */
     min-height: 100vh;
 }
 
+/* Убираем анимацию градиента */
 @keyframes gradientBG {
     0% {
         background-position: 0% 50%;
@@ -67,27 +66,22 @@ header {
     .header-left {
         flex: 1;
         text-align: center;
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 100%;
     }
     
     .header-right {
         display: flex;
         align-items: center;
         gap: 15px;
-        margin-right: auto; /* Перемещаем максимально влево */
     }
     
-    /* Перемещаем кнопку авторизации максимально вправо */
-    .auth-section {
-        margin-left: auto;
-        margin-right: 0;
-    }
-    
-    #authBtn {
-        margin-left: auto;
+    /* Позиционируем название бота по центру */
+    .header-left h1 {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        margin: 0;
+        padding: 0;
+        width: max-content;
     }
 }
 
@@ -576,28 +570,6 @@ footer {
 
 /* Адаптивность */
 @media (max-width: 1200px) {
-    .main-layout {
-        flex-direction: column;
-        height: auto;
-    }
-    
-    .left-column, .right-column {
-        width: 100%;
-    }
-    
-    .chat-container {
-        height: 500px;
-    }
-    
-    .participants-list {
-        max-height: 400px;
-    }
-    
-    .winners-list {
-        min-height: 300px;
-        max-height: 400px;
-    }
-    
     .header-content {
         flex-direction: column;
         gap: 15px;
@@ -614,9 +586,11 @@ footer {
         gap: 10px;
     }
     
-    /* Сбрасываем минимальную высоту карточек на мобильных */
-    .card {
-        min-height: 200px;
+    /* На мобильных убираем абсолютное позиционирование */
+    .header-left h1 {
+        position: static;
+        transform: none;
+        width: auto;
     }
 }
 
