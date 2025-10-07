@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitch Giveaway Bot</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="header-left">
+                    <h1><i class="fab fa-twitch"></i> Twitch Giveaway Bot</h1>
+                </div>
+                <div class="header-right">
+                    <a href="/winners" class="btn btn-secondary winners-btn" target="_blank">
+                        <i class="fas fa-trophy"></i> Победители
+                    </a>
+                    <div class="auth-section">
+                        <div id="userStatus" class="user-status" style="display: none;">
+                            <div class="user-info">
+                                <div class="online-indicator"></div>
+                                <span id="usernameDisplay" class="username"></span>
+                            </div>
+                            <button id="logoutBtn" class="btn btn-secondary">
+                                <i class="fas fa-sign-out-alt"></i> Выйти
+                            </button>
+                        </div>
+                        <button id="authBtn" class="btn btn-primary" style="display: block;">
+                            <i class="fas fa-sign-in-alt"></i> Авторизация
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="main-layout">
+                <!-- Левая колонка - управление и участники -->
+                <div class="left-column">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-key"></i> Кодовое слово</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <input type="text" id="keywordInput" placeholder="Введите кодовое слово" class="form-control">
+                            </div>
+                            <div class="button-group">
+                                <button id="startBtn" class="btn btn-success">
+                                    <i class="fas fa-play"></i> Запуск
+                                </button>
+                                <button id="resetBtn" class="btn btn-warning">
+                                    <i class="fas fa-redo"></i> Перезапуск
+                                </button>
+                                <button id="winnerBtn" class="btn btn-info" style="display: none;">
+                                    <i class="fas fa-trophy"></i> Выбрать победителя
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-users"></i> Участники <span id="participantsCount">(0)</span></h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="participantsList" class="participants-list">
+                                <div class="empty-state">
+                                    <i class="fas fa-user-friends"></i>
+                                    <p>Участников пока нет</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Правая колонка - чат Twitch -->
+                <div class="right-column">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-comments"></i> Чат Twitch</h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="chatContainer" class="chat-container">
+                                <div id="chatMessages" class="chat-messages">
+                                    <div class="empty-state">
+                                        <i class="fas fa-comment"></i>
+                                        <p>Сообщений пока нет</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Twitch Giveaway Bot</p>
+        </footer>
+    </div>
+
+    <!-- Секция победителя (модальное окно) -->
+    <div id="winnerSection" style="display: none;">
+        <div class="winner-content">
+            <p>Выбранный победитель:</p>
+            <h4 id="winnerName"></h4>
+            <div class="winner-timer">
+                <p>Время ожидания ответа:</p>
+                <span id="winnerTimer">00:00</span>
+            </div>
+            <div class="winner-message">
+                <p>Ожидаем сообщение от победителя в чате...</p>
+                <div id="winnerChat" class="winner-chat-container">
+                    <!-- Здесь будут отображаться сообщения от победителя -->
+                </div>
+            </div>
+            <div class="winner-actions">
+                <button id="rerollBtn" class="btn btn-secondary">
+                    <i class="fas fa-redo"></i> Реролл
+                </button>
+                <button id="closeWinnerBtn" class="btn btn-primary">
+                    <i class="fas fa-times"></i> Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Подключаем socket.io клиент -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
