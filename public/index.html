@@ -29,7 +29,7 @@
                             </button>
                         </div>
                         <button id="authBtn" class="btn btn-primary" style="display: block;">
-                            <i class="fas fa-sign-in-alt"></i> Авторизация через Twitch
+                            <i class="fas fa-sign-in-alt"></i> Авторизация
                         </button>
                     </div>
                 </div>
@@ -37,57 +37,70 @@
         </header>
 
         <main>
-            <div class="dashboard">
-                <div class="main-layout">
-                    <!-- Левая колонка - управление и участники -->
-                    <div class="left-column">
-                        <div class="card">
-                            <div class="card-header">
-                                <h2><i class="fas fa-key"></i> Кодовое слово</h2>
-                            </div>
-                            <div class="card-body">
-                                <div class="form-group">
-                                    <input type="text" id="keywordInput" placeholder="Введите кодовое слово" class="form-control">
-                                </div>
-                                <div class="button-group">
-                                    <button id="startBtn" class="btn btn-success">
-                                        <i class="fas fa-play"></i> Запуск
-                                    </button>
-                                    <button id="resetBtn" class="btn btn-warning">
-                                        <i class="fas fa-redo"></i> Перезапуск
-                                    </button>
-                                    <button id="winnerBtn" class="btn btn-info" style="display: none;">
-                                        <i class="fas fa-trophy"></i> Выбрать победителя
-                                    </button>
-                                </div>
-                            </div>
+            <div class="main-layout">
+                <!-- Левая колонка - управление и участники -->
+                <div class="left-column">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-key"></i> Кодовое слово</h2>
                         </div>
-
-                        <div class="card">
-                            <div class="card-header">
-                                <h2><i class="fas fa-users"></i> Участники <span id="participantsCount">(0)</span></h2>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <input type="text" id="keywordInput" placeholder="Введите кодовое слово" class="form-control">
                             </div>
-                            <div class="card-body">
-                                <div id="participantsList" class="participants-list">
-                                    <div class="empty-state">
-                                        <i class="fas fa-user-friends"></i>
-                                        <p>Участников пока нет</p>
-                                    </div>
-                                </div>
+                            <div class="button-group">
+                                <button id="startBtn" class="btn btn-success">
+                                    <i class="fas fa-play"></i> Запуск
+                                </button>
+                                <button id="resetBtn" class="btn btn-warning">
+                                    <i class="fas fa-redo"></i> Перезапуск
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Правая колонка - чат Twitch -->
-                    <div class="right-column">
-                        <div class="card">
-                            <div class="card-header">
-                                <h2><i class="fas fa-comments"></i> Чат Twitch</h2>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-trophy"></i> Выбрать победителя</h2>
+                        </div>
+                        <div class="card-body">
+                            <button id="winnerBtn" class="btn btn-info" style="display: none; width: 100%;">
+                                <i class="fas fa-trophy"></i> Выбрать победителя
+                            </button>
+                            <div class="empty-state" id="noGiveawayState">
+                                <i class="fas fa-info-circle"></i>
+                                <p>Начните розыгрыш, чтобы выбрать победителя</p>
                             </div>
-                            <div class="card-body">
-                                <div id="chatContainer" class="chat-container">
-                                    <div id="chatMessages" class="chat-messages">
-                                        <!-- Сообщения будут добавляться здесь -->
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-users"></i> Участники <span id="participantsCount">(0)</span></h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="participantsList" class="participants-list">
+                                <div class="empty-state">
+                                    <i class="fas fa-user-friends"></i>
+                                    <p>Участников пока нет</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Правая колонка - чат Twitch -->
+                <div class="right-column">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-comments"></i> Чат Twitch</h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="chatContainer" class="chat-container">
+                                <div id="chatMessages" class="chat-messages">
+                                    <div class="empty-state">
+                                        <i class="fas fa-comment"></i>
+                                        <p>Сообщений пока нет</p>
                                     </div>
                                 </div>
                             </div>
@@ -98,13 +111,14 @@
         </main>
 
         <footer>
-            <p>&copy; 2025 Twitch Giveaway Bot. Все права защищены.</p>
+            <p>&copy; 2025 Twitch Giveaway Bot</p>
         </footer>
     </div>
 
     <!-- Секция победителя (модальное окно) -->
     <div id="winnerSection" style="display: none;">
         <div class="winner-content">
+            <h2><i class="fas fa-trophy"></i> Победитель</h2>
             <p>Выбранный победитель:</p>
             <h3 id="winnerName"></h3>
             <div class="winner-timer">
@@ -113,7 +127,7 @@
             </div>
             <div class="winner-message">
                 <p>Ожидаем сообщение от победителя в чате...</p>
-                <div id="winnerChat" class="winner-chat-container">
+                <div id="winnerChat" class="chat-messages">
                     <!-- Здесь будут отображаться сообщения от победителя -->
                 </div>
             </div>
