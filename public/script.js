@@ -64,41 +64,7 @@ function initWebSocket() {
     
     // Обработчик получения нового сообщения из Twitch чата
     socket.on('twitchMessage', (data) => {
-        console.log('Получено сообщение из Twitch чата:', data);
-        // Добавляем сообщение в чат (кроме системных сообщений)
-        if (data.username !== 'Система') {
-            addChatMessage('user', data.username, data.message);
-        }
-        
-        // Если розыгрыш активен и сообщение содержит ключевое слово, добавляем участника
-        if (giveawayActive && currentKeyword && 
-            data.message.toLowerCase() === currentKeyword.toLowerCase()) {
-            addParticipant(data.username);
-        }
-        
-        // Если есть активный победитель и это его сообщение, останавливаем таймер и отображаем сообщение в модальном окне
-        if (currentWinner && data.username === currentWinner) {
-            stopWinnerTimer();
-            winnerResponded = true;
-            showNotification(`Победитель ${currentWinner} ответил в чат!`, 'success');
-            
-            // Добавляем сообщение в чат модального окна
-            const winnerChat = document.getElementById('winnerChat');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'winner-chat-message winner-response';
-            
-            // Форматируем время как [00:18:32]
-            const now = new Date();
-            const timeString = `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}]`;
-            
-            messageDiv.innerHTML = `
-                <span class="winner-chat-time">${timeString}</span>
-                <span class="winner-chat-user">${data.username}:</span>
-                <span class="winner-chat-text">${processEmojis(data.message)}</span>
-            `;
-            winnerChat.appendChild(messageDiv);
-            winnerChat.scrollTop = winnerChat.scrollHeight;
-        }
+        handleTwitchMessage(data);
     });
     
     // Обработчик ошибок Twitch
@@ -679,6 +645,12 @@ function addChatMessage(type, user, text) {
     // Не показываем системные сообщения
     if (type === 'system') {
         return;
+    }
+    
+    // Проверяем, есть ли пустое состояние в чате, и если да, то удаляем его
+    const emptyState = chatMessages.querySelector('.empty-state');
+    if (emptyState) {
+        emptyState.remove();
     }
     
     const messageDiv = document.createElement('div');
