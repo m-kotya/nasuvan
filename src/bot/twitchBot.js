@@ -186,7 +186,7 @@ function initBot(socketIo) {
       if (message.startsWith('!startgiveaway')) {
         const parts = message.split(' ');
         if (parts.length >= 3) {
-          const keyword = parts[1].toLowerCase();
+          const keyword = parts[1];
           const prize = parts.slice(2).join(' ');
           
           // Создаем розыгрыш в базе данных
@@ -194,9 +194,9 @@ function initBot(socketIo) {
           
           if (giveawayData) {
             // Сохраняем информацию о розыгрыше
-            activeGiveaways.set(`${channelName}:${keyword}`, {
+            activeGiveaways.set(`${channelName}:${keyword.toLowerCase()}`, {
               id: giveawayData.id,
-              keyword: keyword,
+              keyword: keyword.toLowerCase(),
               prize: prize,
               participants: [],
               channel: channelName

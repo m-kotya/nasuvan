@@ -414,7 +414,7 @@ function initWebServer(app, io) {
         // Сохраняем информацию о розыгрыше
         const giveawayInfo = {
           id: giveawayData.id,
-          keyword: keyword,
+          keyword: keyword.toLowerCase(),
           prize: prize || 'Участие в розыгрыше',
           participants: [],
           channel: channelName
@@ -425,7 +425,7 @@ function initWebServer(app, io) {
         // Отправляем уведомление через WebSocket
         io.emit('giveawayStarted', {
           id: giveawayData.id,
-          keyword: keyword,
+          keyword: keyword.toLowerCase(),
           prize: prize || 'Участие в розыгрыше',
           channel: channelName
         });

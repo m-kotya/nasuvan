@@ -94,6 +94,9 @@ function initDatabase() {
 
 // Функции для работы с розыгрышами
 async function createGiveaway(channel, keyword, prize) {
+  // Приводим ключевое слово к нижнему регистру для корректного сравнения
+  const normalizedKeyword = keyword.toLowerCase();
+  
   // Проверяем, инициализирован ли клиент
   if (!supabase) {
     console.warn('Supabase клиент не инициализирован, используем фиктивные данные');
@@ -101,14 +104,14 @@ async function createGiveaway(channel, keyword, prize) {
     return {
       id: Date.now(),
       channel,
-      keyword,
+      keyword: normalizedKeyword,
       prize,
       started_at: new Date(),
       is_active: true
     };
   }
   
-  console.log('Попытка создания розыгрыша:', { channel, keyword, prize });
+  console.log('Попытка создания розыгрыша:', { channel, keyword: normalizedKeyword, prize });
   
   try {
     const { data, error } = await supabase
@@ -116,7 +119,7 @@ async function createGiveaway(channel, keyword, prize) {
       .insert([
         {
           channel,
-          keyword,
+          keyword: normalizedKeyword,
           prize,
           started_at: new Date(),
           is_active: true
@@ -131,7 +134,7 @@ async function createGiveaway(channel, keyword, prize) {
       return {
         id: Date.now(),
         channel,
-        keyword,
+        keyword: normalizedKeyword,
         prize,
         started_at: new Date(),
         is_active: true
@@ -147,7 +150,7 @@ async function createGiveaway(channel, keyword, prize) {
     return {
       id: Date.now(),
       channel,
-      keyword,
+      keyword: normalizedKeyword,
       prize,
       started_at: new Date(),
       is_active: true

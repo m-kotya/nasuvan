@@ -64,14 +64,9 @@ function initWebSocket() {
     
     // Обработчик получения нового сообщения из Twitch чата
     socket.on('twitchMessage', (data) => {
-        handleTwitchMessage(data);
-    });
-    
-    // Функция обработки сообщений из Twitch чата
-    function handleTwitchMessage(data) {
         // Добавляем сообщение в чат
-        addChatMessage('user', data.user, data.message);
-    }
+        addChatMessage('user', data.username, data.message);
+    });
     
     // Обработчик ошибок Twitch
     socket.on('twitchError', (data) => {
@@ -599,15 +594,6 @@ function addParticipant(username) {
     
     // Добавляем сообщение в чат
     addChatMessage('participant', username, `Написал кодовое слово: "${currentKeyword}"`);
-    
-    // Отправляем уведомление на сервер о новом участнике
-    if (socket && socket.connected) {
-        socket.emit('addParticipant', {
-            username: username,
-            channel: 'default',
-            timestamp: new Date().toISOString()
-        });
-    }
     
     // Показываем уведомление
     showNotification(`Участник ${username} добавлен`, 'success');
