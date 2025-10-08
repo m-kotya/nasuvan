@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>История победителей - Twitch Giveaway Bot</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="header-left">
+                    <h1><i class="fab fa-twitch"></i> История победителей</h1>
+                </div>
+                <div class="header-right">
+                    <a href="/updateTelegram.html" class="btn btn-secondary">
+                        <i class="fab fa-telegram"></i> Обновить Telegram
+                    </a>
+                    <a href="/" class="btn btn-primary">
+                        <i class="fas fa-arrow-left"></i> Назад к розыгрышам
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="dashboard">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-trophy"></i> Последние победители</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="winnersList" class="winners-list">
+                            <div class="empty-state">
+                                <i class="fas fa-trophy"></i>
+                                <p>Загрузка победителей...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Twitch Giveaway Bot. Все права защищены.</p>
+        </footer>
+    </div>
+
+    <!-- Подключаем socket.io клиент -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Функция загрузки победителей
+        async function loadWinners() {
+            try {
+                const response = await fetch('/api/winners');
+                if (response.ok) {
+                    const data = await response.json();
+                    updateWinnersList(data);
+                } else {
+                    document.getElementById('winnersList').innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Ошибка загрузки победителей</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке победителей:', error);
+                document.getElementById('winnersList').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Ошибка загрузки победителей</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Функция обновления списка победителей
+        function updateWinnersList(winnersData) {
+            const winnersList = document.getElementById('winnersList');
+            
+            if (!winnersData || winnersData.length === 0) {
+                winnersList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-trophy"></i>
+                        <p>Победителей пока нет</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            winnersData.forEach(winnerData => {
+                // Форматируем дату как день/месяц/год
+                const date = new Date(winnerData.win_time);
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                const dateString = `${day}/${month}/${year}`;
+                
+                // Форматируем время как 24-часовой формат часы:минуты
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                const timeString = `${hours}:${minutes}`;
+                
+                // Получаем приз или используем значение по умолчанию
+                const prize = winnerData.prize || 'Участие в розыгрыше';
+                
+                // Получаем Telegram или показываем "Не указан"
+                const telegram = winnerData.telegram || 'Не указан';
+                
+                html += `
+                    <div class="winner-item">
+                        <div class="winner-header">
+                            <span class="winner-name"><i class="fas fa-trophy winner-trophy"></i> ${winnerData.username}</span>
+                            <span class="winner-total-wins">Побед: ${winnerData.total_wins}</span>
+                        </div>
+                        <div class="winner-details">
+                            <div class="winner-info">
+                                <span class="winner-prize"><i class="fas fa-gift"></i> ${prize}</span>
+                            </div>
+                            <div class="winner-info">
+                                <span class="winner-telegram"><i class="fab fa-telegram"></i> ${telegram}</span>
+                            </div>
+                            <div class="winner-info">
+                                <span class="winner-time"><i class="far fa-clock"></i> ${dateString} ${timeString}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            winnersList.innerHTML = html;
+        }
+
+        // Загружаем победителей при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            loadWinners();
+            
+            // Периодически обновляем список победителей каждые 30 секунд
+            setInterval(() => {
+                loadWinners();
+            }, 30000);
+        });
+    </script>
+</body>
+</html>

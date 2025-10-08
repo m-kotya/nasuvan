@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обновление Telegram - Twitch Giveaway Bot</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="header-left">
+                    <h1><i class="fab fa-twitch"></i> Обновление Telegram</h1>
+                </div>
+                <div class="header-right">
+                    <a href="/winners" class="btn btn-primary">
+                        <i class="fas fa-arrow-left"></i> Назад к истории
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="dashboard">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fab fa-telegram"></i> Обновление Telegram победителя</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="telegramForm" class="form">
+                            <div class="form-group">
+                                <label for="username">Имя пользователя Twitch:</label>
+                                <input type="text" id="username" class="form-control" placeholder="Введите имя пользователя" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="telegram">Telegram:</label>
+                                <input type="text" id="telegram" class="form-control" placeholder="Введите Telegram (например, @username)" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Сохранить
+                            </button>
+                        </form>
+                        
+                        <div id="resultMessage" class="notification" style="display: none; margin-top: 1rem;"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Twitch Giveaway Bot. Все права защищены.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('telegramForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const telegram = document.getElementById('telegram').value.trim();
+            const resultMessage = document.getElementById('resultMessage');
+            
+            // Скрываем предыдущее сообщение
+            resultMessage.style.display = 'none';
+            
+            if (!username || !telegram) {
+                showMessage('Пожалуйста, заполните все поля', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/update-telegram', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, telegram })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showMessage(`Telegram для пользователя ${username} успешно обновлен`, 'success');
+                    // Очищаем форму
+                    document.getElementById('telegramForm').reset();
+                } else {
+                    showMessage(data.error || 'Ошибка при обновлении Telegram', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showMessage('Произошла ошибка при обновлении Telegram', 'error');
+            }
+        });
+        
+        function showMessage(message, type) {
+            const resultMessage = document.getElementById('resultMessage');
+            resultMessage.textContent = message;
+            resultMessage.className = `notification ${type}`;
+            resultMessage.style.display = 'block';
+            
+            // Автоматически скрываем сообщение через 5 секунд
+            setTimeout(() => {
+                resultMessage.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
