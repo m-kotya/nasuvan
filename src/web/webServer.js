@@ -1,7 +1,7 @@
 const path = require('path');
 const crypto = require('crypto');
 const { getGiveaways, createGiveaway, selectWinner, addWinner, supabase } = require('../database/supabaseClient');
-const { joinChannel, leaveChannel } = require('../bot/twitchBot');
+const { joinChannel, leaveChannel, getActiveGiveaways, setActiveGiveaways } = require('../bot/twitchBot');
 
 // Хранение активных розыгрышей в памяти (в реальном приложении лучше использовать БД)
 let activeGiveaways = new Map();
@@ -324,6 +324,9 @@ function initWebServer(app, io) {
       console.log('Joining channel:', user.login);
       await joinChannel(user.login);
       
+      // Синхронизируем активные розыгрыши с Twitch ботом
+      setActiveGiveaways(activeGiveaways);
+      
       // Перенаправляем на главную страницу с параметром успеха
       console.log('Redirecting to main page with success');
       res.redirect('/?auth=success');
@@ -464,6 +467,9 @@ function initWebServer(app, io) {
           channel: channelName
         });
         
+        // Синхронизируем активные розыгрыши с Twitch ботом
+        setActiveGiveaways(activeGiveaways);
+        
         console.log('Розыгрыш успешно создан и сохранен:', giveawayInfo);
         console.log('Текущие розыгрыши в activeGiveaways:', Array.from(activeGiveaways.entries()));
         
@@ -553,6 +559,9 @@ function initWebServer(app, io) {
       // Удаляем завершенные розыгрыши
       console.log('Удаление завершенных розыгрышей:', keysToDelete.length);
       keysToDelete.forEach(key => activeGiveaways.delete(key));
+      
+      // Синхронизируем активные розыгрыши с Twitch ботом
+      setActiveGiveaways(activeGiveaways);
       
       console.log('=== КОНЕЦ ОБРАБОТКИ /api/end-giveaway ===');
       return res.json({ 
@@ -794,5 +803,6 @@ function initWebServer(app, io) {
 }
 
 module.exports = {
-  initWebServer
+  initWebServer,
+  activeGiveaways
 };

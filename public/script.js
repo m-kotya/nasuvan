@@ -64,6 +64,23 @@ function initWebSocket() {
         updateAuthButtons(false);
     });
     
+    // Обработчик сообщений из Twitch чата
+    socket.on('twitchMessage', (data) => {
+        console.log('Получено сообщение из Twitch чата:', data);
+        addChatMessage('user', data.username, data.message);
+    });
+    
+    // Обработчик добавления участника
+    socket.on('participantAdded', (data) => {
+        console.log('Получено уведомление о добавлении участника:', data);
+        // Добавляем участника в локальный список, если его там еще нет
+        if (!participants.includes(data.username)) {
+            participants.push(data.username);
+            updateParticipantsList();
+            showNotification(`Участник ${data.username} добавлен`, 'success');
+        }
+    });
+    
     console.log('=== КОНЕЦ ФУНКЦИИ initWebSocket ===');
 }
 
@@ -207,6 +224,9 @@ function handleStart() {
         if (data.success) {
             currentKeyword = keyword.toLowerCase(); // Приводим к нижнему регистру для корректного сравнения
             giveawayActive = true;
+            // Очищаем список участников при начале нового розыгрыша
+            participants = [];
+            updateParticipantsList();
             showNotification(`Розыгрыш начат с кодовым словом "${keyword}"`, 'success');
             
             // Активируем кнопку сброса и кнопку выбора победителя

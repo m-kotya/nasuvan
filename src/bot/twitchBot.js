@@ -92,6 +92,62 @@ function initBot(socketIo) {
     }
   });
 
+  // Обработчик сообщений в чате
+  client.on('message', async (channel, tags, message, self) => {
+    // Игнорируем сообщения от самого бота
+    if (self) return;
+    
+    // Отправляем сообщение через WebSocket для отображения в веб-интерфейсе
+    if (io) {
+      io.emit('twitchMessage', {
+        channel: channel,
+        username: tags.username,
+        message: message,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Проверяем, есть ли активный розыгрыш для этого канала
+    const normalizedChannel = channel.startsWith('#') ? channel.substring(1) : channel;
+    
+    // Проходим по всем активным розыгрышам и проверяем, совпадает ли ключевое слово
+    for (const [key, giveaway] of activeGiveaways.entries()) {
+      if (giveaway.channel === normalizedChannel && message.toLowerCase() === giveaway.keyword.toLowerCase()) {
+        console.log('Найден подходящий розыгрыш!');
+        const username = tags.username;
+        
+        // Проверяем, не участвует ли пользователь уже
+        if (!giveaway.participants.includes(username)) {
+          console.log('Добавление пользователя в список участников');
+          giveaway.participants.push(username);
+          
+          // Добавляем участника в базу данных
+          try {
+            const participantData = await addParticipant(giveaway.id, username);
+            console.log('Участник успешно добавлен в базу данных:', participantData);
+            
+            // Отправляем уведомление через WebSocket
+            if (io) {
+              io.emit('participantAdded', {
+                giveawayId: giveaway.id,
+                username: username,
+                count: giveaway.participants.length
+              });
+            }
+            
+            // Отправляем сообщение в чат о добавлении участника
+            // client.say(channel, `@${username} добавлен в список участников!`);
+          } catch (error) {
+            console.error('Ошибка при добавлении участника в базу данных:', error);
+          }
+        } else {
+          console.log('Пользователь уже участвует в розыгрыше:', username);
+        }
+        break; // Прекращаем проверку после нахождения подходящего розыгрыша
+      }
+    }
+  });
+
   // Подключение к Twitch (только если есть учетные данные)
   if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN) {
     // Проверяем, что учетные данные не являются плейсхолдерами
