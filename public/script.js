@@ -16,6 +16,7 @@ const closeWinnerBtn = document.getElementById('closeWinnerBtn');
 const winnersList = document.getElementById('winnersList');
 const userStatus = document.getElementById('userStatus');
 const usernameDisplay = document.getElementById('usernameDisplay');
+const winnersBtn = document.getElementById('winnersBtn'); // Новая переменная для кнопки победителей
 
 // Глобальные переменные
 let participants = [];
@@ -156,12 +157,20 @@ function updateAuthButtons(isLoggedIn) {
         authBtn.style.display = 'none';
         userStatus.style.display = 'flex';
         usernameDisplay.textContent = currentUsername;
-        console.log('Показываем панель пользователя');
+        // Показываем кнопку победителей после авторизации
+        if (winnersBtn) {
+            winnersBtn.style.display = 'flex';
+        }
+        console.log('Показываем панель пользователя и кнопку победителей');
     } else {
         authBtn.style.display = 'block';
         userStatus.style.display = 'none';
+        // Скрываем кнопку победителей до авторизации
+        if (winnersBtn) {
+            winnersBtn.style.display = 'none';
+        }
         currentUsername = '';
-        console.log('Показываем кнопку авторизации');
+        console.log('Показываем кнопку авторизации, скрываем кнопку победителей');
     }
     
     console.log('=== КОНЕЦ ФУНКЦИИ updateAuthButtons ===');
@@ -615,6 +624,11 @@ function startWinnerTimer() {
             if (timerElement) {
                 timerElement.classList.add('red');
             }
+        }
+        
+        // Останавливаем таймер когда победитель пишет
+        if (winnerResponded) {
+            stopWinnerTimer();
         }
     }, 1000);
 }
