@@ -275,11 +275,9 @@ a:hover {
 
 .card-body {
     padding: 1.5rem;
-    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 0.5rem; /* Уменьшенный отступ */
-    height: 100%;
 }
 
 /* Формы */
@@ -420,7 +418,10 @@ a:hover {
 }
 
 .participant-time {
-    color: #aaa;
+    color: #aaa
+
+a;
+
     font-size: 0.85rem;
 }
 
