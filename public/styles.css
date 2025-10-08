@@ -239,6 +239,7 @@ a:hover {
     backdrop-filter: blur(10px);
     animation: cardAppear 0.6s ease-out;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
 }
 
 .card:hover {
@@ -259,7 +260,7 @@ a:hover {
 
 .card-header {
     background: rgba(45, 45, 65, 0.9);
-    padding: 1.25rem 1.5rem;
+    padding: 1.25rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -268,7 +269,7 @@ a:hover {
     font-weight: 600;
     color: #e0e0e0;
     display: flex;
-    align-items: center;
+    align-items: left;
     gap: 0.75rem;
 }
 
@@ -278,6 +279,7 @@ a:hover {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
+    height: 100%;
 }
 
 /* Формы */
@@ -318,7 +320,7 @@ a:hover {
 /* Списки */
 .participants-list, .winners-list {
     flex: 1;
-    min-height: 400px; /* Увеличенная высота */
+    min-height: 400px;
     max-height: 650px;
     overflow-y: auto;
     display: flex;
@@ -327,6 +329,14 @@ a:hover {
     background: rgba(45, 45, 65, 0.6);
     border-radius: 8px;
     padding: 1rem;
+    
+    /* Скрытие скроллбара для разных браузеров */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE и Edge */
+}
+
+.participants-list::-webkit-scrollbar, .winners-list::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
 }
 
 .participant-item, .winner-item {
@@ -434,9 +444,7 @@ a:hover {
     display: flex;
     flex-direction: column;
     flex: 1;
-    min-height: 650px;
-    max-height: 650px; /* Фиксированная высота */
-    overflow: hidden; /* Скрытие переполнения */
+    height: 100%;
 }
 
 .chat-messages {
@@ -448,6 +456,16 @@ a:hover {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    min-height: 650px;
+    max-height: 650px;
+    
+    /* Скрытие скроллбара для разных браузеров */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE и Edge */
+}
+
+.chat-messages::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
 }
 
 .chat-message {
@@ -457,7 +475,7 @@ a:hover {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.5rem; /* Уменьшенный отступ */
+    gap: 0.5rem;
     font-size: 0.95rem;
     transition: all 0.3s ease;
     animation: messageAppear 0.3s ease;
@@ -500,12 +518,12 @@ a:hover {
 .message-user {
     font-weight: 600;
     color: #9146ff;
-    white-space: nowrap; /* Предотвращаем перенос никнейма */
+    white-space: nowrap;
 }
 
 .message-text {
     flex: 1;
-    word-break: break-word; /* Перенос длинных слов */
+    word-break: break-word;
 }
 
 .message-time {
@@ -584,16 +602,16 @@ a:hover {
 
 .winner-content h2 {
     color: #ff9800;
-    font-size: 1.2rem; /* Уменьшенный размер текста */
+    font-size: 1.2rem;
     margin: 0;
 }
 
 .winner-content h3 {
     color: #9146ff;
-    font-size: 3rem; /* Увеличенный размер имени победителя */
+    font-size: 3rem;
     margin: 0.5rem 0;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    animation: winnerGlow 2s infinite; /* Добавлена анимация */
+    animation: winnerGlow 2s infinite;
 }
 
 @keyframes winnerGlow {
@@ -612,7 +630,7 @@ a:hover {
 }
 
 .winner-timer.red {
-    color: #f44336; /* Красный цвет для таймера после 20 секунд */
+    color: #f44336;
     animation: timerPulse 1s infinite;
 }
 
@@ -637,7 +655,7 @@ a:hover {
 .winner-chat-container {
     flex: 1;
     min-height: 200px;
-    max-height: 200px; /* Фиксированная высота */
+    max-height: 200px;
     overflow-y: auto;
     background: rgba(45, 45, 65, 0.6);
     border-radius: 8px;
@@ -661,7 +679,7 @@ a:hover {
     border-radius: 6px;
     display: flex;
     align-items: center;
-    gap: 0.5rem; /* Уменьшенный отступ */
+    gap: 0.5rem;
     font-size: 0.9rem;
 }
 
@@ -697,12 +715,12 @@ a:hover {
 .winner-chat-user {
     font-weight: 600;
     color: #9146ff;
-    white-space: nowrap; /* Предотвращаем перенос никнейма */
+    white-space: nowrap;
 }
 
 .winner-chat-text {
     flex: 1;
-    word-break: break-word; /* Перенос длинных слов */
+    word-break: break-word;
 }
 
 .winner-actions {
