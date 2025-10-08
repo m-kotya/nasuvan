@@ -69,8 +69,55 @@ function initWebServer(app, io) {
     console.log('  TWITCH_CLIENT_SECRET:', process.env.TWITCH_CLIENT_SECRET ? 'SET' : 'NOT SET');
   }
 
-  // Маршрут для главной страницы
-  app.get('/', (req, res) => {
+  // Middleware для проверки аутентификации
+  const requireAuth = async (req, res, next) => {
+    console.log('=== НАЧАЛО MIDDLEWARE requireAuth ===');
+    const sessionId = req.cookies?.sessionId;
+    
+    // Разрешаем доступ к странице входа без аутентификации
+    if (req.path === '/login') {
+      return next();
+    }
+    
+    if (!sessionId || !userSessions.has(sessionId)) {
+      console.log('Сессия не найдена или отсутствует');
+      console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
+      return res.redirect('/login');
+    }
+    
+    const session = userSessions.get(sessionId);
+    console.log('Найдена сессия:', { userId: session.userId, username: session.username });
+    
+    // Проверяем, не истек ли токен
+    if (Date.now() > session.expiresAt) {
+      console.log('Токен истек, попытка обновления');
+      // Пытаемся обновить токен
+      try {
+        const tokenData = await refreshAccessToken(session.refreshToken);
+        
+        // Обновляем сессию с новыми токенами
+        session.accessToken = tokenData.access_token;
+        session.refreshToken = tokenData.refresh_token;
+        session.expiresAt = Date.now() + (tokenData.expires_in * 1000);
+        
+        userSessions.set(sessionId, session);
+        console.log('Токен успешно обновлен');
+      } catch (error) {
+        console.error('Error refreshing token:', error);
+        // Удаляем сессию при ошибке обновления токена
+        userSessions.delete(sessionId);
+        console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
+        return res.redirect('/login');
+      }
+    }
+    
+    req.user = session;
+    console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
+    next();
+  };
+
+  // Маршрут для главной страницы (теперь требует аутентификации)
+  app.get('/', requireAuth, (req, res) => {
     console.log('Запрос главной страницы');
     res.sendFile(path.join(__dirname, '../../public/index.html'));
   });
@@ -415,53 +462,6 @@ function initWebServer(app, io) {
     res.redirect('/?logout=success');
     console.log('=== КОНЕЦ ОБРАБОТКИ /auth/logout ===');
   });
-
-  // Middleware для проверки аутентификации
-  const requireAuth = async (req, res, next) => {
-    console.log('=== НАЧАЛО MIDDLEWARE requireAuth ===');
-    const sessionId = req.cookies?.sessionId;
-    
-    // Разрешаем доступ к странице входа без аутентификации
-    if (req.path === '/login') {
-      return next();
-    }
-    
-    if (!sessionId || !userSessions.has(sessionId)) {
-      console.log('Сессия не найдена или отсутствует');
-      console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
-      return res.redirect('/login');
-    }
-    
-    const session = userSessions.get(sessionId);
-    console.log('Найдена сессия:', { userId: session.userId, username: session.username });
-    
-    // Проверяем, не истек ли токен
-    if (Date.now() > session.expiresAt) {
-      console.log('Токен истек, попытка обновления');
-      // Пытаемся обновить токен
-      try {
-        const tokenData = await refreshAccessToken(session.refreshToken);
-        
-        // Обновляем сессию с новыми токенами
-        session.accessToken = tokenData.access_token;
-        session.refreshToken = tokenData.refresh_token;
-        session.expiresAt = Date.now() + (tokenData.expires_in * 1000);
-        
-        userSessions.set(sessionId, session);
-        console.log('Токен успешно обновлен');
-      } catch (error) {
-        console.error('Error refreshing token:', error);
-        // Удаляем сессию при ошибке обновления токена
-        userSessions.delete(sessionId);
-        console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
-        return res.redirect('/login');
-      }
-    }
-    
-    req.user = session;
-    console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
-    next();
-  };
 
   // Тестовый маршрут для проверки авторизации
   app.get('/api/giveaways/test', requireAuth, (req, res) => {
