@@ -574,16 +574,16 @@ a:hover {
 
 .winner-content h2 {
     color: #ff9800;
-    font-size: 2rem;
+    font-size: 1.5rem; /* Уменьшенный размер текста */
     margin: 0;
 }
 
 .winner-content h3 {
     color: #9146ff;
-    font-size: 2rem;
+    font-size: 3rem; /* Увеличенный размер имени победителя */
     margin: 0.5rem 0;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    animation: winnerGlow 2s infinite;
+    animation: winnerGlow 2s infinite; /* Добавлена анимация */
 }
 
 @keyframes winnerGlow {
@@ -599,6 +599,17 @@ a:hover {
     color: #9146ff;
     font-family: 'Courier New', monospace;
     letter-spacing: 3px;
+}
+
+.winner-timer.red {
+    color: #f44336; /* Красный цвет для таймера после 20 секунд */
+    animation: timerPulse 1s infinite;
+}
+
+@keyframes timerPulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
 }
 
 .winner-message {

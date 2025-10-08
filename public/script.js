@@ -29,6 +29,7 @@ let winnerSeconds = 0;
 let winners = [];
 let winnerResponded = false;
 let currentUsername = '';
+let winnerChatMessages = []; // Новый массив для хранения сообщений в модальном окне
 
 // Обработчики событий
 authBtn.addEventListener('click', handleAuth);
@@ -67,6 +68,11 @@ function initWebSocket() {
         // Не показываем системные сообщения о подключении
         if (data.username !== 'Система' || !data.message.includes('WebSocket соединение установлено')) {
             addChatMessage('user', data.username, data.message);
+            
+            // Если модальное окно открыто и сообщение от победителя, добавляем его в чат модального окна
+            if (winnerSection.style.display === 'block' && data.username === currentWinner) {
+                addWinnerChatMessage(data.username, data.message);
+            }
         }
     });
     
@@ -547,6 +553,7 @@ function showWinner(winner) {
     currentWinner = winner;
     winnerName.textContent = winner;
     winnerResponded = false; // Сброс флага ответа
+    winnerChatMessages = []; // Очищаем массив сообщений
     
     // Очищаем чат в модальном окне
     const winnerChat = document.getElementById('winnerChat');
@@ -584,6 +591,10 @@ function showWinner(winner) {
     
     // Сброс таймера и запуск
     winnerSeconds = 0;
+    const timerElement = document.getElementById('winnerTimer');
+    if (timerElement) {
+        timerElement.classList.remove('red'); // Убираем красный цвет при сбросе
+    }
     updateWinnerTimer();
     startWinnerTimer();
     
@@ -597,6 +608,19 @@ function startWinnerTimer() {
     winnerTimerInterval = setInterval(() => {
         winnerSeconds++;
         updateWinnerTimer();
+        
+        // После 20 секунд делаем таймер красным
+        if (winnerSeconds >= 20) {
+            const timerElement = document.getElementById('winnerTimer');
+            if (timerElement) {
+                timerElement.classList.add('red');
+            }
+        }
+        
+        // После 30 секунд автоматически закрываем модальное окно
+        if (winnerSeconds >= 30) {
+            handleCloseWinner();
+        }
     }, 1000);
 }
 
@@ -614,7 +638,10 @@ function updateWinnerTimer() {
     const seconds = winnerSeconds % 60;
     
     // Форматируем как MM:SS
-    winnerTimer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const timerElement = document.getElementById('winnerTimer');
+    if (timerElement) {
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
 }
 
 // Функция добавления участника
@@ -988,3 +1015,50 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('=== КОНЕЦ DOMContentLoaded ===');
 });
+
+// Новая функция для добавления сообщений в чат модального окна
+function addWinnerChatMessage(user, text) {
+    console.log('=== НАЧАЛО ФУНКЦИИ addWinnerChatMessage ===');
+    console.log('Добавление сообщения в чат модального окна:', { user, text });
+    
+    // Проверяем, что модальное окно открыто
+    if (winnerSection.style.display !== 'block') {
+        console.log('Модальное окно не открыто, игнорируем сообщение');
+        console.log('=== КОНЕЦ ФУНКЦИИ addWinnerChatMessage ===');
+        return;
+    }
+    
+    // Добавляем сообщение в массив
+    const message = {
+        user: user,
+        text: text,
+        time: new Date()
+    };
+    winnerChatMessages.push(message);
+    
+    // Добавляем сообщение в чат модального окна
+    const winnerChat = document.getElementById('winnerChat');
+    if (winnerChat) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'winner-chat-message';
+        
+        // Если сообщение от победителя, добавляем специальный класс
+        if (user === currentWinner) {
+            messageDiv.classList.add('winner-response');
+            winnerResponded = true; // Победитель ответил
+        }
+        
+        const timeString = `${message.time.getHours().toString().padStart(2, '0')}:${message.time.getMinutes().toString().padStart(2, '0')}`;
+        
+        messageDiv.innerHTML = `
+            <span class="winner-chat-time">${timeString}</span>
+            <span class="winner-chat-user">${user}:</span>
+            <span class="winner-chat-text">${text}</span>
+        `;
+        
+        winnerChat.appendChild(messageDiv);
+        winnerChat.scrollTop = winnerChat.scrollHeight;
+    }
+    
+    console.log('=== КОНЕЦ ФУНКЦИИ addWinnerChatMessage ===');
+}
