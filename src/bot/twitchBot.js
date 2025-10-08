@@ -147,6 +147,25 @@ function initBot(socketIo) {
       }
     }
   });
+  
+  // Обработчик удаленных сообщений
+  client.on('messagedeleted', (channel, username, deletedMessage, userState) => {
+    console.log('Сообщение удалено:', { channel, username, deletedMessage, userState });
+    
+    // Отправляем уведомление через WebSocket об удалении сообщения
+    if (io) {
+      const now = new Date();
+      const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      
+      io.emit('messageDeleted', {
+        channel: channel,
+        username: username,
+        message: deletedMessage,
+        time: timeString,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
 
   // Подключение к Twitch (только если есть учетные данные)
   if (process.env.TWITCH_BOT_USERNAME && process.env.TWITCH_OAUTH_TOKEN) {

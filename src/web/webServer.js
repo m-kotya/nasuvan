@@ -728,7 +728,7 @@ function initWebServer(app, io) {
     console.log('=== НОВОЕ WEBSOCKET СОЕДИНЕНИЕ ===');
     console.log('Новое WebSocket соединение');
     
-    // Отправляем тестовое сообщение при подключении
+    // Отправляем тестовое сообщение при подключении (но не отображаем его в интерфейсе)
     socket.emit('twitchMessage', {
       channel: 'system',
       username: 'Система',
@@ -760,6 +760,13 @@ function initWebServer(app, io) {
           console.log('Добавление участника в локальный список:', data.username);
           activeGiveaway.participants.push(data.username);
           console.log('Участник добавлен в локальный список. Текущие участники:', activeGiveaway.participants);
+          
+          // Отправляем уведомление через WebSocket
+          io.emit('participantAdded', {
+            giveawayId: activeGiveaway.id,
+            username: data.username,
+            count: activeGiveaway.participants.length
+          });
         } else {
           console.log('Участник уже есть в локальном списке:', data.username);
         }

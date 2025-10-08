@@ -471,9 +471,17 @@ a:hover {
     border-left: 3px solid #9146ff;
 }
 
+/* Новый стиль для участников */
 .chat-message.participant {
     background: rgba(46, 74, 58, 0.8);
     border-left: 3px solid #4caf50;
+}
+
+/* Новый стиль для уведомлений о добавлении участников */
+.chat-message.participant-notification {
+    background: rgba(74, 58, 46, 0.8);
+    border-left: 3px solid #ff9800;
+    font-style: italic;
 }
 
 .chat-message.winner {
@@ -584,10 +592,13 @@ a:hover {
     100% { text-shadow: 0 0 5px rgba(145, 70, 255, 0.5); }
 }
 
+/* Формат таймера 00:00 */
 .winner-timer {
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 700;
     color: #9146ff;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 3px;
 }
 
 .winner-message {
@@ -746,4 +757,17 @@ footer {
         min-height: 200px;
         max-height: 300px;
     }
+}
+
+/* Новый стиль для участников в списке */
+.participant-item {
+    background: rgba(46, 74, 58, 0.6);
+    border-left: 3px solid #4caf50;
+}
+
+/* Новый стиль для уведомлений о добавлении участников в списке */
+.participant-notification-item {
+    background: rgba(74, 58, 46, 0.6);
+    border-left: 3px solid #ff9800;
+    font-style: italic;
 }

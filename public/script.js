@@ -46,9 +46,6 @@ function initWebSocket() {
     // Создаем WebSocket соединение с сервером
     socket = io();
     
-    // Флаг для отслеживания первого подключения
-    let isFirstConnection = true;
-    
     // Обработчик успешного подключения
     socket.on('connect', () => {
         console.log('WebSocket подключение установлено');
@@ -67,7 +64,10 @@ function initWebSocket() {
     // Обработчик сообщений из Twitch чата
     socket.on('twitchMessage', (data) => {
         console.log('Получено сообщение из Twitch чата:', data);
-        addChatMessage('user', data.username, data.message);
+        // Не показываем системные сообщения о подключении
+        if (data.username !== 'Система' || !data.message.includes('WebSocket соединение установлено')) {
+            addChatMessage('user', data.username, data.message);
+        }
     });
     
     // Обработчик добавления участника
@@ -78,7 +78,28 @@ function initWebSocket() {
             participants.push(data.username);
             updateParticipantsList();
             showNotification(`Участник ${data.username} добавлен`, 'success');
+            // Добавляем специальное сообщение в чат о добавлении участника
+            addChatMessage('participant-notification', data.username, `ввел кодовое слово и теперь в списке участников!`);
         }
+    });
+    
+    // Обработчик удаленных сообщений
+    socket.on('messageDeleted', (data) => {
+        console.log('Получено уведомление об удалении сообщения:', data);
+        // Удаляем сообщение из чата
+        const messageElements = document.querySelectorAll('.chat-message');
+        messageElements.forEach(element => {
+            const userElement = element.querySelector('.message-user');
+            const timeElement = element.querySelector('.message-time');
+            if (userElement && timeElement) {
+                const username = userElement.textContent.replace(':', '');
+                const timeText = timeElement.textContent;
+                // Проверяем, совпадает ли пользователь и время сообщения
+                if (username === data.username && timeText === data.time) {
+                    element.remove();
+                }
+            }
+        });
     });
     
     console.log('=== КОНЕЦ ФУНКЦИИ initWebSocket ===');
@@ -587,14 +608,13 @@ function stopWinnerTimer() {
     }
 }
 
-// Функция обновления отображения таймера
+// Функция обновления отображения таймера в формате 00:00
 function updateWinnerTimer() {
-    const hours = Math.floor(winnerSeconds / 3600);
-    const minutes = Math.floor((winnerSeconds % 3600) / 60);
+    const minutes = Math.floor(winnerSeconds / 60);
     const seconds = winnerSeconds % 60;
     
-    // Форматируем как HH:MM:SS
-    winnerTimer.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    // Форматируем как MM:SS
+    winnerTimer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
 // Функция добавления участника
@@ -690,9 +710,9 @@ function addChatMessage(type, user, text) {
     console.log('=== НАЧАЛО ФУНКЦИИ addChatMessage ===');
     console.log('Добавление сообщения в чат:', { type, user, text });
     
-    // Не показываем системные сообщения
-    if (type === 'system') {
-        console.log('Системное сообщение, игнорируем');
+    // Не показываем системные сообщения о подключении WebSocket
+    if (type === 'system' && text.includes('WebSocket соединение установлено')) {
+        console.log('Системное сообщение о подключении WebSocket, игнорируем');
         console.log('=== КОНЕЦ ФУНКЦИИ addChatMessage ===');
         return;
     }
@@ -708,9 +728,9 @@ function addChatMessage(type, user, text) {
     messageDiv.className = `chat-message ${type}`;
     
     // Проверяем, есть ли пользователь уже в списке участников
-    if (participants.includes(user) && type === 'user') {
-        console.log('Пользователь уже в списке участников, добавляем класс already-participant');
-        messageDiv.classList.add('already-participant');
+    if (participants.includes(user) && (type === 'user' || type === 'participant-notification')) {
+        console.log('Пользователь в списке участников, добавляем класс participant');
+        messageDiv.classList.add('participant');
     }
     
     const now = new Date();
@@ -723,6 +743,10 @@ function addChatMessage(type, user, text) {
         <span class="message-text">${processedText}</span>
         <span class="message-time">${timeString}</span>
     `;
+    
+    // Добавляем data-атрибуты для возможности удаления сообщений
+    messageDiv.setAttribute('data-username', user);
+    messageDiv.setAttribute('data-time', timeString);
     
     console.log('Добавление сообщения в DOM');
     chatMessages.appendChild(messageDiv);
