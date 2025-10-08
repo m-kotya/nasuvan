@@ -76,12 +76,12 @@ function initWebServer(app, io) {
   });
 
   // Маршрут для страницы входа
-  app.get('/login.html', (req, res) => {
+  app.get('/login', (req, res) => {
     console.log('Запрос страницы входа');
     res.sendFile(path.join(__dirname, '../../public/login.html'));
   });
 
-  // Маршрут для обработки логина
+  // Маршрут для обработки логина через форму
   app.post('/login', (req, res) => {
     console.log('=== НАЧАЛО ОБРАБОТКИ /login ===');
     const { username, password } = req.body;
@@ -92,7 +92,7 @@ function initWebServer(app, io) {
     // Для демонстрации принимаем любые учетные данные
     if (!username || !password) {
       console.log('Не указаны имя пользователя или пароль');
-      return res.redirect('/login.html?error=missing_fields');
+      return res.redirect('/login');
     }
     
     // Создаем сессию для пользователя
@@ -421,15 +421,15 @@ function initWebServer(app, io) {
     console.log('=== НАЧАЛО MIDDLEWARE requireAuth ===');
     const sessionId = req.cookies?.sessionId;
     
-    // Проверяем, является ли это запросом к странице входа
-    if (req.path === '/login.html') {
+    // Разрешаем доступ к странице входа без аутентификации
+    if (req.path === '/login') {
       return next();
     }
     
     if (!sessionId || !userSessions.has(sessionId)) {
       console.log('Сессия не найдена или отсутствует');
       console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
-      return res.redirect('/login.html');
+      return res.redirect('/login');
     }
     
     const session = userSessions.get(sessionId);
@@ -454,7 +454,7 @@ function initWebServer(app, io) {
         // Удаляем сессию при ошибке обновления токена
         userSessions.delete(sessionId);
         console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
-        return res.redirect('/login.html');
+        return res.redirect('/login');
       }
     }
     
