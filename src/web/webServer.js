@@ -69,15 +69,21 @@ function initWebServer(app, io) {
     console.log('  TWITCH_CLIENT_SECRET:', process.env.TWITCH_CLIENT_SECRET ? 'SET' : 'NOT SET');
   }
 
+  // Применяем middleware аутентификации ко всем маршрутам, кроме /login, /auth/* и /health
+  app.use((req, res, next) => {
+    // Разрешаем доступ к странице входа, маршрутам аутентификации и health check без аутентификации
+    if (req.path === '/login' || req.path === '/health' || req.path.startsWith('/auth/')) {
+      return next();
+    }
+    
+    // Для всех остальных маршрутов проверяем аутентификацию
+    requireAuth(req, res, next);
+  });
+
   // Middleware для проверки аутентификации
   const requireAuth = async (req, res, next) => {
     console.log('=== НАЧАЛО MIDDLEWARE requireAuth ===');
     const sessionId = req.cookies?.sessionId;
-    
-    // Разрешаем доступ к странице входа без аутентификации
-    if (req.path === '/login') {
-      return next();
-    }
     
     if (!sessionId || !userSessions.has(sessionId)) {
       console.log('Сессия не найдена или отсутствует');
@@ -116,8 +122,8 @@ function initWebServer(app, io) {
     next();
   };
 
-  // Маршрут для главной страницы (теперь требует аутентификации)
-  app.get('/', requireAuth, (req, res) => {
+  // Маршрут для главной страницы
+  app.get('/', (req, res) => {
     console.log('Запрос главной страницы');
     res.sendFile(path.join(__dirname, '../../public/index.html'));
   });
