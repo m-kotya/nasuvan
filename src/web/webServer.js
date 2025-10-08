@@ -1,5 +1,6 @@
 const path = require('path');
 const crypto = require('crypto');
+const express = require('express');
 const { getGiveaways, createGiveaway, selectWinner, addWinner, supabase } = require('../database/supabaseClient');
 const { joinChannel, leaveChannel, getActiveGiveaways, setActiveGiveaways } = require('../bot/twitchBot');
 
@@ -119,6 +120,9 @@ function initWebServer(app, io) {
 
   // Применяем middleware аутентификации ко всем маршрутам
   app.use(requireAuth);
+  
+  // Теперь добавляем middleware для статических файлов после аутентификации
+  app.use(express.static(path.join(__dirname, '../../public')));
 
   // Маршрут для главной страницы
   app.get('/', (req, res) => {

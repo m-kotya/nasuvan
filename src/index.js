@@ -25,7 +25,6 @@ const io = socketIo(server);
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, '../public')));
 
 // Health check endpoint для Railway
 app.get('/health', (req, res) => {
