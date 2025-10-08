@@ -1,0 +1,36 @@
+<<<<<<< HEAD
+# railway.toml файл конфигурации для twitch-giveaway-bot
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "npm start"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[environments.production]
+nodeEnv = "production"
+
+[healthcheck]
+path = "/health"
+=======
+# railway.toml файл конфигурации для twitch-giveaway-bot
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "npm start"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[environments.production]
+nodeEnv = "production"
+
+[healthcheck]
+path = "/health"
+>>>>>>> 57daa1b24864dfb5a7ce4f3f66cebcc9969304a6
+port = "$PORT"

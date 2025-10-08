@@ -1,0 +1,16 @@
+{
+  "project": {
+    "name": "Twitch Giveaway Bot",
+    "description": "Twitch bot for giveaways with WebSocket integration",
+    "version": "1.0.0"
+  },
+  "git": {
+    "remote": "https://github.com/m-kotya/nasuvan.git",
+    "branch": "main",
+    "autoPush": true
+  },
+  "deployment": {
+    "platform": "railway",
+    "autoDeploy": true
+  }
+}
