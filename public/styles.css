@@ -278,7 +278,7 @@ a:hover {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 0.5rem; /* Уменьшенный отступ */
     height: 100%;
 }
 
@@ -298,7 +298,7 @@ a:hover {
     color: #e0e0e0;
     font-size: 1rem;
     transition: all 0.3s ease;
-    margin-bottom: 0.5rem; /* Уменьшенный отступ снизу */
+    margin-bottom: 0; /* Убран отступ снизу */
 }
 
 .form-control:focus {
@@ -315,7 +315,8 @@ a:hover {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 0.75rem; /* Уменьшенный отступ */
-    margin-top: 0.5rem; /* Уменьшенный отступ сверху */
+    margin-top: 0; /* Убран отступ сверху */
+    margin-bottom: 0; /* Убран отступ снизу */
 }
 
 /* Списки */
