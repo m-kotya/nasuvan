@@ -8,6 +8,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- Login stub -->
+    <div id="loginStub" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 10000; display: flex; justify-content: center; align-items: center;">
+        <div style="background: #1a1a2e; padding: 2rem; border-radius: 12px; width: 300px; text-align: center;">
+            <h2 style="color: #9146ff; margin-bottom: 1.5rem;">Авторизация</h2>
+            <input type="text" id="loginUsername" placeholder="Логин" style="width: 100%; padding: 0.8rem; margin-bottom: 1rem; background: #2d2d41; border: 1px solid #444; border-radius: 6px; color: white;">
+            <input type="password" id="loginPassword" placeholder="Пароль" style="width: 100%; padding: 0.8rem; margin-bottom: 1.5rem; background: #2d2d41; border: 1px solid #444; border-radius: 6px; color: white;">
+            <button id="loginButton" style="width: 100%; padding: 0.8rem; background: #9146ff; color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <i class="fab fa-twitch"></i> Авторизация
+            </button>
+        </div>
+    </div>
+
     <div class="container">
         <header>
             <div class="header-content">
@@ -137,19 +149,14 @@
     <script src="script.js"></script>
     
     <script>
-        // Проверяем авторизацию при загрузке страницы
+        // Показываем заглушку логина при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
-            fetch('/api/giveaways/test', { method: 'GET' })
-            .then(response => {
-                if (response.status === 401) {
-                    // Пользователь не авторизован, перенаправляем на страницу входа
-                    window.location.href = '/login.html';
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка проверки авторизации:', error);
-                // В случае ошибки тоже перенаправляем на страницу входа
-                window.location.href = '/login.html';
+            document.getElementById('loginStub').style.display = 'flex';
+            
+            // Обработчик кнопки логина
+            document.getElementById('loginButton').addEventListener('click', function() {
+                // Скрываем заглушку и показываем основной интерфейс
+                document.getElementById('loginStub').style.display = 'none';
             });
         });
     </script>
