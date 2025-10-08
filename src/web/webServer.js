@@ -52,15 +52,20 @@ async function refreshAccessToken(refreshToken) {
 // Middleware для проверки аутентификации
 const requireAuth = async (req, res, next) => {
   console.log('=== НАЧАЛО MIDDLEWARE requireAuth ===');
-  const sessionId = req.cookies?.sessionId;
+  console.log('Проверка аутентификации для пути:', req.path);
   
   // Разрешаем доступ к странице входа, маршрутам аутентификации и health check без аутентификации
   if (req.path === '/login' || req.path === '/health' || req.path.startsWith('/auth/')) {
+    console.log('Путь разрешен без аутентификации');
+    console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
     return next();
   }
   
+  const sessionId = req.cookies?.sessionId;
+  console.log('Session ID из cookies:', sessionId);
+  
   if (!sessionId || !userSessions.has(sessionId)) {
-    console.log('Сессия не найдена или отсутствует');
+    console.log('Сессия не найдена или отсутствует, перенаправление на /login');
     console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
     return res.redirect('/login');
   }
