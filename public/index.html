@@ -12,15 +12,10 @@
         <header>
             <div class="header-content">
                 <div class="header-left">
+                    <h1><i class="fab fa-twitch"></i> Twitch Giveaway Bot</h1>
                     <a href="/winners.html" class="btn btn-secondary" id="winnersBtn" style="display: none;">
                         <i class="fas fa-history"></i> История
                     </a>
-                    <a href="/updateTelegram.html" class="btn btn-secondary">
-                        <i class="fab fa-telegram"></i> Telegram
-                    </a>
-                </div>
-                <div class="header-center">
-                    <h1><i class="fab fa-twitch"></i> Nasuvan Giveaway Bot</h1>
                 </div>
                 <div class="header-right">
                     <div id="userStatus" class="user-status" style="display: none;">
@@ -28,6 +23,9 @@
                             <div class="online-indicator"></div>
                             <span id="usernameDisplay" class="username"></span>
                         </div>
+                        <a href="/updateTelegram.html" class="btn btn-secondary">
+                            <i class="fab fa-telegram"></i> Telegram
+                        </a>
                         <button id="logoutBtn" class="btn btn-danger">
                             <i class="fas fa-sign-out-alt"></i> Выйти
                         </button>
@@ -137,5 +135,23 @@
     <!-- Подключаем socket.io клиент -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
+    
+    <script>
+        // Проверяем авторизацию при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/giveaways/test', { method: 'GET' })
+            .then(response => {
+                if (response.status === 401) {
+                    // Пользователь не авторизован, перенаправляем на страницу входа
+                    window.location.href = '/login.html';
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка проверки авторизации:', error);
+                // В случае ошибки тоже перенаправляем на страницу входа
+                window.location.href = '/login.html';
+            });
+        });
+    </script>
 </body>
 </html>

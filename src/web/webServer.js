@@ -75,6 +75,54 @@ function initWebServer(app, io) {
     res.sendFile(path.join(__dirname, '../../public/index.html'));
   });
 
+  // Маршрут для страницы входа
+  app.get('/login.html', (req, res) => {
+    console.log('Запрос страницы входа');
+    res.sendFile(path.join(__dirname, '../../public/login.html'));
+  });
+
+  // Маршрут для обработки логина
+  app.post('/login', (req, res) => {
+    console.log('=== НАЧАЛО ОБРАБОТКИ /login ===');
+    const { username, password } = req.body;
+    
+    console.log('Попытка входа:', { username });
+    
+    // В реальной реализации здесь будет проверка учетных данных
+    // Для демонстрации принимаем любые учетные данные
+    if (!username || !password) {
+      console.log('Не указаны имя пользователя или пароль');
+      return res.redirect('/login.html?error=missing_fields');
+    }
+    
+    // Создаем сессию для пользователя
+    const sessionId = generateSessionId();
+    const session = {
+      userId: username,
+      username: username,
+      // В реальной реализации здесь будут настоящие токены
+      accessToken: 'demo_access_token',
+      refreshToken: 'demo_refresh_token',
+      expiresAt: Date.now() + (60 * 60 * 1000) // 1 час
+    };
+    
+    userSessions.set(sessionId, session);
+    
+    // Устанавливаем cookie с sessionId
+    res.cookie('sessionId', sessionId, { 
+      maxAge: 24 * 60 * 60 * 1000, // 24 часа
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
+    
+    console.log('Пользователь успешно вошел в систему:', username);
+    console.log('=== КОНЕЦ ОБРАБОТКИ /login ===');
+    
+    // Перенаправляем на главную страницу
+    res.redirect('/');
+  });
+
   // Маршрут для страницы победителей
   app.get('/winners', (req, res) => {
     console.log('Запрос страницы победителей');
@@ -373,10 +421,15 @@ function initWebServer(app, io) {
     console.log('=== НАЧАЛО MIDDLEWARE requireAuth ===');
     const sessionId = req.cookies?.sessionId;
     
+    // Проверяем, является ли это запросом к странице входа
+    if (req.path === '/login.html') {
+      return next();
+    }
+    
     if (!sessionId || !userSessions.has(sessionId)) {
       console.log('Сессия не найдена или отсутствует');
       console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
-      return res.status(401).json({ error: 'Требуется авторизация' });
+      return res.redirect('/login.html');
     }
     
     const session = userSessions.get(sessionId);
@@ -401,7 +454,7 @@ function initWebServer(app, io) {
         // Удаляем сессию при ошибке обновления токена
         userSessions.delete(sessionId);
         console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
-        return res.status(401).json({ error: 'Сессия истекла, требуется повторная авторизация' });
+        return res.redirect('/login.html');
       }
     }
     
