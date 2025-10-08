@@ -8,10 +8,6 @@ let activeGiveaways = new Map();
 // Хранение информации о сессиях пользователей
 let userSessions = new Map();
 
-// Проверка, работаем ли мы на Railway
-const isRailway = process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_ENVIRONMENT_NAME;
-console.log('Web server running on Railway:', isRailway ? 'YES' : 'NO');
-
 // Функция для генерации безопасного sessionId
 function generateSessionId() {
   return crypto.randomBytes(32).toString('hex');
@@ -53,6 +49,53 @@ async function refreshAccessToken(refreshToken) {
   }
 }
 
+// Middleware для проверки аутентификации
+const requireAuth = async (req, res, next) => {
+  console.log('=== НАЧАЛО MIDDLEWARE requireAuth ===');
+  const sessionId = req.cookies?.sessionId;
+  
+  // Разрешаем доступ к странице входа, маршрутам аутентификации и health check без аутентификации
+  if (req.path === '/login' || req.path === '/health' || req.path.startsWith('/auth/')) {
+    return next();
+  }
+  
+  if (!sessionId || !userSessions.has(sessionId)) {
+    console.log('Сессия не найдена или отсутствует');
+    console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
+    return res.redirect('/login');
+  }
+  
+  const session = userSessions.get(sessionId);
+  console.log('Найдена сессия:', { userId: session.userId, username: session.username });
+  
+  // Проверяем, не истек ли токен
+  if (Date.now() > session.expiresAt) {
+    console.log('Токен истек, попытка обновления');
+    // Пытаемся обновить токен
+    try {
+      const tokenData = await refreshAccessToken(session.refreshToken);
+      
+      // Обновляем сессию с новыми токенами
+      session.accessToken = tokenData.access_token;
+      session.refreshToken = tokenData.refresh_token;
+      session.expiresAt = Date.now() + (tokenData.expires_in * 1000);
+      
+      userSessions.set(sessionId, session);
+      console.log('Токен успешно обновлен');
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      // Удаляем сессию при ошибке обновления токена
+      userSessions.delete(sessionId);
+      console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
+      return res.redirect('/login');
+    }
+  }
+  
+  req.user = session;
+  console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
+  next();
+};
+
 function initWebServer(app, io) {
   console.log('=== НАЧАЛО ФУНКЦИИ initWebServer ===');
   
@@ -69,58 +112,8 @@ function initWebServer(app, io) {
     console.log('  TWITCH_CLIENT_SECRET:', process.env.TWITCH_CLIENT_SECRET ? 'SET' : 'NOT SET');
   }
 
-  // Применяем middleware аутентификации ко всем маршрутам, кроме /login, /auth/* и /health
-  app.use((req, res, next) => {
-    // Разрешаем доступ к странице входа, маршрутам аутентификации и health check без аутентификации
-    if (req.path === '/login' || req.path === '/health' || req.path.startsWith('/auth/')) {
-      return next();
-    }
-    
-    // Для всех остальных маршрутов проверяем аутентификацию
-    requireAuth(req, res, next);
-  });
-
-  // Middleware для проверки аутентификации
-  const requireAuth = async (req, res, next) => {
-    console.log('=== НАЧАЛО MIDDLEWARE requireAuth ===');
-    const sessionId = req.cookies?.sessionId;
-    
-    if (!sessionId || !userSessions.has(sessionId)) {
-      console.log('Сессия не найдена или отсутствует');
-      console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
-      return res.redirect('/login');
-    }
-    
-    const session = userSessions.get(sessionId);
-    console.log('Найдена сессия:', { userId: session.userId, username: session.username });
-    
-    // Проверяем, не истек ли токен
-    if (Date.now() > session.expiresAt) {
-      console.log('Токен истек, попытка обновления');
-      // Пытаемся обновить токен
-      try {
-        const tokenData = await refreshAccessToken(session.refreshToken);
-        
-        // Обновляем сессию с новыми токенами
-        session.accessToken = tokenData.access_token;
-        session.refreshToken = tokenData.refresh_token;
-        session.expiresAt = Date.now() + (tokenData.expires_in * 1000);
-        
-        userSessions.set(sessionId, session);
-        console.log('Токен успешно обновлен');
-      } catch (error) {
-        console.error('Error refreshing token:', error);
-        // Удаляем сессию при ошибке обновления токена
-        userSessions.delete(sessionId);
-        console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
-        return res.redirect('/login');
-      }
-    }
-    
-    req.user = session;
-    console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
-    next();
-  };
+  // Применяем middleware аутентификации ко всем маршрутам
+  app.use(requireAuth);
 
   // Маршрут для главной страницы
   app.get('/', (req, res) => {
@@ -470,7 +463,7 @@ function initWebServer(app, io) {
   });
 
   // Тестовый маршрут для проверки авторизации
-  app.get('/api/giveaways/test', requireAuth, (req, res) => {
+  app.get('/api/giveaways/test', (req, res) => {
     console.log('=== НАЧАЛО ОБРАБОТКИ /api/giveaways/test ===');
     console.log('Тест авторизации успешен для пользователя:', req.user.username);
     res.json({ message: 'Авторизация успешна', user: req.user.username });
@@ -478,7 +471,7 @@ function initWebServer(app, io) {
   });
 
   // API маршрут для начала розыгрыша
-  app.post('/api/start-giveaway', requireAuth, async (req, res) => {
+  app.post('/api/start-giveaway', async (req, res) => {
     console.log('=== НАЧАЛО ОБРАБОТКИ /api/start-giveaway ===');
     try {
       const { keyword, prize } = req.body;
@@ -556,7 +549,7 @@ function initWebServer(app, io) {
   });
 
   // API маршрут для завершения розыгрыша
-  app.post('/api/end-giveaway', requireAuth, async (req, res) => {
+  app.post('/api/end-giveaway', async (req, res) => {
     console.log('=== НАЧАЛО ОБРАБОТКИ /api/end-giveaway ===');
     try {
       // Получаем имя канала авторизованного пользователя
@@ -637,7 +630,7 @@ function initWebServer(app, io) {
   });
 
   // API маршрут для выбора победителя
-  app.post('/api/select-winner', requireAuth, async (req, res) => {
+  app.post('/api/select-winner', async (req, res) => {
     console.log('=== НАЧАЛО ОБРАБОТКИ /api/select-winner ===');
     try {
       // Получаем имя канала авторизованного пользователя
@@ -724,7 +717,7 @@ function initWebServer(app, io) {
   });
 
   // API маршрут для получения последних победителей
-  app.get('/api/winners', requireAuth, async (req, res) => {
+  app.get('/api/winners', async (req, res) => {
     console.log('=== НАЧАЛО ОБРАБОТКИ /api/winners ===');
     try {
       // Получаем имя канала авторизованного пользователя
@@ -746,7 +739,7 @@ function initWebServer(app, io) {
   });
 
   // API маршрут для обновления Telegram победителя
-  app.post('/api/update-telegram', requireAuth, async (req, res) => {
+  app.post('/api/update-telegram', async (req, res) => {
     console.log('=== НАЧАЛО ОБРАБОТКИ /api/update-telegram ===');
     try {
       const { username, telegram } = req.body;
