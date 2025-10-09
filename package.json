@@ -11,7 +11,8 @@
     "test:participants": "node test_participants.js",
     "test:supabase": "node test_supabase.js",
     "test:twitch": "node test_twitch_bot.js",
-    "test:web": "node test_web_interface.js"
+    "test:web": "node test_web_interface.js",
+    "check-env": "node -e \"require('dotenv').config(); console.log('ADMIN_USERNAME:', process.env.ADMIN_USERNAME || 'admin (default)'); console.log('ADMIN_PASSWORD:', process.env.ADMIN_PASSWORD ? 'SET' : 'password (default)');\""
   },
   "keywords": [
     "twitch",

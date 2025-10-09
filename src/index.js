@@ -104,6 +104,13 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('  APP_URL:', process.env.APP_URL || 'Не установлен');
   console.log('  SUPABASE_URL:', process.env.SUPABASE_URL ? 'Установлен' : 'Не установлен');
   console.log('  SUPABASE_KEY:', process.env.SUPABASE_KEY ? 'Установлен' : 'Не установлен');
-  console.log('  ADMIN_USERNAME:', process.env.ADMIN_USERNAME || 'admin (default)');
-  console.log('  ADMIN_PASSWORD:', process.env.ADMIN_PASSWORD ? 'Установлен' : 'password (default)');
+  
+  // Проверяем, используются ли учетные данные по умолчанию
+  if (!process.env.ADMIN_USERNAME && !process.env.ADMIN_PASSWORD) {
+    console.warn('  ВНИМАНИЕ: Используются учетные данные по умолчанию (admin/password)');
+    console.warn('  Рекомендуется установить переменные окружения ADMIN_USERNAME и ADMIN_PASSWORD');
+  } else {
+    console.log('  ADMIN_USERNAME:', process.env.ADMIN_USERNAME || 'admin (default)');
+    console.log('  ADMIN_PASSWORD:', process.env.ADMIN_PASSWORD ? 'Установлен' : 'password (default)');
+  }
 });

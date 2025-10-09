@@ -158,10 +158,18 @@ function initWebServer(app, io) {
     
     console.log('Попытка входа:', { username });
     
-    // В реальной реализации здесь будет проверка учетных данных
     // Проверяем учетные данные через переменные окружения
+    // Если переменные не установлены, используем значения по умолчанию и показываем предупреждение
     const validUsername = process.env.ADMIN_USERNAME || 'admin';
     const validPassword = process.env.ADMIN_PASSWORD || 'password';
+    
+    // Проверяем, установлены ли переменные окружения
+    const usingDefaultCredentials = !process.env.ADMIN_USERNAME && !process.env.ADMIN_PASSWORD;
+    if (usingDefaultCredentials) {
+      console.warn('Используются учетные данные по умолчанию. Рекомендуется установить переменные окружения ADMIN_USERNAME и ADMIN_PASSWORD.');
+    } else {
+      console.log('Используются учетные данные из переменных окружения.');
+    }
     
     if (!username || !password) {
       console.log('Не указаны имя пользователя или пароль');
@@ -171,6 +179,8 @@ function initWebServer(app, io) {
     // Проверяем учетные данные
     if (username !== validUsername || password !== validPassword) {
       console.log('Неверные учетные данные');
+      console.log('Полученные данные:', { username, password });
+      console.log('Ожидаемые данные:', { validUsername, validPassword });
       return res.redirect('/login?error=invalid');
     }
     

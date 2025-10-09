@@ -107,6 +107,17 @@
             text-align: center;
         }
         
+        .warning-message {
+            color: #ffd166;
+            background: rgba(255, 209, 102, 0.1);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border: 1px solid #ffd166;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
         .hidden {
             display: none;
         }
@@ -116,6 +127,11 @@
     <div class="login-form">
         <div id="errorMessage" class="error-message hidden">
             Неверное имя пользователя или пароль
+        </div>
+        
+        <div id="warningMessage" class="warning-message hidden">
+            Используются учетные данные по умолчанию.<br>
+            Логин: admin, Пароль: password
         </div>
         
         <form action="/login" method="POST">
@@ -149,9 +165,17 @@
         const urlParams = new URLSearchParams(window.location.search);
         const error = urlParams.get('error');
         const errorMessage = document.getElementById('errorMessage');
+        const warningMessage = document.getElementById('warningMessage');
         
         if (error === 'invalid') {
             errorMessage.classList.remove('hidden');
+        }
+        
+        // Показываем предупреждение о дефолтных учетных данных
+        // В реальной реализации это будет определяться сервером
+        if (!error) {
+            // Показываем предупреждение только если нет ошибок
+            warningMessage.classList.remove('hidden');
         }
     </script>
 </body>
