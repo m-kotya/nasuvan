@@ -738,6 +738,7 @@ function updateParticipantsList() {
             <div class="participant-item" data-username="${participant}">
                 <span class="participant-name">${participant}</span>
                 <span class="participant-time">${timeString}</span>
+                <div class="participant-checkpoint" onclick="toggleParticipantStrikeThrough(this, '${participant}')"></div>
             </div>
         `;
     });
@@ -746,6 +747,43 @@ function updateParticipantsList() {
     participantsList.innerHTML = html;
     console.log('Список участников обновлен, HTML элементов:', participantsList.children.length);
     console.log('=== КОНЕЦ ФУНКЦИИ updateParticipantsList ===');
+}
+
+// Функция для перечеркивания/восстановления участника
+function toggleParticipantStrikeThrough(element, username) {
+    console.log('=== НАЧАЛО ФУНКЦИИ toggleParticipantStrikeThrough ===');
+    console.log('Переключение состояния участника:', { username });
+    
+    const participantItem = element.closest('.participant-item');
+    
+    // Переключаем класс зачеркивания
+    participantItem.classList.toggle('strikethrough');
+    
+    // Переключаем состояние чекпоинта
+    element.classList.toggle('checked');
+    
+    // Если участник зачеркнут, удаляем его из списка активных участников
+    if (participantItem.classList.contains('strikethrough')) {
+        console.log('Участник зачеркнут, удаляем из активных участников');
+        // Удаляем участника из массива participants
+        const index = participants.indexOf(username);
+        if (index > -1) {
+            participants.splice(index, 1);
+        }
+        showNotification(`Участник ${username} исключен из розыгрыша`, 'info');
+    } else {
+        console.log('Участник восстановлен, добавляем в активные участники');
+        // Добавляем участника обратно в массив, если его там нет
+        if (!participants.includes(username)) {
+            participants.push(username);
+        }
+        showNotification(`Участник ${username} снова участвует в розыгрыше`, 'success');
+    }
+    
+    // Обновляем счетчик участников
+    participantsCount.textContent = `(${participants.length})`;
+    
+    console.log('=== КОНЕЦ ФУНКЦИИ toggleParticipantStrikeThrough ===');
 }
 
 // Функция добавления сообщения в чат с поддержкой эмодзи
