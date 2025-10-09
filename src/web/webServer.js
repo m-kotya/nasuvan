@@ -116,6 +116,8 @@ function initWebServer(app, io) {
     console.log('  SUPABASE_KEY:', process.env.SUPABASE_KEY ? 'SET' : 'NOT SET');
     console.log('  TWITCH_CLIENT_ID:', process.env.TWITCH_CLIENT_ID ? 'SET' : 'NOT SET');
     console.log('  TWITCH_CLIENT_SECRET:', process.env.TWITCH_CLIENT_SECRET ? 'SET' : 'NOT SET');
+    console.log('  ADMIN_USERNAME:', process.env.ADMIN_USERNAME ? 'SET' : 'NOT SET');
+    console.log('  ADMIN_PASSWORD:', process.env.ADMIN_PASSWORD ? 'SET' : 'NOT SET');
   }
 
   // Применяем middleware аутентификации ко всем маршрутам
@@ -123,6 +125,19 @@ function initWebServer(app, io) {
   
   // Теперь добавляем middleware для статических файлов после аутентификации
   app.use(express.static(path.join(__dirname, '../../public')));
+
+  // Health check endpoint
+  app.get('/health', (req, res) => {
+    res.status(200).json({ 
+      status: 'OK', 
+      timestamp: new Date().toISOString(),
+      authenticated: !!req.user,
+      environment: {
+        railway: !!isRailway,
+        nodeEnv: process.env.NODE_ENV || 'development'
+      }
+    });
+  });
 
   // Маршрут для главной страницы
   app.get('/', (req, res) => {
@@ -144,10 +159,19 @@ function initWebServer(app, io) {
     console.log('Попытка входа:', { username });
     
     // В реальной реализации здесь будет проверка учетных данных
-    // Для демонстрации принимаем любые учетные данные
+    // Проверяем учетные данные через переменные окружения
+    const validUsername = process.env.ADMIN_USERNAME || 'admin';
+    const validPassword = process.env.ADMIN_PASSWORD || 'password';
+    
     if (!username || !password) {
       console.log('Не указаны имя пользователя или пароль');
-      return res.redirect('/login');
+      return res.redirect('/login?error=missing');
+    }
+    
+    // Проверяем учетные данные
+    if (username !== validUsername || password !== validPassword) {
+      console.log('Неверные учетные данные');
+      return res.redirect('/login?error=invalid');
     }
     
     // Создаем сессию для пользователя

@@ -95,10 +95,28 @@
             justify-content: center;
             gap: 0.5rem;
         }
+        
+        .error-message {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border: 1px solid #ff6b6b;
+            text-align: center;
+        }
+        
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="login-form">
+        <div id="errorMessage" class="error-message hidden">
+            Неверное имя пользователя или пароль
+        </div>
+        
         <form action="/login" method="POST">
             <div class="form-group">
                 <label for="username">Логин</label>
@@ -125,5 +143,15 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script>
+        // Показываем сообщение об ошибке, если есть параметр error
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        const errorMessage = document.getElementById('errorMessage');
+        
+        if (error === 'invalid') {
+            errorMessage.classList.remove('hidden');
+        }
+    </script>
 </body>
 </html>

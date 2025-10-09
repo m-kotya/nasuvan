@@ -104,4 +104,6 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('  APP_URL:', process.env.APP_URL || 'Не установлен');
   console.log('  SUPABASE_URL:', process.env.SUPABASE_URL ? 'Установлен' : 'Не установлен');
   console.log('  SUPABASE_KEY:', process.env.SUPABASE_KEY ? 'Установлен' : 'Не установлен');
+  console.log('  ADMIN_USERNAME:', process.env.ADMIN_USERNAME || 'admin (default)');
+  console.log('  ADMIN_PASSWORD:', process.env.ADMIN_PASSWORD ? 'Установлен' : 'password (default)');
 });
