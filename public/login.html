@@ -97,6 +97,17 @@
             gap: 0.5rem;
         }
         
+        .info-message {
+            color: #64b5f6;
+            background: rgba(100, 181, 246, 0.1);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border: 1px solid #64b5f6;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
         .error-message {
             color: #ff6b6b;
             background: rgba(255, 107, 107, 0.1);
@@ -132,6 +143,10 @@
         <div id="warningMessage" class="warning-message hidden">
             Используются учетные данные по умолчанию.<br>
             Логин: admin, Пароль: password
+        </div>
+        
+        <div class="info-message">
+            После входа вы будете автоматически переадресованы на авторизацию Twitch
         </div>
         
         <form action="/login" method="POST">
