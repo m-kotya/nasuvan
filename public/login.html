@@ -87,16 +87,7 @@
             z-index: 2;
             padding: 0 1rem;
         }
-        
-        .twitch-login {
-            background: #9146ff;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-        
+                        
         .info-message {
             color: #64b5f6;
             background: rgba(100, 181, 246, 0.1);
@@ -139,16 +130,7 @@
         <div id="errorMessage" class="error-message hidden">
             Неверное имя пользователя или пароль
         </div>
-        
-        <div id="warningMessage" class="warning-message hidden">
-            Используются учетные данные по умолчанию.<br>
-            Логин: admin, Пароль: password
-        </div>
-        
-        <div class="info-message">
-            После входа вы будете автоматически переадресованы на авторизацию Twitch
-        </div>
-        
+                
         <form action="/login" method="POST">
             <div class="form-group">
                 <label for="username">Логин</label>
@@ -163,15 +145,7 @@
             <button type="submit" class="btn">
                 <i class="fas fa-sign-in-alt"></i> Авторизация
             </button>
-        </form>
-        
-        <div class="divider">
-            <span>или</span>
-        </div>
-        
-        <a href="/auth/twitch" class="btn twitch-login">
-            <i class="fab fa-twitch"></i> Авторизация через Twitch
-        </a>
+        </form>     
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
