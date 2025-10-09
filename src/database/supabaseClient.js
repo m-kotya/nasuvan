@@ -5,9 +5,13 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 let supabase;
 
-console.log('Supabase environment variables check:');
-console.log('SUPABASE_URL:', supabaseUrl ? 'SET' : 'NOT SET');
-console.log('SUPABASE_KEY:', supabaseKey ? 'SET' : 'NOT SET');
+console.log('=== SUPABASE CLIENT INITIALIZATION DEBUG ===');
+console.log('Process environment SUPABASE_URL:', process.env.SUPABASE_URL);
+console.log('Process environment SUPABASE_KEY:', process.env.SUPABASE_KEY ? `SET (length: ${process.env.SUPABASE_KEY.length})` : 'NOT SET');
+console.log('Direct variable SUPABASE_URL:', supabaseUrl);
+console.log('Direct variable SUPABASE_KEY:', supabaseKey ? `SET (length: ${supabaseKey.length})` : 'NOT SET');
+console.log('SUPABASE_URL type:', typeof supabaseUrl);
+console.log('SUPABASE_KEY type:', typeof supabaseKey);
 
 // Проверка Railway переменных
 const isRailway = process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_ENVIRONMENT_NAME;
@@ -112,6 +116,16 @@ const mockSupabase = {
 function initDatabase() {
   console.log('=== НАЧАЛО ФУНКЦИИ initDatabase ===');
   console.log('Инициализация базы данных...');
+  
+  // Добавим подробное логирование всех переменных окружения
+  console.log('Все переменные окружения:');
+  Object.keys(process.env).filter(key => key.includes('SUPABASE') || key.includes('RAILWAY')).forEach(key => {
+    if (key.includes('KEY')) {
+      console.log(`  ${key}: ${process.env[key] ? `SET (length: ${process.env[key].length})` : 'NOT SET'}`);
+    } else {
+      console.log(`  ${key}: ${process.env[key] || 'NOT SET'}`);
+    }
+  });
   
   // Если мы на Railway, то переменные должны быть установлены
   if (isRailway) {

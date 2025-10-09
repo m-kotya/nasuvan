@@ -21,7 +21,8 @@
     "check-supabase": "node check_supabase.js",
     "check-winners-table": "node check_winners_table.js",
     "simple-check-winners": "node simple_check_winners.js",
-    "check-winners-api-http": "node check_winners_api_http.js"
+    "check-winners-api-http": "node check_winners_api_http.js",
+    "check-railway-env": "node check_railway_env.js"
   },
   "keywords": [
     "twitch",
