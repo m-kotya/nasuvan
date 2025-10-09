@@ -116,10 +116,33 @@ function initDatabase() {
   // Если мы на Railway, то переменные должны быть установлены
   if (isRailway) {
     console.log('Запущено на Railway');
+    console.log('SUPABASE_URL:', supabaseUrl);
+    console.log('SUPABASE_KEY:', supabaseKey ? `SET (length: ${supabaseKey.length})` : 'NOT SET');
+    
     if (!supabaseUrl || !supabaseKey) {
       console.error('ОШИБКА: На Railway должны быть установлены переменные SUPABASE_URL и SUPABASE_KEY');
       console.error('Пожалуйста, установите их в настройках Railway');
-      // Все равно продолжаем работу с фиктивным клиентом, чтобы приложение не падало
+      console.error('Текущие значения:');
+      console.error('  SUPABASE_URL:', supabaseUrl || 'undefined');
+      console.error('  SUPABASE_KEY:', supabaseKey ? `SET (length: ${supabaseKey.length})` : 'undefined');
+      
+      // Используем фиктивный клиент, чтобы приложение не падало
+      supabase = mockSupabase;
+      console.log('Подключение к Supabase установлено (тестовый режим)');
+      console.log('=== КОНЕЦ ФУНКЦИИ initDatabase ===');
+      return supabase;
+    }
+    
+    // Проверяем, что значения не являются плейсхолдерами
+    const isPlaceholderUrl = supabaseUrl.includes('your-project') || supabaseUrl.includes('localhost');
+    const isPlaceholderKey = supabaseKey.includes('your-') || supabaseKey.includes('test');
+    
+    if (isPlaceholderUrl || isPlaceholderKey) {
+      console.warn('ПРЕДУПРЕЖДЕНИЕ: Обнаружены плейсхолдеры в переменных окружения');
+      console.warn('  SUPABASE_URL является плейсхолдером:', isPlaceholderUrl);
+      console.warn('  SUPABASE_KEY является плейсхолдером:', isPlaceholderKey);
+      
+      // Используем фиктивный клиент
       supabase = mockSupabase;
       console.log('Подключение к Supabase установлено (тестовый режим)');
       console.log('=== КОНЕЦ ФУНКЦИИ initDatabase ===');
@@ -129,7 +152,7 @@ function initDatabase() {
     try {
       console.log('Попытка подключения к Supabase с реальными данными...');
       console.log('SUPABASE_URL:', supabaseUrl);
-      console.log('SUPABASE_KEY (первые 10 символов):', supabaseKey ? supabaseKey.substring(0, 10) + '...' : 'NOT SET');
+      console.log('SUPABASE_KEY (первые 10 символов):', supabaseKey.substring(0, 10) + '...');
       supabase = createClient(supabaseUrl, supabaseKey);
       console.log('Подключение к Supabase установлено');
       
@@ -643,5 +666,6 @@ module.exports = {
   addWinner,
   getWinnersHistory,
   updateWinnerTelegram,
-  supabase
+  supabase,
+  mockSupabase // Экспортируем mockSupabase для использования в других модулях
 };

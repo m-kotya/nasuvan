@@ -1,7 +1,7 @@
 const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
-const { getGiveaways, createGiveaway, selectWinner, addWinner, supabase } = require('../database/supabaseClient');
+const { getGiveaways, createGiveaway, selectWinner, addWinner, supabase, mockSupabase } = require('../database/supabaseClient');
 const { joinChannel, leaveChannel, getActiveGiveaways, setActiveGiveaways } = require('../bot/twitchBot');
 
 // Хранение активных розыгрышей в памяти (в реальном приложении лучше использовать БД)
@@ -804,7 +804,16 @@ function initWebServer(app, io) {
       if (!supabase) {
         console.error('Supabase клиент не инициализирован');
         console.log('=== КОНЕЦ ОБРАБОТКИ /api/winners ===');
-        return res.status(500).json({ error: 'База данных не доступна', details: 'Supabase клиент не инициализирован' });
+        return res.status(500).json({ 
+          error: 'База данных не доступна', 
+          details: 'Supabase клиент не инициализирован. Проверьте переменные окружения SUPABASE_URL и SUPABASE_KEY.',
+          solution: 'Убедитесь, что переменные окружения SUPABASE_URL и SUPABASE_KEY установлены в настройках Railway.'
+        });
+      }
+      
+      // Проверяем, является ли клиент мок-клиентом
+      if (supabase === mockSupabase) {
+        console.warn('Используется мок-клиент Supabase. Данные будут тестовыми.');
       }
       
       // Получаем историю победителей из новой таблицы
