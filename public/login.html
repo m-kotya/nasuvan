@@ -6,68 +6,107 @@
     <title>Авторизация</title>
     <style>
         body {
-            flex: 1;
             margin: 0;
             padding: 0;
-            background: #0f0f1a;
-            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
         }
         
         .login-form {
-            background: #1a1a2e;
-            padding: 2rem;
-            border-radius: 8px;
-            width: 300px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(147, 102, 255, 0.2);
+        }
+        
+        .form-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .form-header h1 {
+            color: #e0e0e0;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .form-header p {
+            color: #a0a0c0;
+            font-size: 0.9rem;
         }
         
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
         
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
             color: #e0e0e0;
+            font-weight: 500;
         }
         
         .form-control {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.9rem;
             border: 1px solid #444;
-            border-radius: 4px;
-            background: #2d2d41;
+            border-radius: 6px;
+            background: rgba(45, 45, 65, 0.7);
             color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #9146ff;
+            box-shadow: 0 0 0 3px rgba(145, 70, 255, 0.2);
         }
         
         .btn {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.9rem;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             background: #9146ff;
             color: white;
             cursor: pointer;
-            margin-top: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
         }
         
         .btn:hover {
             background: #7d3ae0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(145, 70, 255, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
         }
         
         .divider {
             text-align: center;
             color: #888;
-            margin: 1.5rem 0;
+            margin: 2rem 0;
             position: relative;
+            font-size: 0.9rem;
         }
         
         .divider::before {
@@ -77,75 +116,121 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: #444;
+            background: linear-gradient(to right, transparent, #444, transparent);
             z-index: 1;
         }
         
         .divider span {
-            background: #1a1a2e;
+            background: rgba(26, 26, 46, 0.8);
             position: relative;
             z-index: 2;
             padding: 0 1rem;
         }
-                        
+        
+        .twitch-login {
+            background: #9146ff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+        
         .info-message {
             color: #64b5f6;
             background: rgba(100, 181, 246, 0.1);
-            padding: 0.75rem;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-            border: 1px solid #64b5f6;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(100, 181, 246, 0.2);
             text-align: center;
             font-size: 0.9rem;
+            line-height: 1.4;
         }
         
         .error-message {
             color: #ff6b6b;
             background: rgba(255, 107, 107, 0.1);
-            padding: 0.75rem;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-            border: 1px solid #ff6b6b;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 107, 107, 0.2);
             text-align: center;
         }
         
         .warning-message {
             color: #ffd166;
             background: rgba(255, 209, 102, 0.1);
-            padding: 0.75rem;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-            border: 1px solid #ffd166;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 209, 102, 0.2);
             text-align: center;
             font-size: 0.9rem;
+            line-height: 1.4;
         }
         
         .hidden {
             display: none;
         }
+        
+        .form-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #a0a0c0;
+            font-size: 0.85rem;
+        }
     </style>
 </head>
 <body>
-    <div class="login-form">
-        <div id="errorMessage" class="error-message hidden">
-            Неверное имя пользователя или пароль
-        </div>
+    <div class="login-container">
+        <div class="login-form">
+            <div class="form-header">
+                <h1>Авторизация</h1>
+                <p>Введите учетные данные для доступа</p>
+            </div>
+            
+            <div id="errorMessage" class="error-message hidden">
+                Неверное имя пользователя или пароль
+            </div>
+            
+            <div id="warningMessage" class="warning-message hidden">
+                Используются учетные данные по умолчанию<br>
+                Логин: admin, Пароль: password
+            </div>
+            
+            <div class="info-message">
+                После входа вы будете автоматически переадресованы на авторизацию Twitch
+            </div>
+            
+            <form action="/login" method="POST">
+                <div class="form-group">
+                    <label for="username">Логин</label>
+                    <input type="text" id="username" name="username" class="form-control" required>
+                </div>
                 
-        <form action="/login" method="POST">
-            <div class="form-group">
-                <label for="username">Логин</label>
-                <input type="text" id="username" name="username" class="form-control" required>
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input type="password" id="password" name="password" class="form-control" required>
+                </div>
+                
+                <button type="submit" class="btn">
+                    <i class="fas fa-sign-in-alt"></i> Войти в систему
+                </button>
+            </form>
+            
+            <div class="divider">
+                <span>или</span>
             </div>
             
-            <div class="form-group">
-                <label for="password">Пароль</label>
-                <input type="password" id="password" name="password" class="form-control" required>
-            </div>
+            <a href="/auth/twitch" class="btn twitch-login">
+                <i class="fab fa-twitch"></i> Авторизация через Twitch
+            </a>
             
-            <button type="submit" class="btn">
-                <i class="fas fa-sign-in-alt"></i> Авторизация
-            </button>
-        </form>     
+            <div class="form-footer">
+                Twitch Giveaway Bot v1.0
+            </div>
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
@@ -161,7 +246,6 @@
         }
         
         // Показываем предупреждение о дефолтных учетных данных
-        // В реальной реализации это будет определяться сервером
         if (!error) {
             // Показываем предупреждение только если нет ошибок
             warningMessage.classList.remove('hidden');
