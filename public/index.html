@@ -46,7 +46,7 @@
                         <div class="card-header">
                             <h2><i class="fas fa-key"></i> Кодовое слово</h2>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body mb-0">
                             <div class="keyword-section">
                                 <div class="form-group keyword-input">
                                     <input type="text" id="keywordInput" placeholder="Введите кодовое слово" class="form-control">
@@ -58,9 +58,6 @@
                                     <button id="resetBtn" class="btn btn-warning compact">
                                         <i class="fas fa-redo"></i> Перезапуск
                                     </button>
-                                    <button id="winnerBtn" class="btn btn-info compact" style="display: none;">
-                                        <i class="fas fa-trophy"></i> Выбрать победителя
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -69,6 +66,9 @@
                     <div class="card participants-card">
                         <div class="card-header">
                             <h2><i class="fas fa-users"></i> Участники <span id="participantsCount">(0)</span></h2>
+                            <button id="winnerBtn" class="btn btn-info compact" style="display: none; position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%);">
+                                <i class="fas fa-trophy"></i> Выбрать победителя
+                            </button>
                         </div>
                         <div class="card-body participants-body">
                             <div id="participantsList" class="participants-list">

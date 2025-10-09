@@ -265,9 +265,8 @@ function handleStart() {
             updateParticipantsList();
             showNotification(`Розыгрыш начат с кодовым словом "${keyword}"`, 'success');
             
-            // Активируем кнопку сброса и кнопку выбора победителя
+            // Активируем кнопку сброса
             resetBtn.disabled = false;
-            winnerBtn.style.display = 'block';
             
             // Дополнительная отладочная информация
             console.log('Состояние после начала розыгрыша:', { 
@@ -343,7 +342,6 @@ function handleReset() {
         
         // Активируем кнопку запуска
         startBtn.disabled = false;
-        winnerBtn.style.display = 'none';
         
         // Скрываем секцию победителя
         winnerSection.style.display = 'none';
@@ -364,7 +362,6 @@ function handleReset() {
         
         // Активируем кнопку запуска
         startBtn.disabled = false;
-        winnerBtn.style.display = 'none';
         
         // Скрываем секцию победителя
         winnerSection.style.display = 'none';
@@ -706,6 +703,16 @@ function updateParticipantsList() {
     
     // Обновляем счетчик
     participantsCount.textContent = `(${participants.length})`;
+    
+    // Управление видимостью кнопки "Выбрать победителя"
+    const winnerBtn = document.getElementById('winnerBtn');
+    if (winnerBtn) {
+        if (participants.length > 0) {
+            winnerBtn.style.display = 'block';
+        } else {
+            winnerBtn.style.display = 'none';
+        }
+    }
     
     // Если нет участников, показываем пустое состояние
     if (participants.length === 0) {
