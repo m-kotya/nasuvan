@@ -12,18 +12,7 @@
     "test:supabase": "node test_supabase.js",
     "test:twitch": "node test_twitch_bot.js",
     "test:web": "node test_web_interface.js",
-    "test:winners": "node test_winners_api.js",
-    "test:add-winner": "node add_test_winner.js",
-    "test:get-winners": "node test_get_winners.js",
-    "test:comprehensive": "node comprehensive_test.js",
-    "create-winners-table": "node create_winners_table.js",
-    "check-env": "node -e \"require('dotenv').config(); console.log('ADMIN_USERNAME:', process.env.ADMIN_USERNAME || 'admin (default)'); console.log('ADMIN_PASSWORD:', process.env.ADMIN_PASSWORD ? 'SET' : 'password (default)');\"",
-    "check-supabase": "node check_supabase.js",
-    "check-winners-table": "node check_winners_table.js",
-    "simple-check-winners": "node simple_check_winners.js",
-    "check-winners-api-http": "node check_winners_api_http.js",
-    "check-railway-env": "node check_railway_env.js",
-    "diagnose-supabase": "node diagnose_supabase.js"
+    "check-env": "node -e \"require('dotenv').config(); console.log('ADMIN_USERNAME:', process.env.ADMIN_USERNAME || 'admin (default)'); console.log('ADMIN_PASSWORD:', process.env.ADMIN_PASSWORD ? 'SET' : 'password (default)');\""
   },
   "keywords": [
     "twitch",
