@@ -650,8 +650,18 @@ async function getWinnersHistory(channel, limit = 10) {
     // Проверяем, что data определен
     const result = data || [];
     console.log('Получена история победителей:', result.length);
+    
+    // Удаляем дубликаты, если они есть
+    const uniqueResult = result.filter((winner, index, self) => 
+        index === self.findIndex(w => w.username === winner.username && w.win_time === winner.win_time)
+    );
+    
+    if (uniqueResult.length !== result.length) {
+        console.log('Удалены дубликаты. Было:', result.length, 'Стало:', uniqueResult.length);
+    }
+    
     console.log('=== КОНЕЦ ФУНКЦИИ getWinnersHistory ===');
-    return result;
+    return uniqueResult;
   } catch (error) {
     console.error('Исключение при получении истории победителей:', error);
     console.error('Stack trace:', error.stack);
