@@ -383,8 +383,7 @@ a:hover {
 }
 
 .button-group {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    flex: 1;
     gap: 1rem;
     width: 100%;
 }
