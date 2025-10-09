@@ -779,23 +779,6 @@ a:hover {
     border-left: 3px solid #ff9800;
 }
 
-.winner-chat-time {
-    color: #888;
-    font-size: 0.8rem;
-    font-family: 'Courier New', monospace;
-}
-
-.winner-chat-user {
-    font-weight: 600;
-    color: #9146ff;
-    white-space: nowrap;
-}
-
-.winner-chat-text {
-    flex: 1;
-    word-break: break-word;
-}
-
 .winner-actions {
     display: flex;
     gap: 1.5rem;
@@ -858,7 +841,6 @@ footer {
     
     .card-body {
         padding: 1.25rem;
-        flex: 1;
     }
     
     .button-group {
