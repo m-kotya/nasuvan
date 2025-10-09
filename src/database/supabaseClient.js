@@ -1,27 +1,47 @@
 const { createClient } = require('@supabase/supabase-js');
 
-// Инициализация Supabase клиента
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+// Принудительная инициализация Supabase клиента с подробным логированием
+console.log('=== ПОДРОБНАЯ ИНИЦИАЛИЗАЦИЯ SUPABASE КЛИЕНТА ===');
+console.log('Шаг 1: Получение переменных окружения');
+
+// Получаем переменные несколькими способами для проверки
+const supabaseUrl = process.env.SUPABASE_URL || process.env['SUPABASE_URL'];
+const supabaseKey = process.env.SUPABASE_KEY || process.env['SUPABASE_KEY'];
+
+console.log('Шаг 2: Проверка полученных значений');
+console.log('supabaseUrl:', supabaseUrl ? `SET (${supabaseUrl.substring(0, 30)}...)` : 'NOT SET');
+console.log('supabaseKey:', supabaseKey ? `SET (length: ${supabaseKey.length})` : 'NOT SET');
+
+// Проверяем Railway переменные
+const isRailway = process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_ENVIRONMENT_NAME;
+console.log('Шаг 3: Проверка Railway окружения');
+console.log('isRailway:', isRailway ? 'YES' : 'NO');
+console.log('RAILWAY_PROJECT_ID:', process.env.RAILWAY_PROJECT_ID || 'NOT SET');
+
+console.log('Шаг 4: Попытка создания клиента');
 let supabase;
 
-console.log('=== SUPABASE CLIENT INITIALIZATION DEBUG ===');
-console.log('Process environment SUPABASE_URL:', process.env.SUPABASE_URL);
-console.log('Process environment SUPABASE_KEY:', process.env.SUPABASE_KEY ? `SET (length: ${process.env.SUPABASE_KEY.length})` : 'NOT SET');
-console.log('Direct variable SUPABASE_URL:', supabaseUrl);
-console.log('Direct variable SUPABASE_KEY:', supabaseKey ? `SET (length: ${supabaseKey.length})` : 'NOT SET');
-console.log('SUPABASE_URL type:', typeof supabaseUrl);
-console.log('SUPABASE_KEY type:', typeof supabaseKey);
-
-// Проверка Railway переменных
-const isRailway = process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_ENVIRONMENT_NAME;
-console.log('Running on Railway:', isRailway ? 'YES' : 'NO');
-
-if (isRailway) {
-  console.log('Railway Environment:');
-  console.log('  RAILWAY_PROJECT_ID:', process.env.RAILWAY_PROJECT_ID);
-  console.log('  RAILWAY_ENVIRONMENT_NAME:', process.env.RAILWAY_ENVIRONMENT_NAME);
+// Принудительно пытаемся создать клиента, даже если переменные не установлены
+if (supabaseUrl && supabaseKey && supabaseUrl.startsWith('http') && supabaseKey.length > 20) {
+  console.log('Шаг 5: Создание реального Supabase клиента');
+  console.log('URL валиден:', supabaseUrl.startsWith('http'));
+  console.log('Ключ имеет подходящую длину:', supabaseKey.length > 20);
+  
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('Шаг 6: Клиент успешно создан');
+  } catch (error) {
+    console.error('Ошибка при создании клиента:', error.message);
+    supabase = null;
+  }
+} else {
+  console.log('Шаг 5: Условия для реального клиента не выполнены');
+  console.log('supabaseUrl валиден:', !!(supabaseUrl && supabaseUrl.startsWith('http')));
+  console.log('supabaseKey валиден:', !!(supabaseKey && supabaseKey.length > 20));
+  supabase = null;
 }
+
+console.log('Шаг 7: Финальное состояние клиента:', supabase ? 'СОЗДАН' : 'НЕ СОЗДАН');
 
 // Фиктивный клиент для тестирования с возможностью сохранения данных
 let mockData = {
@@ -116,6 +136,13 @@ const mockSupabase = {
 function initDatabase() {
   console.log('=== НАЧАЛО ФУНКЦИИ initDatabase ===');
   console.log('Инициализация базы данных...');
+  
+  // Если клиент уже создан, возвращаем его
+  if (supabase) {
+    console.log('Клиент уже инициализирован');
+    console.log('=== КОНЕЦ ФУНКЦИИ initDatabase ===');
+    return supabase;
+  }
   
   // Добавим подробное логирование всех переменных окружения
   console.log('Все переменные окружения:');
