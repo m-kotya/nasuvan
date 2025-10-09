@@ -1,7 +1,7 @@
 const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
-const { getGiveaways, createGiveaway, selectWinner, addWinner, supabase, mockSupabase } = require('../database/supabaseClient');
+const { getGiveaways, createGiveaway, selectWinner, addWinner, getWinnersHistory, supabase, mockSupabase } = require('../database/supabaseClient');
 const { joinChannel, leaveChannel, getActiveGiveaways, setActiveGiveaways } = require('../bot/twitchBot');
 
 // Хранение активных розыгрышей в памяти (в реальном приложении лучше использовать БД)
