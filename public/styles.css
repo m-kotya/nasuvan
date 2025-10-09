@@ -284,13 +284,13 @@ a:hover {
 
 /* Секция кодового слова */
 .card-body.mb-0 {
-    padding: 0;
+    padding: 1.5rem;
 }
 
 .keyword-section {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 1.5rem;
 }
 
 .form-group.keyword-input {
