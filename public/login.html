@@ -42,11 +42,6 @@
             font-weight: 600;
         }
         
-        .form-header p {
-            color: #a0a0c0;
-            font-size: 0.9rem;
-        }
-        
         .form-group {
             margin-bottom: 1.5rem;
         }
@@ -101,53 +96,6 @@
             transform: translateY(0);
         }
         
-        .divider {
-            text-align: center;
-            color: #888;
-            margin: 2rem 0;
-            position: relative;
-            font-size: 0.9rem;
-        }
-        
-        .divider::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(to right, transparent, #444, transparent);
-            z-index: 1;
-        }
-        
-        .divider span {
-            background: rgba(26, 26, 46, 0.8);
-            position: relative;
-            z-index: 2;
-            padding: 0 1rem;
-        }
-        
-        .twitch-login {
-            background: #9146ff;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-        }
-        
-        .info-message {
-            color: #64b5f6;
-            background: rgba(100, 181, 246, 0.1);
-            padding: 1rem;
-            border-radius: 6px;
-            margin-bottom: 1.5rem;
-            border: 1px solid rgba(100, 181, 246, 0.2);
-            text-align: center;
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-        
         .error-message {
             color: #ff6b6b;
             background: rgba(255, 107, 107, 0.1);
@@ -158,27 +106,8 @@
             text-align: center;
         }
         
-        .warning-message {
-            color: #ffd166;
-            background: rgba(255, 209, 102, 0.1);
-            padding: 1rem;
-            border-radius: 6px;
-            margin-bottom: 1.5rem;
-            border: 1px solid rgba(255, 209, 102, 0.2);
-            text-align: center;
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-        
         .hidden {
             display: none;
-        }
-        
-        .form-footer {
-            text-align: center;
-            margin-top: 1.5rem;
-            color: #a0a0c0;
-            font-size: 0.85rem;
         }
     </style>
 </head>
@@ -187,20 +116,10 @@
         <div class="login-form">
             <div class="form-header">
                 <h1>Авторизация</h1>
-                <p>Введите учетные данные для доступа</p>
             </div>
             
             <div id="errorMessage" class="error-message hidden">
                 Неверное имя пользователя или пароль
-            </div>
-            
-            <div id="warningMessage" class="warning-message hidden">
-                Используются учетные данные по умолчанию<br>
-                Логин: admin, Пароль: password
-            </div>
-            
-            <div class="info-message">
-                После входа вы будете автоматически переадресованы на авторизацию Twitch
             </div>
             
             <form action="/login" method="POST">
@@ -215,21 +134,9 @@
                 </div>
                 
                 <button type="submit" class="btn">
-                    <i class="fas fa-sign-in-alt"></i> Войти в систему
+                    <i class="fas fa-sign-in-alt"></i> Войти
                 </button>
             </form>
-            
-            <div class="divider">
-                <span>или</span>
-            </div>
-            
-            <a href="/auth/twitch" class="btn twitch-login">
-                <i class="fab fa-twitch"></i> Авторизация через Twitch
-            </a>
-            
-            <div class="form-footer">
-                Twitch Giveaway Bot v1.0
-            </div>
         </div>
     </div>
 
@@ -239,16 +146,9 @@
         const urlParams = new URLSearchParams(window.location.search);
         const error = urlParams.get('error');
         const errorMessage = document.getElementById('errorMessage');
-        const warningMessage = document.getElementById('warningMessage');
         
         if (error === 'invalid') {
             errorMessage.classList.remove('hidden');
-        }
-        
-        // Показываем предупреждение о дефолтных учетных данных
-        if (!error) {
-            // Показываем предупреждение только если нет ошибок
-            warningMessage.classList.remove('hidden');
         }
     </script>
 </body>
