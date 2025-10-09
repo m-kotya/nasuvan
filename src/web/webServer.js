@@ -62,13 +62,23 @@ const requireAuth = async (req, res, next) => {
     return next();
   }
   
+  // Для API запросов возвращаем JSON ошибку вместо перенаправления
+  const isAPIRequest = req.path.startsWith('/api/');
+  
   const sessionId = req.cookies?.sessionId;
   console.log('Session ID из cookies:', sessionId);
   
   if (!sessionId || !userSessions.has(sessionId)) {
-    console.log('Сессия не найдена или отсутствует, перенаправление на /login');
-    console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
-    return res.redirect('/login');
+    console.log('Сессия не найдена или отсутствует');
+    if (isAPIRequest) {
+      console.log('API запрос без аутентификации, возвращаем 401');
+      console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
+      return res.status(401).json({ error: 'Требуется аутентификация' });
+    } else {
+      console.log('Перенаправление на /login');
+      console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
+      return res.redirect('/login');
+    }
   }
   
   const session = userSessions.get(sessionId);
@@ -92,8 +102,15 @@ const requireAuth = async (req, res, next) => {
       console.error('Error refreshing token:', error);
       // Удаляем сессию при ошибке обновления токена
       userSessions.delete(sessionId);
-      console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
-      return res.redirect('/login');
+      if (isAPIRequest) {
+        console.log('API запрос с истекшим токеном, возвращаем 401');
+        console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
+        return res.status(401).json({ error: 'Токен истек, требуется повторная аутентификация' });
+      } else {
+        console.log('Перенаправление на /login из-за истекшего токена');
+        console.log('=== КОНЕЦ MIDDLEWARE requireAuth ===');
+        return res.redirect('/login');
+      }
     }
   }
   
@@ -627,6 +644,14 @@ function initWebServer(app, io) {
             console.log('Сохранение победителя в таблице winners');
             const winnerRecord = await addWinner(winnerResult.winner, channelName, prize);
             
+            // Проверяем, была ли ошибка при добавлении победителя
+            if (winnerRecord && winnerRecord.error) {
+              console.error('Ошибка при сохранении победителя в базе данных:', winnerRecord.error);
+              console.error('Детали ошибки:', winnerRecord.details || winnerRecord.exception);
+            } else {
+              console.log('Победитель успешно сохранен в базе данных:', winnerRecord);
+            }
+            
             // Сохраняем данные победителя для ответа
             if (!winnerData) {
               winnerData = { 
@@ -728,6 +753,14 @@ function initWebServer(app, io) {
       console.log('Сохранение победителя в таблице winners');
       const winnerData = await addWinner(winner, channelName, prize);
       
+      // Проверяем, была ли ошибка при добавлении победителя
+      if (winnerData && winnerData.error) {
+        console.error('Ошибка при сохранении победителя в базе данных:', winnerData.error);
+        console.error('Детали ошибки:', winnerData.details || winnerData.exception);
+      } else {
+        console.log('Победитель успешно сохранен в базе данных:', winnerData);
+      }
+      
       // Отправляем уведомление через WebSocket
       console.log('Отправка уведомления о выборе победителя через WebSocket');
       io.emit('winnerSelected', {
@@ -767,6 +800,13 @@ function initWebServer(app, io) {
       const channelName = req.user.username;
       console.log('Запрос победителей для канала:', channelName);
       
+      // Проверяем, что у нас есть клиент Supabase
+      if (!supabase) {
+        console.error('Supabase клиент не инициализирован');
+        console.log('=== КОНЕЦ ОБРАБОТКИ /api/winners ===');
+        return res.status(500).json({ error: 'База данных не доступна' });
+      }
+      
       // Получаем историю победителей из новой таблицы
       console.log('Получение истории победителей');
       const winners = await getWinnersHistory(channelName, 50);
@@ -776,8 +816,9 @@ function initWebServer(app, io) {
       return res.json(winners);
     } catch (error) {
       console.error('Ошибка при получении истории победителей:', error);
+      console.error('Stack trace:', error.stack);
       console.log('=== КОНЕЦ ОБРАБОТКИ /api/winners ===');
-      res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+      res.status(500).json({ error: 'Внутренняя ошибка сервера: ' + error.message });
     }
   });
 

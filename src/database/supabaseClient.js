@@ -19,26 +19,94 @@ if (isRailway) {
   console.log('  RAILWAY_ENVIRONMENT_NAME:', process.env.RAILWAY_ENVIRONMENT_NAME);
 }
 
-// Фиктивный клиент для тестирования
+// Фиктивный клиент для тестирования с возможностью сохранения данных
+let mockData = {
+  winners: []
+};
+
 const mockSupabase = {
-  from: (table) => ({
-    insert: (data) => {
-      console.log(`Mock insert into ${table}:`, data);
-      return {
-        select: () => Promise.resolve({ data: [{ id: 1, ...data[0] }], error: null })
-      };
-    },
-    update: (data) => ({
-      eq: (field, value) => ({
-        select: () => Promise.resolve({ data: [{ id: 1, [field]: value, ...data }], error: null })
-      })
-    }),
-    select: (fields) => ({
-      eq: (field, value) => ({
-        order: (field, options) => Promise.resolve({ data: [], error: null })
-      })
-    })
-  })
+  from: (table) => {
+    const mockTable = {
+      insert: (data) => {
+        console.log(`Mock insert into ${table}:`, data);
+        
+        // Сохраняем данные в зависимости от таблицы
+        if (table === 'winners' && Array.isArray(data)) {
+          // Добавляем данные в mockData
+          data.forEach(item => {
+            mockData.winners.push({
+              id: mockData.winners.length + 1,
+              ...item
+            });
+          });
+        }
+        
+        return {
+          select: () => Promise.resolve({ data: data.map((item, index) => ({ id: mockData.winners.length - data.length + index + 1, ...item })), error: null })
+        };
+      },
+      update: (data) => ({
+        eq: (field, value) => ({
+          select: () => Promise.resolve({ data: [{ id: 1, [field]: value, ...data }], error: null })
+        })
+      }),
+      select: (fields) => {
+        // Для select создаем цепочку фильтров
+        let filteredData = [];
+        
+        // Определяем начальные данные в зависимости от таблицы
+        if (table === 'winners') {
+          filteredData = [...mockData.winners];
+        }
+        
+        const queryChain = {
+          eq: (field, value) => {
+            // Фильтруем данные по полю
+            filteredData = filteredData.filter(item => item[field] === value);
+            return queryChain;
+          },
+          order: (field, options) => {
+            // Сортируем данные
+            if (options && options.ascending === false) {
+              filteredData.sort((a, b) => {
+                if (a[field] < b[field]) return 1;
+                if (a[field] > b[field]) return -1;
+                return 0;
+              });
+            } else {
+              filteredData.sort((a, b) => {
+                if (a[field] < b[field]) return -1;
+                if (a[field] > b[field]) return 1;
+                return 0;
+              });
+            }
+            return queryChain;
+          },
+          limit: (count) => {
+            // Ограничиваем количество результатов
+            filteredData = filteredData.slice(0, count);
+            return queryChain;
+          },
+          single: () => {
+            // Возвращаем один элемент или null с ошибкой
+            if (filteredData.length > 0) {
+              return Promise.resolve({ data: filteredData[0], error: null });
+            } else {
+              return Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'Row not found' } });
+            }
+          }
+        };
+        
+        // Добавляем метод для выполнения запроса
+        queryChain.then = (callback) => {
+          return Promise.resolve({ data: filteredData, error: null }).then(callback);
+        };
+        
+        return queryChain;
+      }
+    };
+    return mockTable;
+  }
 };
 
 function initDatabase() {
@@ -47,6 +115,7 @@ function initDatabase() {
   
   // Если мы на Railway, то переменные должны быть установлены
   if (isRailway) {
+    console.log('Запущено на Railway');
     if (!supabaseUrl || !supabaseKey) {
       console.error('ОШИБКА: На Railway должны быть установлены переменные SUPABASE_URL и SUPABASE_KEY');
       console.error('Пожалуйста, установите их в настройках Railway');
@@ -60,12 +129,33 @@ function initDatabase() {
     try {
       console.log('Попытка подключения к Supabase с реальными данными...');
       console.log('SUPABASE_URL:', supabaseUrl);
+      console.log('SUPABASE_KEY (первые 10 символов):', supabaseKey ? supabaseKey.substring(0, 10) + '...' : 'NOT SET');
       supabase = createClient(supabaseUrl, supabaseKey);
       console.log('Подключение к Supabase установлено');
+      
+      // Проверяем подключение, выполнив простой запрос
+      console.log('Проверка подключения к базе данных...');
+      supabase
+        .from('winners')
+        .select('count')
+        .limit(1)
+        .then(result => {
+          if (result.error) {
+            console.warn('Предупреждение: Ошибка при проверке подключения к таблице winners:', result.error.message);
+            // Это может быть нормально, если таблица еще не создана
+          } else {
+            console.log('Проверка подключения успешна, таблица winners доступна');
+          }
+        })
+        .catch(error => {
+          console.warn('Предупреждение: Исключение при проверке подключения:', error.message);
+        });
+      
       console.log('=== КОНЕЦ ФУНКЦИИ initDatabase ===');
       return supabase;
     } catch (error) {
       console.error('Ошибка при подключении к Supabase:', error);
+      console.error('Stack trace:', error.stack);
       console.warn('Используется фиктивный клиент для тестирования.');
       supabase = mockSupabase;
       console.log('=== КОНЕЦ ФУНКЦИИ initDatabase ===');
@@ -77,8 +167,17 @@ function initDatabase() {
   const isRealUrl = supabaseUrl && !supabaseUrl.includes('your-project.supabase.co');
   const isRealKey = supabaseKey && !supabaseKey.includes('your_supabase_key_here');
   
+  console.log('Локальная разработка:');
+  console.log('  SUPABASE_URL установлен:', !!supabaseUrl);
+  console.log('  SUPABASE_KEY установлен:', !!supabaseKey);
+  console.log('  Реальный URL:', isRealUrl);
+  console.log('  Реальный ключ:', isRealKey);
+  
   if (!supabaseUrl || !supabaseKey || !isRealUrl || !isRealKey) {
     console.warn('Не найдены настоящие SUPABASE_URL или SUPABASE_KEY в переменных окружения. Используется фиктивный клиент для тестирования.');
+    console.log('Текущие значения:');
+    console.log('  SUPABASE_URL:', supabaseUrl || 'NOT SET');
+    console.log('  SUPABASE_KEY:', supabaseKey ? 'SET (длина: ' + supabaseKey.length + ')' : 'NOT SET');
     supabase = mockSupabase;
     console.log('Подключение к Supabase установлено (тестовый режим)');
     console.log('=== КОНЕЦ ФУНКЦИИ initDatabase ===');
@@ -86,12 +185,35 @@ function initDatabase() {
   }
 
   try {
+    console.log('Попытка подключения к Supabase с реальными данными (локальная разработка)...');
+    console.log('SUPABASE_URL:', supabaseUrl);
+    console.log('SUPABASE_KEY (первые 10 символов):', supabaseKey.substring(0, 10) + '...');
     supabase = createClient(supabaseUrl, supabaseKey);
     console.log('Подключение к Supabase установлено');
+    
+    // Проверяем подключение, выполнив простой запрос
+    console.log('Проверка подключения к базе данных...');
+    supabase
+      .from('winners')
+      .select('count')
+      .limit(1)
+      .then(result => {
+        if (result.error) {
+          console.warn('Предупреждение: Ошибка при проверке подключения к таблице winners:', result.error.message);
+          // Это может быть нормально, если таблица еще не создана
+        } else {
+          console.log('Проверка подключения успешна, таблица winners доступна');
+        }
+      })
+      .catch(error => {
+        console.warn('Предупреждение: Исключение при проверке подключения:', error.message);
+      });
+    
     console.log('=== КОНЕЦ ФУНКЦИИ initDatabase ===');
     return supabase;
   } catch (error) {
     console.error('Ошибка при подключении к Supabase:', error);
+    console.error('Stack trace:', error.stack);
     console.warn('Используется фиктивный клиент для тестирования.');
     supabase = mockSupabase;
     console.log('=== КОНЕЦ ФУНКЦИИ initDatabase ===');
@@ -382,29 +504,45 @@ async function addWinner(username, channel, prize, telegram = null) {
       totalWins = existingWinner.total_wins + 1;
       console.log('Найдена существующая запись, увеличиваем счетчик побед:', totalWins);
     } else {
+      if (fetchError) {
+        console.log('Ошибка при поиске существующей записи (это нормально, если запись не найдена):', fetchError.message);
+        // Проверяем, является ли ошибка "не найдено" - это нормально
+        if (fetchError.code !== 'PGRST116') { // Код ошибки "Row not found"
+          console.error('Неожиданная ошибка при поиске существующей записи:', fetchError);
+        }
+      }
       console.log('Существующая запись не найдена, начинаем с 1 победы');
     }
+    
+    // Подготавливаем данные для вставки
+    const winnerData = {
+      username,
+      channel,
+      prize,
+      win_time: new Date(),
+      total_wins: totalWins,
+      created_at: new Date()
+    };
+    
+    // Добавляем Telegram, если он указан
+    if (telegram !== null) {
+      winnerData.telegram = telegram;
+    }
+    
+    console.log('Подготовленные данные для вставки:', winnerData);
     
     // Добавляем победителя в таблицу
     console.log('Добавление победителя в таблицу winners');
     const { data, error } = await supabase
       .from('winners')
-      .insert([
-        {
-          username,
-          channel,
-          prize,
-          telegram,
-          win_time: new Date(),
-          total_wins: totalWins
-        }
-      ])
+      .insert([winnerData])
       .select();
 
     if (error) {
       console.error('Ошибка при добавлении победителя:', error);
+      console.error('Детали ошибки:', JSON.stringify(error, null, 2));
       console.log('=== КОНЕЦ ФУНКЦИИ addWinner ===');
-      return null;
+      return { error: error.message, details: error };
     }
     
     console.log('Победитель успешно добавлен:', data[0]);
@@ -412,8 +550,9 @@ async function addWinner(username, channel, prize, telegram = null) {
     return data[0];
   } catch (error) {
     console.error('Исключение при добавлении победителя:', error);
+    console.error('Stack trace:', error.stack);
     console.log('=== КОНЕЦ ФУНКЦИИ addWinner ===');
-    return null;
+    return { error: error.message, exception: error };
   }
 }
 
@@ -439,15 +578,19 @@ async function getWinnersHistory(channel, limit = 10) {
 
     if (error) {
       console.error('Ошибка при получении истории победителей:', error);
+      console.error('Детали ошибки:', JSON.stringify(error, null, 2));
       console.log('=== КОНЕЦ ФУНКЦИИ getWinnersHistory ===');
       return [];
     }
     
-    console.log('Получена история победителей:', data.length);
+    // Проверяем, что data определен
+    const result = data || [];
+    console.log('Получена история победителей:', result.length);
     console.log('=== КОНЕЦ ФУНКЦИИ getWinnersHistory ===');
-    return data;
+    return result;
   } catch (error) {
     console.error('Исключение при получении истории победителей:', error);
+    console.error('Stack trace:', error.stack);
     console.log('=== КОНЕЦ ФУНКЦИИ getWinnersHistory ===');
     return [];
   }

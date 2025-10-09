@@ -55,23 +55,53 @@
         async function loadWinners() {
             try {
                 const response = await fetch('/api/winners');
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('Winners data received:', data);
                     updateWinnersList(data);
                 } else {
-                    document.getElementById('winnersList').innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-exclamation-circle"></i>
-                            <p>Ошибка загрузки победителей</p>
-                        </div>
-                    `;
+                    // Обрабатываем различные типы ошибок
+                    if (response.status === 401) {
+                        // Ошибка аутентификации
+                        document.getElementById('winnersList').innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <p>Требуется авторизация для просмотра победителей</p>
+                                <p><a href="/login">Перейти на страницу входа</a></p>
+                            </div>
+                        `;
+                    } else if (response.status === 500) {
+                        // Внутренняя ошибка сервера
+                        document.getElementById('winnersList').innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <p>Внутренняя ошибка сервера</p>
+                                <p>Пожалуйста, попробуйте позже</p>
+                            </div>
+                        `;
+                    } else {
+                        // Другие ошибки
+                        const errorText = await response.text();
+                        console.error('Error response from server:', response.status, errorText);
+                        document.getElementById('winnersList').innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <p>Ошибка загрузки победителей: ${response.status} ${response.statusText}</p>
+                                <p>Пожалуйста, попробуйте обновить страницу</p>
+                            </div>
+                        `;
+                    }
                 }
             } catch (error) {
-                console.error('Ошибка при загрузке победителей:', error);
+                console.error('Network error when loading winners:', error);
                 document.getElementById('winnersList').innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-exclamation-circle"></i>
-                        <p>Ошибка загрузки победителей</p>
+                        <p>Ошибка загрузки победителей: ${error.message}</p>
+                        <p>Проверьте подключение к интернету</p>
                     </div>
                 `;
             }
