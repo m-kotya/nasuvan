@@ -24,6 +24,7 @@ const io = socketIo(server);
 
 // Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Добавляем middleware для обработки данных формы
 app.use(cookieParser());
 
 // Health check endpoint для Railway
