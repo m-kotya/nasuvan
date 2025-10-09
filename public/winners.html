@@ -105,25 +105,12 @@
                 const minutes = date.getMinutes().toString().padStart(2, '0');
                 const timeString = `${hours}:${minutes}`;
                 
-                // Получаем приз или используем значение по умолчанию
-                const prize = winnerData.prize || 'Участие в розыгрыше';
-                
-                // Получаем Telegram или показываем "Не указан"
-                const telegram = winnerData.telegram || 'Не указан';
-                
                 html += `
                     <div class="winner-item">
                         <div class="winner-header">
                             <span class="winner-name"><i class="fas fa-trophy winner-trophy"></i> ${winnerData.username}</span>
-                            <span class="winner-total-wins">Побед: ${winnerData.total_wins}</span>
                         </div>
                         <div class="winner-details">
-                            <div class="winner-info">
-                                <span class="winner-prize"><i class="fas fa-gift"></i> ${prize}</span>
-                            </div>
-                            <div class="winner-info">
-                                <span class="winner-telegram"><i class="fab fa-telegram"></i> ${telegram}</span>
-                            </div>
                             <div class="winner-info">
                                 <span class="winner-time"><i class="far fa-clock"></i> ${dateString} ${timeString}</span>
                             </div>
