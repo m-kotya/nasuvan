@@ -64,6 +64,8 @@
                     updateWinnersList(data);
                 } else {
                     // Обрабатываем различные типы ошибок
+                    const errorData = await response.json().catch(() => ({}));
+                    
                     if (response.status === 401) {
                         // Ошибка аутентификации
                         document.getElementById('winnersList').innerHTML = `
@@ -79,17 +81,18 @@
                             <div class="empty-state">
                                 <i class="fas fa-exclamation-circle"></i>
                                 <p>Внутренняя ошибка сервера</p>
+                                <p>${errorData.details || 'Произошла ошибка при загрузке данных'}</p>
                                 <p>Пожалуйста, попробуйте позже</p>
                             </div>
                         `;
                     } else {
                         // Другие ошибки
-                        const errorText = await response.text();
-                        console.error('Error response from server:', response.status, errorText);
+                        console.error('Error response from server:', response.status, errorData);
                         document.getElementById('winnersList').innerHTML = `
                             <div class="empty-state">
                                 <i class="fas fa-exclamation-circle"></i>
                                 <p>Ошибка загрузки победителей: ${response.status} ${response.statusText}</p>
+                                <p>${errorData.error || 'Произошла ошибка при загрузке данных'}</p>
                                 <p>Пожалуйста, попробуйте обновить страницу</p>
                             </div>
                         `;

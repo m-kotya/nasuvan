@@ -565,7 +565,7 @@ async function getWinnersHistory(channel, limit = 10) {
   if (!supabase) {
     console.error('Supabase клиент не инициализирован');
     console.log('=== КОНЕЦ ФУНКЦИИ getWinnersHistory ===');
-    return [];
+    throw new Error('Supabase клиент не инициализирован');
   }
   
   try {
@@ -580,7 +580,7 @@ async function getWinnersHistory(channel, limit = 10) {
       console.error('Ошибка при получении истории победителей:', error);
       console.error('Детали ошибки:', JSON.stringify(error, null, 2));
       console.log('=== КОНЕЦ ФУНКЦИИ getWinnersHistory ===');
-      return [];
+      throw new Error(`Ошибка базы данных: ${error.message}`);
     }
     
     // Проверяем, что data определен
@@ -592,7 +592,7 @@ async function getWinnersHistory(channel, limit = 10) {
     console.error('Исключение при получении истории победителей:', error);
     console.error('Stack trace:', error.stack);
     console.log('=== КОНЕЦ ФУНКЦИИ getWinnersHistory ===');
-    return [];
+    throw new Error(`Исключение при получении истории победителей: ${error.message}`);
   }
 }
 

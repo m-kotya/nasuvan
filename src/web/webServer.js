@@ -804,7 +804,7 @@ function initWebServer(app, io) {
       if (!supabase) {
         console.error('Supabase клиент не инициализирован');
         console.log('=== КОНЕЦ ОБРАБОТКИ /api/winners ===');
-        return res.status(500).json({ error: 'База данных не доступна' });
+        return res.status(500).json({ error: 'База данных не доступна', details: 'Supabase клиент не инициализирован' });
       }
       
       // Получаем историю победителей из новой таблицы
@@ -818,7 +818,12 @@ function initWebServer(app, io) {
       console.error('Ошибка при получении истории победителей:', error);
       console.error('Stack trace:', error.stack);
       console.log('=== КОНЕЦ ОБРАБОТКИ /api/winners ===');
-      res.status(500).json({ error: 'Внутренняя ошибка сервера: ' + error.message });
+      // Возвращаем более подробную информацию об ошибке
+      return res.status(500).json({ 
+        error: 'Внутренняя ошибка сервера', 
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
     }
   });
 
