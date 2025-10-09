@@ -282,11 +282,41 @@ a:hover {
     height: 100%;
 }
 
+/* Секция кодового слова */
+.card-body.mb-0 {
+    padding: 1.5rem;
+}
+
+.keyword-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group.keyword-input {
+    margin-bottom: 0;
+}
+
+.button-group.keyword-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    width: 100%;
+    margin-top: 0;
+}
+
+/* Компактные кнопки */
+.btn.compact {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+}
+
 /* Формы */
 .form-group {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    margin-bottom: 1.5rem;
 }
 
 .form-control {
@@ -298,6 +328,7 @@ a:hover {
     color: #e0e0e0;
     font-size: 1rem;
     transition: all 0.3s ease;
+    box-sizing: border-box;
 }
 
 .form-control:focus {
@@ -312,9 +343,9 @@ a:hover {
 
 .button-group {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
-    margin-top: auto;
+    width: 100%;
 }
 
 /* Списки */
