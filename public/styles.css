@@ -565,14 +565,10 @@ a:hover {
     min-height: 400px;
     max-height: 600px;
     
-    /* Добавляем фон для чата */
-    background-image: 
-        url('/nasuvan.png'),
-        radial-gradient(circle at 10% 20%, rgba(145, 70, 255, 0.1) 0%, transparent 20%),
-        radial-gradient(circle at 90% 80%, rgba(145, 70, 255, 0.1) 0%, transparent 20%),
-        radial-gradient(circle at 50% 50%, rgba(145, 70, 255, 0.05) 0%, transparent 30%);
-    background-size: cover, 200px 200px, 150px 150px, 300px 300px;
-    background-repeat: no-repeat, repeat, repeat, repeat;
+    /* Добавляем фон для чата - только изображение */
+    background-image: url('/nasuvan.png');
+    background-size: cover;
+    background-repeat: no-repeat;
     background-position: center center;
     
     /* Скрытие скроллбара для разных браузеров */
@@ -685,6 +681,29 @@ a:hover {
 }
 
 /* Секция победителя */
+
+/* Фиксированный размер чата в модальном окне с невидимым скроллбаром */
+.winner-chat-container {
+    flex: 1;
+    min-height: 200px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: rgba(45, 45, 65, 0.6);
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    
+    /* Убираем фон для чата в модальном окне */
+    background-image: none;
+    
+    /* Скрытие скроллбара для разных браузеров */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE и Edge */
+}
+
+/* Фон всего модального окна победителя */
 #winnerSection {
     position: fixed;
     top: 50%;
@@ -701,6 +720,12 @@ a:hover {
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     animation: modalAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    
+    /* Добавляем фоновое изображение для всего модального окна */
+    background-image: url('/nasuvan.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
 }
 
 @keyframes modalAppear {
@@ -765,38 +790,6 @@ a:hover {
 .winner-message p {
     margin: 0;
     color: #aaa;
-}
-
-/* Фиксированный размер чата в модальном окне с невидимым скроллбаром */
-.winner-chat-container {
-    flex: 1;
-    min-height: 200px;
-    max-height: 200px;
-    overflow-y: auto;
-    background: rgba(45, 45, 65, 0.6);
-    border-radius: 8px;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    
-    /* Добавляем фон для чата в модальном окне */
-    background-image: 
-        url('/nasuvan.png'),
-        radial-gradient(circle at 10% 20%, rgba(145, 70, 255, 0.1) 0%, transparent 20%),
-        radial-gradient(circle at 90% 80%, rgba(145, 70, 255, 0.1) 0%, transparent 20%),
-        radial-gradient(circle at 50% 50%, rgba(145, 70, 255, 0.05) 0%, transparent 30%);
-    background-size: cover, 200px 200px, 150px 150px, 300px 300px;
-    background-repeat: no-repeat, repeat, repeat, repeat;
-    background-position: center center;
-    
-    /* Скрытие скроллбара для разных браузеров */
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE и Edge */
-}
-
-.winner-chat-container::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
 }
 
 .winner-chat-message {
