@@ -820,9 +820,19 @@ function initWebServer(app, io) {
       console.log('Получение истории победителей');
       const winners = await getWinnersHistory(channelName, 50);
       
-      console.log('Получена история победителей:', winners.length);
+      // Удаляем дубликаты на стороне сервера для дополнительной защиты
+      const uniqueWinners = winners.filter((winner, index, self) => {
+        // Проверяем по username и точному времени (с точностью до секунды)
+        const winnerTime = new Date(winner.win_time).getTime();
+        return index === self.findIndex(w => 
+          w.username === winner.username && 
+          Math.abs(new Date(w.win_time).getTime() - winnerTime) < 1000 // Разница менее 1 секунды
+        );
+      });
+      
+      console.log('Получена история победителей (уникальных):', uniqueWinners.length);
       console.log('=== КОНЕЦ ОБРАБОТКИ /api/winners ===');
-      return res.json(winners);
+      return res.json(uniqueWinners);
     } catch (error) {
       console.error('Ошибка при получении истории победителей:', error);
       console.error('Stack trace:', error.stack);

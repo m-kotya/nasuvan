@@ -127,10 +127,18 @@
                 return;
             }
 
-            // Удаляем дубликаты, если они есть
-            const uniqueWinners = winnersData.filter((winner, index, self) => 
-                index === self.findIndex(w => w.username === winner.username && w.win_time === winner.win_time)
-            );
+            // Удаляем дубликаты, если они есть, используя более строгую проверку
+            const uniqueWinners = winnersData.filter((winner, index, self) => {
+                // Проверяем по username и точному времени (с точностью до секунды)
+                const winnerTime = new Date(winner.win_time).getTime();
+                return index === self.findIndex(w => 
+                    w.username === winner.username && 
+                    Math.abs(new Date(w.win_time).getTime() - winnerTime) < 1000 // Разница менее 1 секунды
+                );
+            });
+
+            // Сортируем по времени победы (новые первыми)
+            uniqueWinners.sort((a, b) => new Date(b.win_time) - new Date(a.win_time));
 
             let html = '';
             uniqueWinners.forEach(winnerData => {
@@ -141,19 +149,22 @@
                 const year = date.getFullYear();
                 const dateString = `${day}/${month}/${year}`;
                 
-                // Форматируем время как 24-часовой формат часы:минуты
+                // Форматируем время как 24-часовой формат часы:минуты:секунды
                 const hours = date.getHours().toString().padStart(2, '0');
                 const minutes = date.getMinutes().toString().padStart(2, '0');
-                const timeString = `${hours}:${minutes}`;
+                const seconds = date.getSeconds().toString().padStart(2, '0');
+                const timeString = `${hours}:${minutes}:${seconds}`;
                 
                 html += `
                     <div class="winner-item">
                         <div class="winner-header">
                             <span class="winner-name"><i class="fas fa-trophy winner-trophy"></i> ${winnerData.username}</span>
+                            <span class="winner-prize">${winnerData.prize || 'Участие в розыгрыше'}</span>
                         </div>
                         <div class="winner-details">
                             <div class="winner-info">
                                 <span class="winner-time"><i class="far fa-clock"></i> ${dateString} ${timeString}</span>
+                                <span class="winner-count"><i class="fas fa-medal"></i> Побед: ${winnerData.total_wins || 1}</span>
                             </div>
                         </div>
                     </div>

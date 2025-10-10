@@ -552,11 +552,55 @@ async function addWinner(username, channel, prize, telegram = null) {
   }
   
   try {
-    // Проверяем, есть ли уже запись о победителе в этой таблице
-    console.log('Проверка существующих записей о победителе');
-    const { data: existingWinner, error: fetchError } = await supabase
+    // Проверяем, есть ли уже запись о победителе с тем же именем пользователя и каналом в последнюю минуту
+    // Это предотвратит дублирование при быстрых последовательных вызовах
+    console.log('Проверка существующих записей о победителе за последнюю минуту');
+    const oneMinuteAgo = new Date(Date.now() - 60000); // 1 минута назад
+    
+    // Для реального клиента используем gte, для мок-клиента фильтруем вручную
+    let recentWinnersQuery = supabase
       .from('winners')
-      .select('id, total_wins')
+      .select('id, total_wins, win_time')
+      .eq('username', username)
+      .eq('channel', channel);
+      
+    // Проверяем, поддерживает ли клиент метод gte (реальный клиент поддерживает, мок - нет)
+    if (typeof recentWinnersQuery.gte === 'function') {
+      recentWinnersQuery = recentWinnersQuery.gte('win_time', oneMinuteAgo.toISOString());
+    }
+    
+    const { data: recentWinners, error: fetchError } = await recentWinnersQuery
+      .order('win_time', { ascending: false });
+
+    if (fetchError) {
+      console.log('Ошибка при поиске существующих записей (это нормально, если запись не найдена):', fetchError.message);
+      // Проверяем, является ли ошибка "не найдено" - это нормально
+      if (fetchError.code !== 'PGRST116') { // Код ошибки "Row not found"
+        console.error('Неожиданная ошибка при поиске существующей записи:', fetchError);
+      }
+    } else if (recentWinners && recentWinners.length > 0) {
+      // Для мок-клиента фильтруем вручную по времени
+      let filteredWinners = recentWinners;
+      if (typeof supabase.from !== 'function' || supabase === mockSupabase) {
+        // Это мок-клиент, фильтруем вручную
+        filteredWinners = recentWinners.filter(winner => 
+          new Date(winner.win_time) >= oneMinuteAgo
+        );
+      }
+      
+      if (filteredWinners.length > 0) {
+        // Если найдены недавние записи, возвращаем самую последнюю
+        console.log('Найдены недавние записи победителя, возвращаем последнюю:', filteredWinners[0]);
+        console.log('=== КОНЕЦ ФУНКЦИИ addWinner ===');
+        return filteredWinners[0];
+      }
+    }
+    
+    // Если недавних записей нет, проверяем общее количество побед
+    console.log('Проверка общего количества побед для пользователя');
+    const { data: allWinners, error: allWinnersError } = await supabase
+      .from('winners')
+      .select('total_wins')
       .eq('username', username)
       .eq('channel', channel)
       .order('win_time', { ascending: false })
@@ -564,18 +608,18 @@ async function addWinner(username, channel, prize, telegram = null) {
       .single();
     
     let totalWins = 1;
-    if (existingWinner && !fetchError) {
-      totalWins = existingWinner.total_wins + 1;
-      console.log('Найдена существующая запись, увеличиваем счетчик побед:', totalWins);
+    if (allWinners && !allWinnersError) {
+      totalWins = allWinners.total_wins + 1;
+      console.log('Найдены предыдущие победы, увеличиваем счетчик побед:', totalWins);
     } else {
-      if (fetchError) {
-        console.log('Ошибка при поиске существующей записи (это нормально, если запись не найдена):', fetchError.message);
+      if (allWinnersError) {
+        console.log('Ошибка при поиске предыдущих побед (это нормально, если запись не найдена):', allWinnersError.message);
         // Проверяем, является ли ошибка "не найдено" - это нормально
-        if (fetchError.code !== 'PGRST116') { // Код ошибки "Row not found"
-          console.error('Неожиданная ошибка при поиске существующей записи:', fetchError);
+        if (allWinnersError.code !== 'PGRST116') { // Код ошибки "Row not found"
+          console.error('Неожиданная ошибка при поиске предыдущих побед:', allWinnersError);
         }
       }
-      console.log('Существующая запись не найдена, начинаем с 1 победы');
+      console.log('Предыдущие победы не найдены, начинаем с 1 победы');
     }
     
     // Подготавливаем данные для вставки
@@ -651,10 +695,15 @@ async function getWinnersHistory(channel, limit = 10) {
     const result = data || [];
     console.log('Получена история победителей:', result.length);
     
-    // Удаляем дубликаты, если они есть
-    const uniqueResult = result.filter((winner, index, self) => 
-        index === self.findIndex(w => w.username === winner.username && w.win_time === winner.win_time)
-    );
+    // Удаляем дубликаты, если они есть, используя более строгую проверку
+    const uniqueResult = result.filter((winner, index, self) => {
+      // Проверяем по username и точному времени (с точностью до секунды)
+      const winnerTime = new Date(winner.win_time).getTime();
+      return index === self.findIndex(w => 
+        w.username === winner.username && 
+        Math.abs(new Date(w.win_time).getTime() - winnerTime) < 1000 // Разница менее 1 секунды
+      );
+    });
     
     if (uniqueResult.length !== result.length) {
         console.log('Удалены дубликаты. Было:', result.length, 'Стало:', uniqueResult.length);
