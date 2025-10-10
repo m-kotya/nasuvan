@@ -26,6 +26,16 @@ Twitch бот для проведения розыгрышей с сохране
 - `RAILWAY_PROJECT_ID` - ID проекта Railway (устанавливается автоматически)
 - `RAILWAY_ENVIRONMENT_NAME` - Название окружения Railway (устанавливается автоматически)
 
+### Настройка базы данных Supabase
+
+Подробная инструкция по настройке базы данных Supabase находится в файле [SUPABASE_SETUP.md](file:///C:/Users/D/Desktop/Giveway%20Bot/twitch-giveaway-bot/SUPABASE_SETUP.md).
+
+Основные шаги:
+1. Создайте проект в Supabase
+2. Получите URL и ключ доступа к базе данных
+3. Создайте таблицу `winners` с правильной структурой
+4. Обновите переменные окружения в файле `.env`
+
 ### Настройка на Railway
 
 1. Создайте новый проект на [Railway](https://railway.app/)
@@ -91,6 +101,12 @@ app.use(express.urlencoded({ extended: true }));
 ```
 
 Это middleware необходимо для корректной обработки данных, отправленных через HTML форму методом POST.
+
+### Проблема: Не отображаются все победители
+
+**Причина:** Неправильная структура таблицы `winners` в базе данных Supabase.
+
+**Решение:** Убедитесь, что таблица `winners` создана с правильной структурой, как описано в [SUPABASE_SETUP.md](file:///C:/Users/D/Desktop/Giveway%20Bot/twitch-giveaway-bot/SUPABASE_SETUP.md).
 
 ### Проверка переменных окружения
 

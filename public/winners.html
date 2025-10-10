@@ -202,7 +202,7 @@
                     timeString = `${hours}:${minutes}:${seconds}`;
                 }
                 
-                // Отображаем приз только если он не равен "Участие в розыгрыше"
+                // Отображаем приз только если он существует (для обратной совместимости)
                 let prizeText = '';
                 if (winnerData.prize && winnerData.prize !== 'Участие в розыгрыше') {
                     prizeText = `<span class="winner-prize">${winnerData.prize}</span>`;

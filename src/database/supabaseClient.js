@@ -540,7 +540,6 @@ async function addWinner(username, channel, prize, telegram = null) {
       id: Date.now(),
       username,
       channel,
-      prize,
       telegram,
       win_time: new Date(),
       total_wins: 1,
@@ -622,7 +621,7 @@ async function addWinner(username, channel, prize, telegram = null) {
       console.log('Предыдущие победы не найдены, начинаем с 1 победы');
     }
     
-    // Подготавливаем данные для вставки
+    // Подготавливаем данные для вставки (без поля prize)
     const winnerData = {
       username,
       channel,
@@ -630,11 +629,6 @@ async function addWinner(username, channel, prize, telegram = null) {
       total_wins: totalWins,
       created_at: new Date()
     };
-    
-    // Добавляем приз, если он указан
-    if (prize !== null && prize !== undefined) {
-      winnerData.prize = prize;
-    }
     
     // Добавляем Telegram, если он указан
     if (telegram !== null) {
