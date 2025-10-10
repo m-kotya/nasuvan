@@ -665,7 +665,7 @@ async function addWinner(username, channel, prize, telegram = null) {
 }
 
 // Функция для получения истории победителей
-async function getWinnersHistory(channel, limit = 10) {
+async function getWinnersHistory(channel, limit = 50) {
   console.log('=== НАЧАЛО ФУНКЦИИ getWinnersHistory ===');
   console.log('Получение истории победителей для канала:', { channel, limit });
   
