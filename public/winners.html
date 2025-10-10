@@ -55,14 +55,22 @@
         async function loadWinners() {
             console.log('=== НАЧАЛО ЗАГРУЗКИ ПОБЕДИТЕЛЕЙ ===');
             try {
+                console.log('Отправка запроса к /api/winners');
                 const response = await fetch('/api/winners');
                 console.log('Response status:', response.status);
                 console.log('Response headers:', [...response.headers.entries()]);
                 
                 if (response.ok) {
+                    console.log('Получение данных из ответа');
                     const data = await response.json();
                     console.log('Winners data received:', data);
-                    console.log('Количество победителей:', data.length);
+                    console.log('Количество победителей в ответе:', data ? data.length : 0);
+                    
+                    // Дополнительная проверка данных
+                    if (data && Array.isArray(data)) {
+                        console.log('Первые 3 записи:', data.slice(0, 3));
+                    }
+                    
                     updateWinnersList(data);
                 } else {
                     // Обрабатываем различные типы ошибок
@@ -73,6 +81,8 @@
                         // Если не удалось распарсить JSON, создаем объект с текстом ошибки
                         errorData = { error: `HTTP Error ${response.status}: ${response.statusText}` };
                     }
+                    
+                    console.error('Server error response:', response.status, errorData);
                     
                     if (response.status === 401) {
                         // Ошибка аутентификации
@@ -121,49 +131,82 @@
 
         // Функция обновления списка победителей
         function updateWinnersList(winnersData) {
+            console.log('=== НАЧАЛО ОБНОВЛЕНИЯ СПИСКА ПОБЕДИТЕЛЕЙ ===');
+            console.log('Данные для обновления списка:', winnersData);
+            
             const winnersList = document.getElementById('winnersList');
             
-            if (!winnersData || winnersData.length === 0) {
+            if (!winnersData || !Array.isArray(winnersData) || winnersData.length === 0) {
+                console.log('Нет данных для отображения');
                 winnersList.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-trophy"></i>
                         <p>Победителей пока нет</p>
                     </div>
                 `;
+                console.log('=== КОНЕЦ ОБНОВЛЕНИЯ СПИСКА ПОБЕДИТЕЛЕЙ ===');
                 return;
             }
+
+            console.log('Количество победителей для отображения:', winnersData.length);
 
             // Удаляем дубликаты, если они есть, используя более строгую проверку
             const uniqueWinners = winnersData.filter((winner, index, self) => {
                 // Проверяем по username и точному времени (с точностью до секунды)
+                if (!winner || !winner.win_time || !winner.username) {
+                    console.log('Пропускаем некорректную запись:', winner);
+                    return false;
+                }
+                
                 const winnerTime = new Date(winner.win_time).getTime();
-                return index === self.findIndex(w => 
-                    w.username === winner.username && 
-                    Math.abs(new Date(w.win_time).getTime() - winnerTime) < 1000 // Разница менее 1 секунды
-                );
+                return index === self.findIndex(w => {
+                    if (!w || !w.win_time || !w.username) return false;
+                    return w.username === winner.username && 
+                        Math.abs(new Date(w.win_time).getTime() - winnerTime) < 1000; // Разница менее 1 секунды
+                });
             });
 
+            console.log('Уникальных победителей после фильтрации:', uniqueWinners.length);
+
             // Сортируем по времени победы (новые первыми)
-            uniqueWinners.sort((a, b) => new Date(b.win_time) - new Date(a.win_time));
+            uniqueWinners.sort((a, b) => {
+                if (!a.win_time || !b.win_time) return 0;
+                return new Date(b.win_time) - new Date(a.win_time);
+            });
 
             let html = '';
-            uniqueWinners.forEach(winnerData => {
-                // Форматируем дату как день/месяц/год
-                const date = new Date(winnerData.win_time);
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const year = date.getFullYear();
-                const dateString = `${day}/${month}/${year}`;
+            uniqueWinners.forEach((winnerData, index) => {
+                // Проверяем, что данные корректны
+                if (!winnerData || !winnerData.username) {
+                    console.log('Пропускаем некорректную запись:', winnerData);
+                    return;
+                }
                 
-                // Форматируем время как 24-часовой формат часы:минуты:секунды
-                const hours = date.getHours().toString().padStart(2, '0');
-                const minutes = date.getMinutes().toString().padStart(2, '0');
-                const seconds = date.getSeconds().toString().padStart(2, '0');
-                const timeString = `${hours}:${minutes}:${seconds}`;
+                console.log(`Обработка победителя ${index + 1}:`, winnerData);
+                
+                // Форматируем дату как день/месяц/год
+                let dateString = 'Нет данных';
+                let timeString = '';
+                
+                if (winnerData.win_time) {
+                    const date = new Date(winnerData.win_time);
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const year = date.getFullYear();
+                    dateString = `${day}/${month}/${year}`;
+                    
+                    // Форматируем время как 24-часовой формат часы:минуты:секунды
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                    const seconds = date.getSeconds().toString().padStart(2, '0');
+                    timeString = `${hours}:${minutes}:${seconds}`;
+                }
                 
                 // Отображаем приз только если он не равен "Участие в розыгрыше"
-                const prizeText = winnerData.prize && winnerData.prize !== 'Участие в розыгрыше' ? 
-                    `<span class="winner-prize">${winnerData.prize}</span>` : '';
+                let prizeText = '';
+                if (winnerData.prize && winnerData.prize !== 'Участие в розыгрыше') {
+                    prizeText = `<span class="winner-prize">${winnerData.prize}</span>`;
+                }
                 
                 html += `
                     <div class="winner-item">
@@ -181,8 +224,22 @@
                 `;
             });
             
-            // Полностью заменяем содержимое контейнера
-            winnersList.innerHTML = html;
+            // Проверяем, что есть данные для отображения
+            if (html === '') {
+                console.log('HTML пустой после обработки данных');
+                winnersList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-trophy"></i>
+                        <p>Победителей пока нет</p>
+                    </div>
+                `;
+            } else {
+                console.log('Обновляем содержимое контейнера с HTML');
+                // Полностью заменяем содержимое контейнера
+                winnersList.innerHTML = html;
+            }
+            
+            console.log('=== КОНЕЦ ОБНОВЛЕНИЯ СПИСКА ПОБЕДИТЕЛЕЙ ===');
         }
 
         // Загружаем победителей при загрузке страницы

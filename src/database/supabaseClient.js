@@ -626,11 +626,15 @@ async function addWinner(username, channel, prize, telegram = null) {
     const winnerData = {
       username,
       channel,
-      prize,
       win_time: new Date(),
       total_wins: totalWins,
       created_at: new Date()
     };
+    
+    // Добавляем приз, если он указан
+    if (prize !== null && prize !== undefined) {
+      winnerData.prize = prize;
+    }
     
     // Добавляем Telegram, если он указан
     if (telegram !== null) {
@@ -665,7 +669,7 @@ async function addWinner(username, channel, prize, telegram = null) {
 }
 
 // Функция для получения истории победителей
-async function getWinnersHistory(channel, limit = 50) {
+async function getWinnersHistory(channel, limit = 100) {
   console.log('=== НАЧАЛО ФУНКЦИИ getWinnersHistory ===');
   console.log('Получение истории победителей для канала:', { channel, limit });
   
@@ -677,12 +681,33 @@ async function getWinnersHistory(channel, limit = 50) {
   }
   
   try {
+    console.log('Выполняем запрос к базе данных Supabase');
+    // Сначала попробуем получить все данные без ограничений, чтобы понять объем
+    const { data: allData, error: countError } = await supabase
+      .from('winners')
+      .select('*', { count: 'exact' })
+      .eq('channel', channel);
+      
+    if (countError) {
+      console.log('Не удалось получить общее количество записей:', countError.message);
+    } else {
+      console.log('Общее количество записей в таблице для канала:', allData.length);
+    }
+    
+    // Теперь выполняем основной запрос с лимитом
     const { data, error } = await supabase
       .from('winners')
       .select('*')
       .eq('channel', channel)
       .order('win_time', { ascending: false })
       .limit(limit);
+
+    console.log('Результат запроса к базе данных:', { 
+      hasData: !!data, 
+      dataLength: data ? data.length : 0,
+      hasError: !!error,
+      error: error ? error.message : null
+    });
 
     if (error) {
       console.error('Ошибка при получении истории победителей:', error);
@@ -694,6 +719,11 @@ async function getWinnersHistory(channel, limit = 50) {
     // Проверяем, что data определен
     const result = data || [];
     console.log('Получена история победителей:', result.length);
+    
+    // Выводим информацию о первых нескольких победителях для отладки
+    if (result.length > 0) {
+      console.log('Первые 3 победителя:', result.slice(0, 3));
+    }
     
     // Удаляем дубликаты, если они есть, используя более строгую проверку
     const uniqueResult = result.filter((winner, index, self) => {

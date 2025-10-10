@@ -818,7 +818,9 @@ function initWebServer(app, io) {
       
       // Получаем историю победителей из новой таблицы
       console.log('Получение истории победителей');
-      const winners = await getWinnersHistory(channelName, 50);
+      const winners = await getWinnersHistory(channelName, 100);
+      
+      console.log('Получено победителей из функции getWinnersHistory:', winners.length);
       
       // Удаляем дубликаты на стороне сервера для дополнительной защиты
       const uniqueWinners = winners.filter((winner, index, self) => {
@@ -831,6 +833,12 @@ function initWebServer(app, io) {
       });
       
       console.log('Получена история победителей (уникальных):', uniqueWinners.length);
+      
+      // Дополнительная проверка - выводим первые несколько записей
+      if (uniqueWinners.length > 0) {
+        console.log('Первые 3 победителя в ответе:', uniqueWinners.slice(0, 3));
+      }
+      
       console.log('=== КОНЕЦ ОБРАБОТКИ /api/winners ===');
       return res.json(uniqueWinners);
     } catch (error) {
