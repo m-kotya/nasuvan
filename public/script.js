@@ -71,7 +71,8 @@ function initWebSocket() {
             addChatMessage('user', data.username, data.message);
             
             // Если модальное окно открыто и сообщение от победителя, добавляем его в чат модального окна
-            if (winnerSection.style.display === 'block' && data.username === currentWinner) {
+            // Но только если победитель уже ответил (winnerResponded = true)
+            if (winnerSection.style.display === 'block' && data.username === currentWinner && winnerResponded) {
                 addWinnerChatMessage(data.username, data.message);
             }
         }
@@ -583,6 +584,13 @@ function showWinner(winner) {
         winnerLastWinElement.textContent = dateString; // Временное значение
     }
     
+    // Очищаем чат модального окна перед открытием
+    const winnerChat = document.getElementById('winnerChat');
+    if (winnerChat) {
+        winnerChat.innerHTML = ''; // Очищаем чат
+        console.log('Чат модального окна очищен');
+    }
+    
     // Показываем модальное окно
     const winnerSection = document.getElementById('winnerSection');
     if (winnerSection) {
@@ -1084,6 +1092,13 @@ function addWinnerChatMessage(user, text) {
         return;
     }
     
+    // Проверяем, что сообщение от победителя (только победитель может добавлять сообщения в чат модального окна)
+    if (user !== currentWinner) {
+        console.log('Сообщение не от победителя, игнорируем');
+        console.log('=== КОНЕЦ ФУНКЦИИ addWinnerChatMessage ===');
+        return;
+    }
+    
     // Добавляем сообщение в массив
     const message = {
         user: user,
@@ -1096,14 +1111,13 @@ function addWinnerChatMessage(user, text) {
     const winnerChat = document.getElementById('winnerChat');
     if (winnerChat) {
         const messageDiv = document.createElement('div');
-        messageDiv.className = 'winner-chat-message';
+        messageDiv.className = 'winner-chat-message winner-response';
         
-        // Если сообщение от победителя, добавляем специальный класс и останавливаем таймер
-        if (user === currentWinner) {
-            messageDiv.classList.add('winner-response');
-            winnerResponded = true; // Победитель ответил
-            stopWinnerTimer(); // Останавливаем таймер когда победитель пишет
-        }
+        // Устанавливаем флаг, что победитель ответил
+        winnerResponded = true;
+        
+        // Останавливаем таймер когда победитель пишет
+        stopWinnerTimer();
         
         // Формат времени 00:00:00
         const timeString = `${message.time.getHours().toString().padStart(2, '0')}:${message.time.getMinutes().toString().padStart(2, '0')}:${message.time.getSeconds().toString().padStart(2, '0')}`;
