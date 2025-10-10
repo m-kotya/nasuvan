@@ -159,12 +159,12 @@
                     <div class="winner-item">
                         <div class="winner-header">
                             <span class="winner-name"><i class="fas fa-trophy winner-trophy"></i> ${winnerData.username}</span>
-                            <span class="winner-prize">${winnerData.prize || 'Участие в розыгрыше'}</span>
+                            <span class="winner-count"><i class="fas fa-medal"></i> Побед: ${winnerData.total_wins || 1}</span>
                         </div>
                         <div class="winner-details">
                             <div class="winner-info">
                                 <span class="winner-time"><i class="far fa-clock"></i> ${dateString} ${timeString}</span>
-                                <span class="winner-count"><i class="fas fa-medal"></i> Побед: ${winnerData.total_wins || 1}</span>
+                                <span class="winner-prize">${winnerData.prize || 'Участие в розыгрыше'}</span>
                             </div>
                         </div>
                     </div>
