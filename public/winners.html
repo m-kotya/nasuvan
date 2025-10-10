@@ -155,6 +155,10 @@
                 const seconds = date.getSeconds().toString().padStart(2, '0');
                 const timeString = `${hours}:${minutes}:${seconds}`;
                 
+                // Отображаем приз только если он не равен "Участие в розыгрыше"
+                const prizeText = winnerData.prize && winnerData.prize !== 'Участие в розыгрыше' ? 
+                    `<span class="winner-prize">${winnerData.prize}</span>` : '';
+                
                 html += `
                     <div class="winner-item">
                         <div class="winner-header">
@@ -164,7 +168,7 @@
                         <div class="winner-details">
                             <div class="winner-info">
                                 <span class="winner-time"><i class="far fa-clock"></i> ${dateString} ${timeString}</span>
-                                <span class="winner-prize">${winnerData.prize || 'Участие в розыгрыше'}</span>
+                                ${prizeText}
                             </div>
                         </div>
                     </div>
