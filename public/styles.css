@@ -567,12 +567,12 @@ a:hover {
     
     /* Добавляем фон для чата */
     background-image: 
-        /* url('nasuvan.png'), - Фоновое изображение, если будет добавлено */
+        url('../nasuvan.png'),
         radial-gradient(circle at 10% 20%, rgba(145, 70, 255, 0.1) 0%, transparent 20%),
         radial-gradient(circle at 90% 80%, rgba(145, 70, 255, 0.1) 0%, transparent 20%),
         radial-gradient(circle at 50% 50%, rgba(145, 70, 255, 0.05) 0%, transparent 30%);
-    background-size: 200px 200px, 150px 150px, 300px 300px;
-    background-repeat: repeat;
+    background-size: cover, 200px 200px, 150px 150px, 300px 300px;
+    background-repeat: no-repeat, repeat, repeat, repeat;
     background-position: center center;
     
     /* Скрытие скроллбара для разных браузеров */
@@ -782,12 +782,12 @@ a:hover {
     
     /* Добавляем фон для чата в модальном окне */
     background-image: 
-        /* url('nasuvan.png'), - Фоновое изображение, если будет добавлено */
+        url('../nasuvan.png'),
         radial-gradient(circle at 10% 20%, rgba(145, 70, 255, 0.1) 0%, transparent 20%),
         radial-gradient(circle at 90% 80%, rgba(145, 70, 255, 0.1) 0%, transparent 20%),
         radial-gradient(circle at 50% 50%, rgba(145, 70, 255, 0.05) 0%, transparent 30%);
-    background-size: 200px 200px, 150px 150px, 300px 300px;
-    background-repeat: repeat;
+    background-size: cover, 200px 200px, 150px 150px, 300px 300px;
+    background-repeat: no-repeat, repeat, repeat, repeat;
     background-position: center center;
     
     /* Скрытие скроллбара для разных браузеров */
