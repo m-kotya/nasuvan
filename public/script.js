@@ -551,56 +551,42 @@ function handleCloseWinner() {
     console.log('=== КОНЕЦ ФУНКЦИИ handleCloseWinner ===');
 }
 
-// Функция отображения победителя в модальном окне
+// Функция показа победителя
 function showWinner(winner) {
     console.log('=== НАЧАЛО ФУНКЦИИ showWinner ===');
-    console.log('Отображение победителя:', winner);
+    console.log('Показ победителя:', winner);
     
+    // Сохраняем имя текущего победителя
     currentWinner = winner;
-    winnerName.textContent = winner;
-    winnerResponded = false; // Сброс флага ответа
-    winnerChatMessages = []; // Очищаем массив сообщений
     
-    // Очищаем чат в модальном окне
-    const winnerChat = document.getElementById('winnerChat');
-    if (winnerChat) {
-        winnerChat.innerHTML = '';
+    // Сбрасываем флаг ответа победителя
+    winnerResponded = false;
+    
+    // Обновляем имя победителя
+    const winnerNameElement = document.getElementById('winnerName');
+    if (winnerNameElement) {
+        winnerNameElement.textContent = winner;
+        console.log('Имя победителя обновлено:', winner);
     }
     
     // Показываем модальное окно
-    winnerSection.style.display = 'block';
-    
-    // Убеждаемся, что модальное окно остается по центру
-    winnerSection.style.position = 'fixed';
-    winnerSection.style.top = '50%';
-    winnerSection.style.left = '50%';
-    winnerSection.style.transform = 'translate(-50%, -50%)';
-    winnerSection.style.zIndex = '10000';
-    
-    // Добавляем оверлей для затемнения фона
-    let overlay = document.getElementById('modalOverlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'modalOverlay';
-        overlay.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 9999;
-            pointer-events: none;
-        `;
-        document.body.appendChild(overlay);
+    const winnerSection = document.getElementById('winnerSection');
+    if (winnerSection) {
+        winnerSection.style.display = 'block';
+        console.log('Модальное окно показано');
     }
     
-    // Сброс таймера и запуск
+    // Сбрасываем таймер
     winnerSeconds = 0;
+    
+    // Убираем красный цвет при сбросе
+    const timerContainer = document.querySelector('.winner-timer-container');
     const timerElement = document.getElementById('winnerTimer');
-    if (timerElement) {
-        timerElement.classList.remove('red'); // Убираем красный цвет при сбросе
+    if (timerContainer && timerElement) {
+        timerContainer.classList.remove('red');
+        timerElement.classList.remove('red');
     }
+    
     updateWinnerTimer();
     startWinnerTimer();
     
@@ -615,10 +601,12 @@ function startWinnerTimer() {
         winnerSeconds++;
         updateWinnerTimer();
         
-        // После 20 секунд делаем таймер красным
-        if (winnerSeconds >= 20) {
+        // После 25 секунд делаем таймер красным
+        if (winnerSeconds >= 25) {
+            const timerContainer = document.querySelector('.winner-timer-container');
             const timerElement = document.getElementById('winnerTimer');
-            if (timerElement) {
+            if (timerContainer && timerElement) {
+                timerContainer.classList.add('red');
                 timerElement.classList.add('red');
             }
         }

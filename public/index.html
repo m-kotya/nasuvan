@@ -110,14 +110,14 @@
     <!-- Секция победителя (модальное окно) -->
     <div id="winnerSection" style="display: none;">
         <div class="winner-content">
-            <h2>Выбранный победитель:</h2>
-            <h3 id="winnerName"></h3>
-            <div class="winner-timer">
-                <p>Время ожидания ответа:</p>
-                <span id="winnerTimer">00:00</span>
+            <div class="winner-header">
+                <h2>Выбранный победитель:</h2>
+                <div class="winner-timer-container">
+                    <span id="winnerTimer" class="winner-timer-box">00:00</span>
+                </div>
             </div>
+            <h3 id="winnerName"></h3>
             <div class="winner-message">
-                <p>Ожидаем сообщение от победителя в чате...</p>
                 <div id="winnerChat" class="winner-chat-container">
                     <!-- Здесь будут отображаться сообщения от победителя -->
                 </div>
