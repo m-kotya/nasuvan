@@ -569,6 +569,20 @@ function showWinner(winner) {
         console.log('Имя победителя обновлено:', winner);
     }
     
+    // Обновляем информацию о победителе (временный код - в реальном приложении данные будут получены из БД)
+    const winnerRankElement = document.getElementById('winnerRank');
+    const winnerLastWinElement = document.getElementById('winnerLastWin');
+    
+    if (winnerRankElement) {
+        winnerRankElement.textContent = '1'; // Временное значение
+    }
+    
+    if (winnerLastWinElement) {
+        const now = new Date();
+        const dateString = `${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()}`;
+        winnerLastWinElement.textContent = dateString; // Временное значение
+    }
+    
     // Показываем модальное окно
     const winnerSection = document.getElementById('winnerSection');
     if (winnerSection) {
